@@ -1,0 +1,75 @@
+### TORCH ###
+
+parametri di torch.nn.Transformer:
+- nhead: number of heads in the multiheadattention model. cosa è una head? per ogni head calcolo l'attenzione con uno scope diverso per 
+		 scoprire relazioni diverse (big picture, pattern locali, ecc).
+- dim_feedforward: numero di neuroni di ogni layer hidden.
+- dropout: valore di dropout: è la probabilità di SPEGNIMENTO del neurone.
+- layer_norm_eps: the eps value in layer normalization components. ogni dato viene normalizzato. nella normalizzazione si aggiunge a 
+				  sigma un epsilon piccolo e positivo per evitare la divisione per zero e per evitare vanishing gradient.
+- batch_first: se True i tensori di input e output sono dati con dimensione (batch, sequenza, feature), altrimenti (sequenza, batch, 
+			   feature). 
+			   BATCH: numero di dati, nel nostro caso quanti eventi su quelli generati hanno particelle 23. 
+			   SEQUENZA: è il passo temporale, ossia quante particelle 23 ci sono per ogni evento in cui appaiono. 
+			   FEATURES: numero di features per ogni particella 23. Il discorso interessante è che non è detto che il passo temporale di 
+			   			 ogni evento sia uguale (passo temporale di lunghezza variabile).
+- norm_first: di default False, ossia la  layer_norm viene fatta DOPO attention e feedforward; porta risultati simili a transformer 
+			  tradizionali, la normalizzazione viene fatta alla fine senza intaccare i dati prima che vengano trasformati. 
+			  Se True, fa layer_norm prima di attention e feedforward; può portare a modelli più stabili ma meno espressivi.
+- bias: di default True, c'è bias additivo. 
+
+
+### TRANSFORMER ###
+
+Nel Transformer, ci sono due operazioni principali per ogni layer:
+
+1. L'attenzione (Attention): aiuta il modello a "guardare" e "pesare" diverse parti della sequenza di input.
+
+2. La rete neurale feedforward (Feedforward Network): è una rete neurale "normale" che elabora ulteriormente le informazioni.
+	È una rete neurale semplice che prende i dati in ingresso, li elabora e restituisce un output. Non ha connessioni ricorrenti come in altri tipi di reti neurali, ma sono solo 	passaggi di calcolo tra neuroni.
+
+	Ogni layer del Transformer ha una parte feedforward che:
+
+		Prende l'output dell'attenzione.
+		Lo passa attraverso una piccola rete neurale completamente connessa (ossia connessa tra tutti i neuroni).
+		Questa rete neurale "feedforward" può essere pensata come un piccolo modello di rete neurale che aiuta a trasformare ulteriormente l'informazione che arriva 				dall'attenzione.
+
+	dim_feedforward è la dimensione di questa rete neurale che si trova dentro il Transformer. In pratica, è quante "unità" o neuroni ha quella rete neurale che elabora i dati dopo 	l'attenzione.
+	Se dim_feedforward è 4 * hidden_dim, significa che la rete neurale dentro ogni layer del Transformer ha 4 volte più neuroni rispetto alla dimensione di input, che è hidden_dim. 	Questo rende la rete più potente e capace di apprendere rappresentazioni più complesse.
+
+
+### nn.Transformer ###
+
+Cosa fa nn.Transformer?
+	La classe nn.Transformer è progettata per elaborare sequenze di dati numerici. Questi dati vengono passati attraverso il modello 
+	in forma di tensori. I dati veri e propri (cioè le sequenze che vuoi elaborare, come nel tuo caso le particelle) non sono 
+	esplicitamente elencati nei parametri del modello perché il modello è costruito per ricevere i dati direttamente durante l'inferenza.
+
+I parametri di configurazione di nn.Transformer
+	I parametri che vediamo nella documentazione (come d_model, nhead, num_encoder_layers, ecc.) sono parametri di configurazione che 
+	definiscono l'architettura del Transformer, ma non si riferiscono ai dati veri e propri che passano attraverso il modello. Ecco a 
+	cosa servono:
+
+		d_model: Definisce il numero di caratteristiche per ciascun elemento della sequenza. In altre parole, è la dimensione dello spazio
+				 in cui ogni elemento della sequenza (ogni particella nel tuo caso) viene rappresentato. Questo è spesso anche il numero 
+				 di unità in ogni layer nascosto (hidden layer).
+
+		nhead: Numero di "teste" nella meccanismo di attenzione multi-testa. Ogni testa è responsabile di esplorare diverse relazioni tra 
+			   gli elementi della sequenza.
+
+		num_encoder_layers e num_decoder_layers: Questi definiscono quanti strati di encoder e decoder ci sono nel Transformer. 
+												 Ogni strato ha un meccanismo di attenzione e una rete feedforward.
+
+		dim_feedforward: La dimensione delle reti completamente connesse all'interno del modello, che vengono applicate a ciascun 
+						 elemento della sequenza.
+
+		dropout: È la probabilità di dropout da applicare per evitare il sovra-adattamento.
+
+		activation: La funzione di attivazione utilizzata nella rete feedforward (come ReLU o GELU).
+
+I dati veri e propri
+	Anche se questi parametri sono fondamentali per la struttura del modello, i dati veri e propri non sono un parametro di configurazione
+	del modello. Quelli vengono passati come tensori quando chiami il modello, e non sono specificati nella documentazione dei parametri. 
+
+Questa stessa cosa vale anche quando creo un layer e poi lo voglio usare: quando lo creo inizializzo i parametri di configurazione, 
+quando lo vado ad usare gli passo i dati veri e propri
