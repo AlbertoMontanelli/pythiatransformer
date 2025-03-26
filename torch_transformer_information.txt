@@ -26,23 +26,25 @@ Nel Transformer, ci sono due operazioni principali per ogni layer:
 1. L'attenzione (Attention): aiuta il modello a "guardare" e "pesare" diverse parti della sequenza di input.
 
 2. La rete neurale feedforward (Feedforward Network): è una rete neurale "normale" che elabora ulteriormente le informazioni.
-	È una rete neurale semplice che prende i dati in ingresso, li elabora e restituisce un output. Non ha connessioni ricorrenti come in altri tipi di reti neurali, ma sono solo 	passaggi di calcolo tra neuroni.
+	È una rete neurale semplice che prende i dati in ingresso, li elabora e restituisce un output. 
+	Non ha connessioni ricorrenti come in altri tipi di reti neurali, ma sono solo passaggi di calcolo tra neuroni.
 
 	Ogni layer del Transformer ha una parte feedforward che:
-
 		Prende l'output dell'attenzione.
 		Lo passa attraverso una piccola rete neurale completamente connessa (ossia connessa tra tutti i neuroni).
-		Questa rete neurale "feedforward" può essere pensata come un piccolo modello di rete neurale che aiuta a trasformare ulteriormente l'informazione che arriva 				dall'attenzione.
+		Questa rete neurale "feedforward" può essere pensata come un piccolo modello di rete neurale che aiuta a trasformare ulteriormente l'informazione che arriva dall'attenzione.
 
-	dim_feedforward è la dimensione di questa rete neurale che si trova dentro il Transformer. In pratica, è quante "unità" o neuroni ha quella rete neurale che elabora i dati dopo 	l'attenzione.
-	Se dim_feedforward è 4 * hidden_dim, significa che la rete neurale dentro ogni layer del Transformer ha 4 volte più neuroni rispetto alla dimensione di input, che è hidden_dim. 	Questo rende la rete più potente e capace di apprendere rappresentazioni più complesse.
+	dim_feedforward è la dimensione di questa rete neurale che si trova dentro il Transformer. 
+	In pratica, è quante "unità" o neuroni ha quella rete neurale che elabora i dati dopo l'attenzione.
+	Se dim_feedforward è 4 * hidden_dim, significa che la rete neurale dentro ogni layer del Transformer ha 4 volte più neuroni rispetto alla dimensione di input, che è hidden_dim. 
+	Questo rende la rete più potente e capace di apprendere rappresentazioni più complesse.
 
 
 ### nn.Transformer ###
 
 Cosa fa nn.Transformer?
 	La classe nn.Transformer è progettata per elaborare sequenze di dati numerici. Questi dati vengono passati attraverso il modello 
-	in forma di tensori. I dati veri e propri (cioè le sequenze che vuoi elaborare, come nel tuo caso le particelle) non sono 
+	in forma di tensori. I dati veri e propri (cioè le sequenze che vuoi elaborare, come nel nostro caso le particelle) non sono 
 	esplicitamente elencati nei parametri del modello perché il modello è costruito per ricevere i dati direttamente durante l'inferenza.
 
 I parametri di configurazione di nn.Transformer
@@ -51,10 +53,10 @@ I parametri di configurazione di nn.Transformer
 	cosa servono:
 
 		d_model: Definisce il numero di caratteristiche per ciascun elemento della sequenza. In altre parole, è la dimensione dello spazio
-				 in cui ogni elemento della sequenza (ogni particella nel tuo caso) viene rappresentato. Questo è spesso anche il numero 
+				 in cui ogni elemento della sequenza (ogni particella nel nostro caso) viene rappresentato. Questo è spesso anche il numero 
 				 di unità in ogni layer nascosto (hidden layer).
 
-		nhead: Numero di "teste" nella meccanismo di attenzione multi-testa. Ogni testa è responsabile di esplorare diverse relazioni tra 
+		nhead: Numero di "teste" nel meccanismo di attenzione multi-testa. Ogni testa è responsabile di esplorare diverse relazioni tra 
 			   gli elementi della sequenza.
 
 		num_encoder_layers e num_decoder_layers: Questi definiscono quanti strati di encoder e decoder ci sono nel Transformer. 
@@ -63,7 +65,7 @@ I parametri di configurazione di nn.Transformer
 		dim_feedforward: La dimensione delle reti completamente connesse all'interno del modello, che vengono applicate a ciascun 
 						 elemento della sequenza.
 
-		dropout: È la probabilità di dropout da applicare per evitare il sovra-adattamento.
+		dropout: È la probabilità di dropout da applicare per evitare overfitting.
 
 		activation: La funzione di attivazione utilizzata nella rete feedforward (come ReLU o GELU).
 
