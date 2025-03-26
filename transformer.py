@@ -1,3 +1,6 @@
+import logging
+import argparse
+
 import ROOT
 import torch.nn as nn # questo contiene la classe transformer di pytorch
 import torch.optim as optimizer # sicuramente ci servirà
@@ -62,26 +65,32 @@ class Particle_Transformer(nn.Module): # va scritto con la maiuscola, o almeno, 
             activation (string): activation function of encoder or/and decoder layers
         '''
 
-        super(Particle_Transformer, self).__init__() # serve per chiamare il costruttore della classe nn.Module (è necessario)
-                                                     # praticamente quello che vogliamo fare è estendere la classe di pytorch
+        super(Particle_Transformer, self).__init__() 
+        # serve per chiamare il costruttore della classe nn.Module
+        # (è necessario) praticamente quello che vogliamo fare è 
+        # estendere la classe di pytorch
         
         self.dim_features = dim_features
         self.N_head = N_head
         self.N_encoder_layers = N_encoder_layers
         self.N_decoder_layers = N_decoder_layers
-        self.N_units = N_units # più è grande, più catturo informazioni dettagliate
+        # N_units più è grande, più catturo informazioni dettagliate
+        self.N_units = N_units 
         self.dropout = dropout
         self.activation = activation
-
 
     def data_preprocessor(self):
         '''
         Data preprocessing
         '''
-        # queste righe servono per trasformare i dati di input e output in una rappresentazione più adatta per un trasformer
-        # nn.Linear è un layer con funzione lineare, applica la trasformazione y = xA^T + B
-        self.input_projection = nn.Linear(self.dim_features, self.N_units) # per lavorare con una rappresentazione più astratta. N_units > num_features
-        self.output_projection = nn.Linear(self.N_units, self.dim_features) # poi le riconverte alle dimensioni originali
+        # queste righe servono per trasformare i dati di input e output
+        # in una rappresentazione più adatta per un trasformer nn.Linear
+        # è un layer con funzione lineare, applica la trasformazione 
+        # y = xA^T + B
+        self.input_projection = nn.Linear(self.dim_features, self.N_units) 
+        # per lavorare con una rappresentazione più astratta. N_units > num_features
+        self.output_projection = nn.Linear(self.N_units, self.dim_features) 
+        # poi le riconverte alle dimensioni originali
 
 
     def transformer_application(self):
@@ -89,19 +98,25 @@ class Particle_Transformer(nn.Module): # va scritto con la maiuscola, o almeno, 
 
         '''
         self.transformer = nn.Transformer(
-            d_model = self.N_units, # gli va passato il numero di features trasformato, non originali
+            d_model = self.N_units, 
+            # gli va passato il numero di features trasformato, non originali
             nhead = self.N_head,
             num_encoder_layers = self.N_encoder_layers,
             num_decoder_layers = self.N_decoder_layers,
             dim_feedforward = 4 * self.N_units, 
-            # non ho capito molto bene cos'è questo, non credo siano le dimensioni delle hidden perché quello è il primo parametro
-            # dim_feedforward rappresenta la dimensione degli strati completamente connessi all'interno del Transformer.
-            # È solitamente impostato a un valore maggiore rispetto a d_model (qui 4 * hidden_dim) per aumentare la capacità del modello
-            # di apprendere rappresentazioni più complesse
-            # 4 * hidden_dim è una scelta comune, ma può essere modificato a seconda delle necessità specifiche del modello.
+            # non ho capito molto bene cos'è questo, non credo siano le
+            # dimensioni delle hidden perché quello è il primo parametro
+            # dim_feedforward rappresenta la dimensione degli strati 
+            # completamente connessi all'interno del Transformer.
+            #
+            # È solitamente impostato a un valore maggiore rispetto a 
+            # d_model (qui 4 * hidden_dim) per aumentare la capacità 
+            # del modello di apprendere rappresentazioni più complesse
+            # 4 * hidden_dim è una scelta comune, ma può essere 
+            # modificato a seconda delle necessità specifiche del modello.
             dropout = self.dropout,
             activation = self.activation
-            # il resto dei parametri li lascerei di default per ora poi vediamo
+            # il resto dei parametri li lascerei di default per ora
         )
 
     def forward(self, source, target):
@@ -115,13 +130,15 @@ class Particle_Transformer(nn.Module): # va scritto con la maiuscola, o almeno, 
         '''
 
         # qui sto praticamente usando il layer che ho costruito sopra
-        source = self.input_projection(source)  # Proiezione nello spazio nascosto sia dei dati  di input che del target
+        # Proiezione nello spazio nascosto sia dei dati di input che
+        # del target
+        source = self.input_projection(source)  
         target = self.input_projection(target)  
         
         # qui sto usando il trasformer creato sopra
         output = self.transformer(source, target) 
 
         # anche qui uso l'altro layer che ho fatto prima
-        output = self.output_projection(output)  # Proiezione finale nello spazio delle feature
-        
+        # Proiezione finale nello spazio delle feature
+        output = self.output_projection(output)
         return output
