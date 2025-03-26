@@ -23,6 +23,10 @@ andrà fatta una funzione che PREPARA i dati che abbiamo simulato. per essere us
     
     In questo caso: batch_size = 2 (due eventi), seq_len = 3 (tre particelle per evento), feature_dim = 6 (x, y, z, E, m, ID)
     Non riesco però a capire come fa il modello a sapere che la forma del tensore è questa
+    LEO: eh infatti.... più che altro come fa a capire che i primi tre vettori stanno insieme e i secondi tre stanno insieme....
+    questo è semplicemente l'elenco delle caratteristiche raggruppate per particella, ma poi le particelle non sono raggruppate 
+    per evento.... vero è che se tu gli dici esplicitamente che il tensore è supponiamo (400, 3, 6) allora ok, ma questo vorrebbe dire
+    che le 23 di ogni evento sono 3 (è il nostro caso?)
 '''
 
 '''
@@ -32,7 +36,7 @@ altre funzioni da fare:
 altro?
 '''
 
-class Particle_Transformer(nn.module):
+class Particle_Transformer(nn.Module): # va scritto con la maiuscola, o almeno, io ho trovato solo questo. poi se volevi module minuscolo ce lo dici te
     '''
         nn.module è una classe di torch per tutti i tuti di reti neurali, contiene delle subclassi come la classe transformer
         
