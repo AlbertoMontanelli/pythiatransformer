@@ -4,7 +4,7 @@ pythia generator
 from pythia8 import Pythia
 from ROOT import TFile, TTree, std
 
-N_EVENTS = 30000
+N_EVENTS = 3000
 
 # Pythia configuration.
 pythia = Pythia()
@@ -12,7 +12,7 @@ pythia.readString("Beams:eCM = 13000.0")
 pythia.readString("Top:qqbar2ttbar = on")
 pythia.init()
 
-features_list = ["id", "status", "px", "py", "pz", "energy", "mass"]
+features_list = ["id", "status", "px", "py", "pz", "e", "m"]
 attributes_23 = {
     "_".join([feature, "23"]): std.vector('int')()
     if feature in ["id", "status"] else std.vector('float')()
@@ -51,11 +51,11 @@ for i_event in range(N_EVENTS):
     for i in range(pythia.event.size()):
         particle = pythia.event[i]
         if particle.status() == 23:
-            for key, accessor in accessors_23.items():
-                attributes_23[key].push_back(accessor(particle))
+            for key, value in accessors_23.items():
+                attributes_23[key].push_back(value(particle))
         if particle.isFinal():
-            for key, accessor in accessors_final.items():
-                attributes_final[key].push_back(accessor(particle))
+            for key, value in accessors_final.items():
+                attributes_final[key].push_back(value(particle))
     # Riempie il TTree. Ricorda che nel Tree ogni riga corrisponde ad
     # un evento di pythia. Per ogni riga avrò array colonna dinamici
     # contenenti le caratteristiche dell'evento:
