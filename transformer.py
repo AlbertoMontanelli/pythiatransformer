@@ -1,5 +1,8 @@
-import logging
+"""
+transformer class
+"""
 import argparse
+import logging
 import ROOT
 import torch.nn as nn
 import torch.optim as optimizer

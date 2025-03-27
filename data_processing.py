@@ -1,6 +1,9 @@
+"""
+data processing
+"""
+import numpy as np
 import torch
 import uproot
-import numpy as np
 
 from pythia_generator import features_list
 
