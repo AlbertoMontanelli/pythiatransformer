@@ -4,7 +4,7 @@ pythia generator
 from pythia8 import Pythia
 from ROOT import TFile, TTree, std
 
-N_EVENTS = 3000
+N_EVENTS = 500
 
 # Pythia configuration.
 pythia = Pythia()

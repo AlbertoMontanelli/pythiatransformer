@@ -4,6 +4,8 @@ import ROOT
 import torch.nn as nn
 import torch.optim as optimizer
 
+from data_processing import inputs_tensor, outputs_tensor
+
 
 '''
 andrà fatta una funzione che PREPARA i dati che abbiamo simulato. per essere usati devono essere in questa forma: 

@@ -2,7 +2,7 @@ import torch
 import uproot
 import numpy as np
 
-import features_list
+from pythia_generator import features_list
 
 particle_list = ["23", "final"]
 
@@ -33,9 +33,10 @@ for status23, final in zip(
 inputs_tensor = torch.nn.utils.rnn.pad_sequence(inputs, batch_first = True)
 outputs_tensor = torch.nn.utils.rnn.pad_sequence(outputs, batch_first = True)
 
+print(f'tensore di input {inputs_tensor}')
+
 # Crea un TensorDataset
 dataset = torch.utils.data.TensorDataset(inputs_tensor, outputs_tensor)
 
 # Salva il dataset
 torch.save(dataset, "dataset.pt")
-
