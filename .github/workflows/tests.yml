@@ -1,0 +1,31 @@
+name: Run tests
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v3
+
+      - name: Set up Conda
+        uses: conda-incubator/setup-miniconda@v2
+        with:
+          python-version: 3.9
+          environment-file: environment.yml
+          activate-environment: myrootenv
+
+      - name: Install additional dependencies
+        run: |
+          conda install -c conda-forge root
+          pip install loguru numpy uproot
+
+      - name: Run tests
+        run: pytest tests/
+
+
