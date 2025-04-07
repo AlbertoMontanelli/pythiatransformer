@@ -1,0 +1,24 @@
+[project]
+name = "CMEPDA-project"
+version = "0.1.0"
+description = "Add description"
+authors = [
+    { name = "Leonardo Bandiera Marlia", email = "l.bandieramarlia@studenti.unipi.it" },
+    { name = "Irene Bini", email = "i.bini3@studenti.unipi.it" },
+    { name = "Alberto Montanelli", email = "a.montanelli@studenti.unipi.it" }
+]
+dependencies = [
+    "numpy",
+    "uproot",
+    "loguru",
+]
+
+[project.optional-dependencies]
+dev = ["pytest"]
+
+[build-system]
+requires = ["setuptools>=42", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[tool.pytest.ini_options]
+addopts = "--maxfail=3 --disable-warnings"
