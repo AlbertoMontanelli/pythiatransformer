@@ -1,0 +1,1 @@
+from .pythia_generator import generate_events

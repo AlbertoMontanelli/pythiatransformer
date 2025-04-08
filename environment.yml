@@ -1,0 +1,12 @@
+name: myrootenv
+channels:
+  - conda-forge
+dependencies:
+  - python=3.9
+  - root
+  - pip
+  - pip:
+      - numpy
+      - uproot
+      - loguru
+      - pytest
