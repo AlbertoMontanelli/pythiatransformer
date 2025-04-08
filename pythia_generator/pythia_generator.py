@@ -129,31 +129,6 @@ def generate_events(output_file: str, n_events: int):
 
 if __name__ == "__main__":
     generate_events("events.root", n_events=100)
-
-
-
-
-# ACCESSO ALLE ENTRIES DI CIASCUN BRANCH DEL TREE
-
-"""
-qua si potrebbero fare degli unit test spacchettando il file appena generato e controllando che i valori salvati, lunghezza, siano uguali, etc
-"""
-
-# Iterare su tutte le entry di un branch
-with uproot.open("events.root") as root_file:
-    tree = root_file["tree_final"]
-    
-    # questo un esempio con pandas, da installare con pip awkward-pandas
-    df = tree.arrays(library = "pd")
-
-    print(df)
-
-    # qua un esempio per accedere alle singole entries (quindi ciascun evento, in cui ciascun evento ha un numero diverso di particelle) del branch 
-    for i, entry in enumerate(tree["id_final"].array(library = "np")):
-        print(f"Entry {i} (id_final):", entry)
-
-    for i, entry in enumerate(tree["px_final"].array(library = "np")):
-        print(f"Entry {i} (px_final):", entry)
     
 
 """
