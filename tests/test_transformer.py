@@ -1,8 +1,13 @@
 import logging
+import os
+import sys
 import torch
 import unittest
 
-from transformer import ParticleTransformer
+# Aggiunge il path alla cartella contenente 'transformer/'
+# sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
+
+from .transformer import ParticleTransformer
 
 # logging set up
 if not logging.getLogger().hasHandlers():
@@ -10,8 +15,7 @@ if not logging.getLogger().hasHandlers():
 
 
 class TestParticleTransformer(unittest.TestCase):
-    '''
-    This class contains unit tests to verify the functionality of the
+    """This class contains unit tests to verify the functionality of the
     ParticleTransformer class.
     It uses the unittest framework to run the tests.
     The tests include:
@@ -21,14 +25,13 @@ class TestParticleTransformer(unittest.TestCase):
       shape.
     - Ensuring the output does not contain NaN or Inf.
     - Ensuring the projection produces the correct shape.
-    '''
+    """
     def setUp(self):
-        '''
-        This function initializes the variables required to create an
+        """This function initializes the variables required to create an
         instance of the ParticleTransformers class.
         This method is automatically called before each test to set up
         a consistent test environment.
-        '''
+        """
         self.dim_features = 4
         self.num_heads = 4
         self.num_encoder_layers = 1
@@ -64,11 +67,10 @@ class TestParticleTransformer(unittest.TestCase):
         ) # (batch_size=2, sequence_length=3, dim_features=4)
 
     def test_dim_features(self):
-        '''
-        This function checks that the third dimension of the input
+        """This function checks that the third dimension of the input
         tensor (i.e., the number of features per particle) matches
         the dim_features parameter of the model.
-        '''
+        """
         self.assertEqual(
             self.input.shape[2],
             self.dim_features,
@@ -77,19 +79,17 @@ class TestParticleTransformer(unittest.TestCase):
         )
 
     def test_forward_output_shape(self):
-        '''
-        This function tests that the forward method of the model
+        """This function tests that the forward method of the model
         produces an output tensor with the correct shape. The shape of
         the output tensor must match with the shape of the input tensor.
-        '''
+        """
         output = self.transformer.forward(self.input, self.input)
         self.assertEqual(output.shape, self.input.shape)
 
     def test_forward_output_nans_infs(self):
-        '''
-        This function tests that the putput of the forward methods does
+        """This function tests that the putput of the forward methods does
         not contain Inf values or NaN values.
-        '''
+        """
         output = self.transformer.forward(self.input, self.input)
         self.assertFalse(
             torch.isnan(output).any(),
@@ -101,13 +101,12 @@ class TestParticleTransformer(unittest.TestCase):
         )
 
     def test_projection_layer(self):
-        '''
-        This function tests the functionality of the projection layers.
+        """This function tests the functionality of the projection layers.
         Ensures that the input projection transforms the data from the
         input feature space to the hidden representation space, and
         that the output projection correctly maps it back to the
         original feature dimension.
-        '''
+        """
         input_proj= self.transformer.input_projection(self.input)
         output_proj= self.transformer.output_projection(input_proj)
         self.assertEqual(input_proj.shape, (2, 3, self.num_units))
