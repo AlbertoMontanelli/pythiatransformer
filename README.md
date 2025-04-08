@@ -70,14 +70,13 @@ CMEPDA-project/
 │
 ├── environment.yml          # Conda environment file
 ├── README.md                # Project documentation
-├── pythia_generator/        # Source code
+├── pythiatransformer/        # Source code
 │   ├── __init__.py
-│   └── pythia_generator.py
-├── transformer/        # Source code
-│   ├── __init__.py
+│   ├── pythia_generator.py
+|   ├── data_processing.py
 │   └── transformer.py
 ├── tests/                   # Automated tests
-│   ├── pythia_generator_test.py
+│   ├── test_pythia-generator.py
 │   └── test_transformer.py
 ├── pyproject.toml           # Build system configuration
 └── .github/workflows/       # GitHub Actions CI configuration
