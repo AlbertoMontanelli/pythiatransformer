@@ -1,5 +1,5 @@
 import pytest
-from pythia_generator import (
+from pythiatransformer.pythia_generator import (
     setup_pythia,
     initialize_data,
     append_empty_event,
