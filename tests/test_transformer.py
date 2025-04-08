@@ -1,20 +1,16 @@
 import logging
-import os
-import sys
 import torch
 import unittest
 
-# Aggiunge il path alla cartella contenente 'transformer/'
-# sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 
-from .transformer import ParticleTransformer
+from pythiatransformer.transformer import ParticleTransformer
 
 # logging set up
 if not logging.getLogger().hasHandlers():
     logging.basicConfig(level=logging.DEBUG, format='%(levelname)s:%(message)s')
 
 
-class TestParticleTransformer(unittest.TestCase):
+class TestParticleTransformer():
     """This class contains unit tests to verify the functionality of the
     ParticleTransformer class.
     It uses the unittest framework to run the tests.
