@@ -3,6 +3,7 @@ import ast
 import numpy as np
 import pandas as pd
 from sklearn.preprocessing import StandardScaler
+import torch
 import uproot
 
 
@@ -60,14 +61,16 @@ def convert_to_list(value):
     """
     if isinstance(value, str):
         try:
-            return ast.literal_eval(value)  # Converting the list to a string.
+            return ast.literal_eval(value)  # ast.literal_eval raises an
+                                            # exception if value is not
+                                            # a valid datatype.
         except (ValueError, SyntaxError):
-            return value  # If not a list, returns the original value.
+            return value
     return value
 
 # Converting every column.
 for col in [
-    "id_23", "status_23", "px_23", "py_23"
+    "id_23", "status_23", "px_23", "py_23",
     "pz_23", "e_23", "m_23", "event_number"
     ]:
     df_23[col] = df_23[col].apply(convert_to_list)
@@ -90,9 +93,23 @@ df_23_exploded["e_23"] = pd.to_numeric(
     df_23_exploded["e_23"], errors="coerce")
 df_23_exploded["m_23"] = pd.to_numeric(
     df_23_exploded["m_23"], errors="coerce")
+
 df_23_exploded[["e_23", "m_23"]] = df_23_exploded[
     ["e_23", "m_23"]].apply(np.log1p)
+
 
 """Once the normalization process is finished, the dataframe
 is reconstitued with its initial shape.
 """
+df_23_stand = (df_23_exploded.groupby(["event_number"]).agg({
+    "id_23": list, "status_23": list, "px_23": list, "py_23": list,
+    "pz_23": list, "e_23": list, "m_23": list
+}).reset_index())
+
+"""Once standardized, the dataframe needs to be converted to a
+tensor readable by Torch.
+"""
+numpy_23 = df_23_stand.to_numpy() # Converting the df to a numpy array
+tensor_23 = torch.from_numpy(numpy_23) # Converting the array to a tensor
+print(tensor_23)
+
