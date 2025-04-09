@@ -105,11 +105,3 @@ df_23_stand = (df_23_exploded.groupby(["event_number"]).agg({
     "id_23": list, "status_23": list, "px_23": list, "py_23": list,
     "pz_23": list, "e_23": list, "m_23": list
 }).reset_index())
-
-"""Once standardized, the dataframe needs to be converted to a
-tensor readable by Torch.
-"""
-numpy_23 = df_23_stand.to_numpy() # Converting the df to a numpy array
-tensor_23 = torch.from_numpy(numpy_23) # Converting the array to a tensor
-print(tensor_23)
-
