@@ -10,7 +10,7 @@ if not logging.getLogger().hasHandlers():
     logging.basicConfig(level=logging.DEBUG, format='%(levelname)s:%(message)s')
 
 
-class TestParticleTransformer():
+class TestParticleTransformer(unittest.TestCase):
     """This class contains unit tests to verify the functionality of the
     ParticleTransformer class.
     It uses the unittest framework to run the tests.
