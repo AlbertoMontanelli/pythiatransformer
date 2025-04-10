@@ -1,7 +1,8 @@
 import logging
 import torch
+import torch.nn as nn
+import torch.optim as optimizer
 import unittest
-
 
 from pythiatransformer.transformer import ParticleTransformer
 
@@ -28,39 +29,39 @@ class TestParticleTransformer(unittest.TestCase):
         This method is automatically called before each test to set up
         a consistent test environment.
         """
-        self.dim_features = 4
+        self.input_train = torch.rand(10, 2, 6)
+        self.input_test = torch.rand(10, 2, 6)
+        self.input_val = torch.rand(10, 2, 6)
+        self.target_train = torch.rand(10, 12, 6)
+        self.target_test = torch.rand(10, 12, 6)
+        self.target_val = torch.rand(10, 12, 6)
+
+        self.dim_features = 6
         self.num_heads = 4
         self.num_encoder_layers = 1
         self.num_decoder_layers = 1
         self.num_units = 12
         self.dropout = 0.1
+        self.batch_size = 2
         self.transformer = ParticleTransformer(
+            self.input_train,
+            self.input_val,
+            self.input_test,
+            self.target_train,
+            self.target_val,
+            self.target_test,
             self.dim_features,
             self.num_heads,
             self.num_encoder_layers,
             self.num_decoder_layers,
             self.num_units,
-            self.dropout
+            self.dropout,
+            self.batch_size
         )
 
-        self.input = torch.tensor(
-            [
-                # event 1
-                [
-                    # 3 particles for each event
-                    # 4 features for each particles
-                    [1.0, 2.0, 3.0, 5.0],
-                    [4.0, 5.0, 6.0, 3.0],
-                    [7.0, 8.0, 9.0, 2.0],
-                ],
-                # event 2
-                [
-                    [2.0, 3.0, 4.0, 3.0],
-                    [5.0, 6.0, 7.0, 5.0],
-                    [8.0, 9.0, 10.0, 8.0],
-                ]
-            ], dtype=torch.float32
-        ) # (batch_size=2, sequence_length=3, dim_features=4)
+        self.loss_func = nn.MSELoss()
+        self.optim = optimizer.Adam(self.transformer.parameters(), lr=1e-3)
+       
 
     def test_dim_features(self):
         """This function checks that the third dimension of the input
@@ -68,10 +69,10 @@ class TestParticleTransformer(unittest.TestCase):
         the dim_features parameter of the model.
         """
         self.assertEqual(
-            self.input.shape[2],
+            self.input_train.shape[2],
             self.dim_features,
             f"Mismatch in feature dimensions: expected {self.dim_features}, "
-            f"got {self.input.shape[2]}"
+            f"got {self.input_train.shape[2]}"
         )
 
     def test_forward_output_shape(self):
@@ -79,14 +80,14 @@ class TestParticleTransformer(unittest.TestCase):
         produces an output tensor with the correct shape. The shape of
         the output tensor must match with the shape of the input tensor.
         """
-        output = self.transformer.forward(self.input, self.input)
-        self.assertEqual(output.shape, self.input.shape)
+        output = self.transformer.forward(self.input_train, self.target_train)
+        self.assertEqual(output.shape, self.target_train.shape)
 
     def test_forward_output_nans_infs(self):
         """This function tests that the putput of the forward methods does
         not contain Inf values or NaN values.
         """
-        output = self.transformer.forward(self.input, self.input)
+        output = self.transformer.forward(self.input_train, self.target_train)
         self.assertFalse(
             torch.isnan(output).any(),
             "Output contains NaN values"
@@ -103,10 +104,17 @@ class TestParticleTransformer(unittest.TestCase):
         that the output projection correctly maps it back to the
         original feature dimension.
         """
-        input_proj= self.transformer.input_projection(self.input)
+        input_proj= self.transformer.input_projection(self.input_train)
         output_proj= self.transformer.output_projection(input_proj)
-        self.assertEqual(input_proj.shape, (2, 3, self.num_units))
-        self.assertEqual(output_proj.shape, (2, 3, self.dim_features))
+        self.assertEqual(input_proj.shape, (10, 2, self.num_units))
+        self.assertEqual(output_proj.shape, (10, 2, self.dim_features))
+    
+    def test_training(self):
+        """
+        """
+        self.transformer.train_val(20, self.loss_func, self.optim)
+        #self.transformer.test(self.loss_func)
+
 
 if __name__ == '__main__':
     unittest.main()
