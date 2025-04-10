@@ -13,13 +13,13 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-    - name: Check out repository
-      uses: actions/checkout@v2
+    - name: Checkout repository
+      uses: actions/checkout@v3
 
     - name: Set up Conda
       uses: conda-incubator/setup-miniconda@v2
       with:
-        conda-version: "latest"
+        conda-version: 24.11.2
 
     - name: Create Conda environment
       run: |
