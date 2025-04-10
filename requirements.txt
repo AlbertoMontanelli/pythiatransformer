@@ -1,6 +1,5 @@
 awkward
 numpy
-logging
 loguru
 torch
 unittest
