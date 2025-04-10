@@ -23,19 +23,18 @@ jobs:
 
     - name: Create Conda environment
       run: |
-        conda create -n myrootenv python=3.9
-        conda activate myrootenv
+        conda create -n myrootenv python=3.9 -y
+        conda init bash
 
     - name: Install dependencies
       run: |
-        conda activate myrootenv
-        conda install -c conda-forge root
-        pip install -r requirements.txt  
+        conda run -n myrootenv conda install -c conda-forge root -y
+        conda run -n myrootenv pip install -r requirements.txt
 
     - name: Run tests with unittest
       run: |
-        conda activate myrootenv
-        python -m unittest discover -s tests -p "*.py"
+        conda run -n myrootenv python -m unittest discover -s tests -p "*.py"
+
 
 
 
