@@ -4,8 +4,8 @@ import numpy as np
 import pandas as pd
 from sklearn.preprocessing import StandardScaler
 import torch
+from torch.nn.utils.rnn import pad_sequence 
 import uproot
-
 
 """Memento: features = ["id", "status", "px", "py", "pz", "e", "m"]
 
@@ -81,6 +81,8 @@ df_23_exploded = df_23.explode(
     ignore_index=True
     )
 
+print(df_23_exploded)
+
 # ===== Standardization of px_23, py_23 and pz_23. =====
 df_23_exploded[["px_23", "py_23", "pz_23"]] = StandardScaler().fit_transform(
     df_23_exploded[["px_23", "py_23", "pz_23"]]
@@ -97,11 +99,52 @@ df_23_exploded["m_23"] = pd.to_numeric(
 df_23_exploded[["e_23", "m_23"]] = df_23_exploded[
     ["e_23", "m_23"]].apply(np.log1p)
 
-
 """Once the normalization process is finished, the dataframe
 is reconstitued with its initial shape.
 """
 df_23_stand = (df_23_exploded.groupby(["event_number"]).agg({
-    "id_23": list, "status_23": list, "px_23": list, "py_23": list,
+    "nid_23": 'min', "id_23": list, "status_23": list, "px_23": list, "py_23": list,
     "pz_23": list, "e_23": list, "m_23": list
 }).reset_index())
+
+df_23_stand = df_23_stand.drop(columns=["status_23", "event_number"])
+
+"""Once the original division per event is retrieved, the dataframe
+needs to be converted to a Torch tensor readable by the transformer.
+"""
+events_23 = []
+for _, row in df_23_stand.iterrows():
+    num_particles = row["nid_23"]
+    event = []
+    for ii in range(num_particles):
+        particle = [
+            row["id_23"][ii],
+            row["px_23"][ii],
+            row["py_23"][ii],
+            row["px_23"][ii],
+            row["e_23"][ii],
+            row["m_23"][ii]
+        ]
+        event.append(particle)
+    events_23.append(event)
+
+event_23_tensors = [
+    torch.tensor(event, dtype = torch.float32) for event in events_23
+    ]
+
+"""Padding is necessary since every event has a different
+number of particles.
+"""
+padded_23 = pad_sequence(
+    event_23_tensors, batch_first=True, padding_value=0.0
+    )
+
+"""The padded sequence needs to be discriminated: actual particles
+vs padding. In order to do so, an attention_mask is implemented.
+"""
+attention_mask = torch.tensor(
+    [[1]*len(event) 
+    + [0]*(padded_23.shape[1] 
+    - len(event)) for event in events_23],
+    dtype=torch.bool
+)
