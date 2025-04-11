@@ -31,16 +31,28 @@ class ParticleTransformer(nn.Module):
         num_units,
         dropout,
         batch_size,
-        activation = nn.ReLU()
+        activation
     ):
         """
-        Args: 
-            input_train (torch.Tensor):
-            input_val (torch.Tensor):
-            input_test (torch.Tensor):
-            target_train (torch.Tensor):
-            target_val (torch.Tensor):
-            target_test (torch.Tensor):
+        Args:  
+            input_train (torch.Tensor): Input tensor representing
+                                        status 23 particles used during
+                                        the model training.
+            input_val (torch.Tensor): Input tensor representing status
+                                      23 particles used during the
+                                      model validation.
+            input_test (torch.Tensor): Input tensor representing status
+                                       23 particles used during the
+                                       model test.
+            target_train (torch.Tensor): Target tensor representing
+                                         stable particles used during
+                                         the model training.
+            target_val (torch.Tensor): Target tensor representing
+                                       stable particles used during the
+                                       model validation.
+            target_test (torch.Tensor): Target tensor representing
+                                        stable particles used during
+                                        the model test.
             dim_features (int): number of features of each particle
                                 (px, py, pz, E, M, ID).
             num_heads (int): heads number of the attention system.
@@ -50,8 +62,8 @@ class ParticleTransformer(nn.Module):
             dropout (float): probability of each neuron to be
                              switched off.
             batch_size (int): 
-            activation (string): activation function of encoder
-                                 and/or decoder layers.
+            activation (nn.function): activation function of encoder
+                                      and/or decoder layers.
         """
         # da aggiungere le varie exception per controllare i tipi
         super(ParticleTransformer, self).__init__()
@@ -82,14 +94,7 @@ class ParticleTransformer(nn.Module):
 
         self.build_projection_layer()
         self.initialize_transformer()
-        self.train_data, self.val_data, self.test_data = self.data_processing(
-            self.input_train,
-            self.input_val,
-            self.input_test,
-            self.target_train,
-            self.target_val,
-            self.target_test
-        )
+        self.train_data, self.val_data, self.test_data = self.data_processing()
 
     def build_projection_layer(self):
         """This function transforms input and output data into a
@@ -126,33 +131,24 @@ class ParticleTransformer(nn.Module):
             f"num_decoder_layers={self.num_decoder_layers}"
         )
 
-    def data_processing(
-            self,
-            input_train,
-            input_val,
-            input_test,
-            target_train,
-            target_val,
-            target_test
-        ):
-        """Qui preparo i dati per l'allenamento, li divido in batch e randomizzo i training data.
-
-        Args: 
-            input_train (torch.Tensor):
-            input_val (torch.Tensor):
-            input_test (torch.Tensor):
-            target_train (torch.Tensor):
-            target_val (torch.Tensor):
-            target_test (torch.Tensor):
+    def data_processing(self):
+        """This function prepares the data for training by splitting it
+        into batches and shuffling the training data.
 
         Returns:
-            training_loader (torch.Tensor):
-            validation_loader (torch.Tensor):
-            test_loader (torch.Tensor):
+            training_loader (Iterator): An iterator for the training
+                                        data, with batching and
+                                        shuffling enabled.
+            validation_loader (Iterator): An iterator for the
+                                          validation data, with
+                                          batching and shuffling
+                                          enabled.
+            test_loader (Iterator): An iterator for the test data, with
+                                    batching and shuffling enabled.
         """
-        training_set = TensorDataset(input_train, target_train)
-        validation_set = TensorDataset(input_val, target_val)
-        test_set = TensorDataset(input_test, target_test)
+        training_set = TensorDataset(self.input_train, self.target_train)
+        validation_set = TensorDataset(self.input_val, self.target_val)
+        test_set = TensorDataset(self.input_test, self.target_test)
 
         training_loader = DataLoader(
             training_set,
@@ -164,15 +160,15 @@ class ParticleTransformer(nn.Module):
 
         return training_loader, validation_loader, test_loader
 
-    def forward(self, source, target):
+    def forward(self, input, target):
         """The aim of this function is computed the output of the model by
         projecting the input and the target into an hidden
         representation space, processing them through a Transformer, 
         and projecting the result back to the original feature space.
 
         Args:
-            source (torch.Tensor): Input tensor representing status 23
-                                   particles.
+            input (torch.Tensor): Input tensor representing status 23
+                                  particles.
             target (torch.Tensor): Input tensor representing stable
                                    particles.
         
@@ -180,15 +176,24 @@ class ParticleTransformer(nn.Module):
             output (torch.Tensor): The output tensor after processing
                                    through the model.
         """
-        source = self.input_projection(source)
+        input = self.input_projection(input)
         target = self.input_projection(target)
-        output = self.transformer(source, target)
+        output = self.transformer(input, target)
         output = self.output_projection(output)
         return output
     
-    def training(self, epoch, loss_func, optim):
-        """
-        epoch: epoca corrente
+    def train_one_epoch(self, epoch, loss_func, optim):
+        """This function trains the model for one epoch. It iterates
+        through the training data, computes the model's output and the
+        loss, performs backpropagation and updates the model parameters
+        provided optimizer.
+
+        Args:
+            epoch (int): current epoch.
+            loss_func (nn.Module): Loss function used to compute the
+                                   loss.
+            optim (torch.optim.optimizer): Optimizer used for updating
+                                           model parameters.
         """
         self.train()
         loss_epoch = 0
@@ -199,11 +204,17 @@ class ParticleTransformer(nn.Module):
             loss.backward()
             optim.step()
             loss_epoch += loss.item()
-        # devo dividere la loss per il numero di esempi, capire quanti
         logging.info(f"Loss at epoch {epoch + 1}: {loss_epoch}")
 
-    def validation(self, epoch, loss_func):
-        """
+    def val_one_epoch(self, epoch, loss_func):
+        """This function validates the model for one epoch. It iterates
+        through the validation data, computes the model's output and
+        the loss.
+
+        Args:
+            epoch (int): current epoch.
+            loss_func (nn.Module): Loss function used to compute the
+                                   loss.
         """
         self.eval()
         loss_epoch = 0
@@ -212,25 +223,34 @@ class ParticleTransformer(nn.Module):
                 outputs = self.forward(inputs, targets)
                 loss = loss_func(outputs, targets)
                 loss_epoch += loss.item()
-            #anche qui devo dividere la loss
-        logging.info(f"validation loss at epoch {epoch}: {loss_epoch}")
+        logging.info(f"validation loss at epoch {epoch + 1}: {loss_epoch}")
 
     def train_val(self, num_epochs, loss_func, optim):
-        """
+        """This function trains and validates the model for the given
+        number of epochs.
+        Args:
+            num_epochs (int): Number of total epochs.
+            loss_func (nn.Module): Loss function used to compute the
+                                   loss.
+            optim (torch.optim.optimizer): Optimizer used for updating
+                                           model parameters.
         """
         for epoch in range(num_epochs):
-            self.training(epoch, loss_func, optim)
-            self.validation(epoch, loss_func)
+            self.train_one_epoch(epoch, loss_func, optim)
+            self.val_one_epoch(epoch, loss_func)
 
     def test(self, loss_func):
-        """
+        """This function computes the total loss of the model on the
+        test data without updating the model's parameters.
+        Args:
+            loss_func (nn.Module): Loss function used to compute the
+                                   loss. 
         """
         self.eval()
         total_loss = 0
         with torch.no_grad():
-            for inputs, targets in self.val_data:
+            for inputs, targets in self.test_data:
                 outputs = self(inputs, targets)
                 loss = loss_func(outputs, targets)
                 total_loss += loss.item()
-            #anche qui devo dividere la loss
         logging.info(f"Test loss: {total_loss}")

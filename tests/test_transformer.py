@@ -22,6 +22,7 @@ class TestParticleTransformer(unittest.TestCase):
       shape.
     - Ensuring the output does not contain NaN or Inf.
     - Ensuring the projection produces the correct shape.
+    - 
     """
     def setUp(self):
         """This function initializes the variables required to create an
@@ -29,12 +30,14 @@ class TestParticleTransformer(unittest.TestCase):
         This method is automatically called before each test to set up
         a consistent test environment.
         """
-        self.input_train = torch.rand(10, 2, 6)
-        self.input_test = torch.rand(10, 2, 6)
-        self.input_val = torch.rand(10, 2, 6)
-        self.target_train = torch.rand(10, 12, 6)
-        self.target_test = torch.rand(10, 12, 6)
-        self.target_val = torch.rand(10, 12, 6)
+        seed = 4
+        torch.manual_seed(seed)
+        self.input_train = torch.rand(100, 2, 6)
+        self.input_test = torch.rand(100, 2, 6)
+        self.input_val = torch.rand(100, 2, 6)
+        self.target_train = torch.rand(100, 12, 6)
+        self.target_test = torch.rand(100, 12, 6)
+        self.target_val = torch.rand(100, 12, 6)
 
         self.dim_features = 6
         self.num_heads = 4
@@ -43,6 +46,7 @@ class TestParticleTransformer(unittest.TestCase):
         self.num_units = 12
         self.dropout = 0.1
         self.batch_size = 2
+        self.activation = nn.ReLU()
         self.transformer = ParticleTransformer(
             self.input_train,
             self.input_val,
@@ -110,10 +114,13 @@ class TestParticleTransformer(unittest.TestCase):
         self.assertEqual(output_proj.shape, (10, 2, self.dim_features))
     
     def test_training(self):
-        """
+        """This function runs the full training, validation, and
+        testing process for the model. It first trains the model for 20
+        epochs, using the specified loss function and optimizer.
+        Then, it evaluates the model on the test data after training.
         """
         self.transformer.train_val(20, self.loss_func, self.optim)
-        #self.transformer.test(self.loss_func)
+        self.transformer.test(self.loss_func)
 
 
 if __name__ == '__main__':
