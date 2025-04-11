@@ -1,14 +1,10 @@
-import logging
+import matplotlib.pyplot as plt
 import torch
 import torch.nn as nn
 import torch.optim as optimizer
 import unittest
 
 from pythiatransformer.transformer import ParticleTransformer
-
-# logging set up
-if not logging.getLogger().hasHandlers():
-    logging.basicConfig(level=logging.DEBUG, format='%(levelname)s:%(message)s')
 
 
 class TestParticleTransformer(unittest.TestCase):
@@ -22,7 +18,8 @@ class TestParticleTransformer(unittest.TestCase):
       shape.
     - Ensuring the output does not contain NaN or Inf.
     - Ensuring the projection produces the correct shape.
-    - 
+    - Verifies that the model can complete training and testing over 20
+      epochs without issues.
     """
     def setUp(self):
         """This function initializes the variables required to create an
@@ -33,11 +30,11 @@ class TestParticleTransformer(unittest.TestCase):
         seed = 4
         torch.manual_seed(seed)
         self.input_train = torch.rand(100, 2, 6)
-        self.input_test = torch.rand(100, 2, 6)
-        self.input_val = torch.rand(100, 2, 6)
+        self.input_test = torch.rand(25, 2, 6)
+        self.input_val = torch.rand(20, 2, 6)
         self.target_train = torch.rand(100, 12, 6)
-        self.target_test = torch.rand(100, 12, 6)
-        self.target_val = torch.rand(100, 12, 6)
+        self.target_test = torch.rand(25, 12, 6)
+        self.target_val = torch.rand(20, 12, 6)
 
         self.dim_features = 6
         self.num_heads = 4
@@ -60,7 +57,8 @@ class TestParticleTransformer(unittest.TestCase):
             self.num_decoder_layers,
             self.num_units,
             self.dropout,
-            self.batch_size
+            self.batch_size,
+            self.activation
         )
 
         self.loss_func = nn.MSELoss()
@@ -110,17 +108,46 @@ class TestParticleTransformer(unittest.TestCase):
         """
         input_proj= self.transformer.input_projection(self.input_train)
         output_proj= self.transformer.output_projection(input_proj)
-        self.assertEqual(input_proj.shape, (10, 2, self.num_units))
-        self.assertEqual(output_proj.shape, (10, 2, self.dim_features))
+        self.assertEqual(input_proj.shape, (100, 2, self.num_units))
+        self.assertEqual(output_proj.shape, (100, 2, self.dim_features))
     
+    def plot_losses(self, train_loss, val_loss):
+        """
+        """
+        plt.figure()
+        plt.plot(train_loss, label='Training Loss')
+        plt.plot(val_loss, label='Validation Loss')
+        plt.xlabel('Epoch')
+        plt.ylabel('Loss')
+        plt.title('Learning curve')
+        plt.legend()
+        plt.grid(True)
+        plt.show()
+
     def test_training(self):
         """This function runs the full training, validation, and
         testing process for the model. It first trains the model for 20
         epochs, using the specified loss function and optimizer.
         Then, it evaluates the model on the test data after training.
         """
-        self.transformer.train_val(20, self.loss_func, self.optim)
+        train_loss, val_loss = self.transformer.train_val(20, self.loss_func, self.optim)
         self.transformer.test(self.loss_func)
+        self.plot_losses(train_loss, val_loss)
+
+    def test_batch_sizes(self):
+        """
+        """
+        for loader_name, loader in [
+            ("train", self.transformer.train_data),
+            ("validation", self.transformer.val_data),
+            ("test", self.transformer.test_data)
+        ]:
+            for batch_idx, (inputs, targets) in enumerate(loader):
+                batch_size = inputs.shape[0]
+                assert batch_size <= self.transformer.batch_size, (
+                    f"{loader_name} batch {batch_idx} has batch size {batch_size}, "
+                    f"which exceeds the expected {self.transformer.batch_size}"
+                )
 
 
 if __name__ == '__main__':

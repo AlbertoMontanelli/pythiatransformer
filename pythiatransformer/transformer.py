@@ -2,14 +2,11 @@
 Transformer class.
 """
 import argparse
-import logging
 import torch
 import torch.nn as nn
-import torch.optim as optimizer
 from torch.utils.data import TensorDataset, DataLoader
 
-# from data_processing import input_train, input_test, input_val
-# from data_processing import target_train, target_test, target_val
+from loguru import logger
 
 class ParticleTransformer(nn.Module):
     """Transformer taking in input particles having status 23
@@ -73,16 +70,58 @@ class ParticleTransformer(nn.Module):
         self.target_train = target_train
         self.target_val = target_val
         self.target_test = target_test
+
         self.dim_features = dim_features
+        if not isinstance(dim_features, int):
+            raise TypeError(
+                f"The number of features must be int, got {type(dim_features)}"
+            )
+
         self.num_heads = num_heads
+        if not isinstance(num_heads, int):
+            raise TypeError(
+                f"The number of heads must be int, got {type(num_heads)}"
+            )
+
         self.num_encoder_layers = num_encoder_layers
+        if not isinstance(num_encoder_layers, int):
+            raise TypeError(
+                f"The number of encoder layers must be int, "
+                f"got {type(num_encoder_layers)}"
+            )
+        
         self.num_decoder_layers = num_decoder_layers
+        if not isinstance(num_decoder_layers, int):
+            raise TypeError(
+                f"The number of decoder layers must be int, "
+                f"got {type(num_decoder_layers)}"
+            )
+
         self.num_units = num_units
+        if not isinstance(num_units, int):
+            raise TypeError(
+                f"The number of unit must be int, got {type(num_units)}"
+            )
+
         self.dropout = dropout
+        if not isinstance(dropout, float):
+            raise TypeError(f"dropout must be float, got {type(dropout)}")
+        if not (0.0 <= dropout <= 1.0):
+            raise ValueError("dropout must be between 0.0 and 1.0")
+        
         self.batch_size = batch_size
+        if not isinstance(batch_size, int):
+            raise TypeError(
+                f"Batch size must be int, got {type(batch_size)}"
+            )
+        if not (batch_size <= input_train.shape[0]):
+            raise ValueError(
+                f"Batch size must be smaller than the input dataset size."
+            )
+        
         self.activation = activation
 
-        logging.info(
+        logger.info(
             f"Initialized ParticleTransformer with "
             f"dim_features={dim_features}, "
             f"num_heads={num_heads}, "
@@ -107,7 +146,7 @@ class ParticleTransformer(nn.Module):
         """
         self.input_projection = nn.Linear(self.dim_features, self.num_units)
         self.output_projection = nn.Linear(self.num_units, self.dim_features)
-        logging.debug("Projection layers (input/output) created.")
+        logger.debug("Projection layers (input/output) created.")
 
     def initialize_transformer(self):
         """This function initializes the transformer with the specified
@@ -124,7 +163,7 @@ class ParticleTransformer(nn.Module):
             batch_first=True
         )
 
-        logging.debug(
+        logger.debug(
             f"Transformer initialized with "
             f"d_model={self.num_units}, nhead={self.num_heads}, "
             f"num_encoder_layers={self.num_encoder_layers}, "
@@ -194,6 +233,8 @@ class ParticleTransformer(nn.Module):
                                    loss.
             optim (torch.optim.optimizer): Optimizer used for updating
                                            model parameters.
+        Returns:
+            loss_epoch (float):
         """
         self.train()
         loss_epoch = 0
@@ -201,10 +242,15 @@ class ParticleTransformer(nn.Module):
             optim.zero_grad()
             outputs = self.forward(inputs, targets)
             loss = loss_func(outputs, targets)
+            if not torch.isfinite(loss):
+                raise ValueError(
+                    f"Loss is not finite at epoch {epoch + 1}"
+                )
             loss.backward()
             optim.step()
             loss_epoch += loss.item()
-        logging.info(f"Loss at epoch {epoch + 1}: {loss_epoch}")
+        logger.info(f"Loss at epoch {epoch + 1}: {loss_epoch}")
+        return loss_epoch
 
     def val_one_epoch(self, epoch, loss_func):
         """This function validates the model for one epoch. It iterates
@@ -215,6 +261,8 @@ class ParticleTransformer(nn.Module):
             epoch (int): current epoch.
             loss_func (nn.Module): Loss function used to compute the
                                    loss.
+        Returns:
+            loss_epoch (float):
         """
         self.eval()
         loss_epoch = 0
@@ -222,10 +270,15 @@ class ParticleTransformer(nn.Module):
             for inputs, targets in self.val_data:
                 outputs = self.forward(inputs, targets)
                 loss = loss_func(outputs, targets)
+                if not torch.isfinite(loss):
+                    raise ValueError(
+                        f"Loss is not finite at epoch {epoch + 1}"
+                    )
                 loss_epoch += loss.item()
-        logging.info(f"validation loss at epoch {epoch + 1}: {loss_epoch}")
-
-    def train_val(self, num_epochs, loss_func, optim):
+        logger.info(f"Validation loss at epoch {epoch + 1}: {loss_epoch}")
+        return loss_epoch
+    
+    def train_val(self, num_epochs, loss_func, optim, patient = 10):
         """This function trains and validates the model for the given
         number of epochs.
         Args:
@@ -234,10 +287,34 @@ class ParticleTransformer(nn.Module):
                                    loss.
             optim (torch.optim.optimizer): Optimizer used for updating
                                            model parameters.
+            patient (int):
+        Returns:
+            train_loss (list):
+            val_loss (list):
         """
+        if not isinstance(num_epochs, int):
+            raise TypeError(
+                f"The number of epoch must be int, got {type(num_epochs)}"
+            )
+        if not isinstance(patient, int):
+            raise TypeError(
+                f"The patien must be int, got {type(patient)}"
+            )
+        if not (patient < num_epochs):
+            raise ValueError(
+                f"Patient must be smaller than the number of epochs."
+            )
+        train_loss = []
+        val_loss = []
         for epoch in range(num_epochs):
-            self.train_one_epoch(epoch, loss_func, optim)
-            self.val_one_epoch(epoch, loss_func)
+            train_loss.append(self.train_one_epoch(epoch, loss_func, optim))
+            val_loss.append(self.val_one_epoch(epoch, loss_func))
+            if epoch > patient and val_loss[-1] > val_loss[-2] and train_loss[-1] < train_loss[-2]:
+                logger.warning(f"Possible overfitting at epoch {epoch + 1}.")
+            # earlystop = self.early_stopping(epoch)
+            # if earlystop:
+            #     break
+        return train_loss, val_loss
 
     def test(self, loss_func):
         """This function computes the total loss of the model on the
@@ -253,4 +330,20 @@ class ParticleTransformer(nn.Module):
                 outputs = self(inputs, targets)
                 loss = loss_func(outputs, targets)
                 total_loss += loss.item()
-        logging.info(f"Test loss: {total_loss}")
+        logger.info(f"Test loss: {total_loss}")
+
+    # def early_stopping(val_loss, current_epoch, patience = 10):
+    #     """ da sistemare e testare
+    #     """
+    #     stop = False
+    #     if current_epoch == 0:
+    #         counter = 0
+    #     elif current_epoch > 0:
+    #         if val_loss[-1] < val_loss[0]:
+    #             counter += 1
+    #     else:
+    #         counter = 0
+    #     if counter >= patience:
+    #         logger.warning("Early stopping.")
+    #         stop = True
+    #     return stop
