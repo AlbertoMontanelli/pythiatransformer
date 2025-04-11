@@ -4,7 +4,8 @@ import numpy as np
 import pandas as pd
 from sklearn.preprocessing import StandardScaler
 import torch
-from torch.nn.utils.rnn import pad_sequence 
+from torch.nn.utils.rnn import pad_sequence
+from torch.utils.data import TensorDataset, DataLoader, random_split
 import uproot
 
 """Memento: features = ["id", "status", "px", "py", "pz", "e", "m"]
@@ -207,3 +208,15 @@ padded_tensor_final, attention_mask_final = dataframe_to_padded_tensor(
     df_final_stand, "nid_final", "id_final", "px_final", "py_final",
     "pz_final", "e_final", "m_final"
 )
+
+"""Splitting the two tensors in training, validation and test set.
+"""
+data = TensorDataset(padded_tensor_23, padded_tensor_final)
+training_set, validation_set, test_set = random_split(
+    data, [0.6*len(data), 0.2*len(data), 0.2*len(data)],
+    generator = torch.Generator().manual_seed(1)
+)
+
+training_ready = DataLoader(training_set, batch_size = 32, shuffle = True)
+validation_ready = DataLoader(validation_set, batch_size = 32)
+test_ready = DataLoader(test_set, batch_size = 32)
