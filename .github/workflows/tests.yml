@@ -1,7 +1,10 @@
-name: Run tests
+name: Run Tests
 
 on:
   push:
+    branches:
+      - main
+  pull_request:
     branches:
       - main
 
@@ -10,22 +13,28 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Checkout repository
-        uses: actions/checkout@v3
+    - name: Checkout repository
+      uses: actions/checkout@v3
 
-      - name: Set up Conda
-        uses: conda-incubator/setup-miniconda@v2
-        with:
-          python-version: 3.9
-          environment-file: environment.yml
-          activate-environment: myrootenv
+    - name: Set up Conda
+      uses: conda-incubator/setup-miniconda@v2
+      with:
+        conda-version: 24.11.2
 
-      - name: Install additional dependencies
-        run: |
-          conda install -c conda-forge root
-          pip install loguru numpy uproot
+    - name: Create Conda environment
+      run: |
+        conda create -n myrootenv python=3.9 -y
+        conda init bash
 
-      - name: Run tests
-        run: pytest tests/
+    - name: Install dependencies
+      run: |
+        conda run -n myrootenv conda install -c conda-forge root -y
+        conda run -n myrootenv pip install -r requirements.txt
+
+    - name: Run tests with unittest
+      run: |
+        conda run -n myrootenv python -m unittest discover -s tests -p "*.py"
+
+
 
 

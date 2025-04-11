@@ -3,6 +3,7 @@ final stable particles into a ROOT file with two separate TTrees.
 """
 from pathlib import Path
 
+import awkward as ak
 from loguru import logger
 import numpy as np
 import uproot
@@ -22,53 +23,55 @@ def setup_pythia() -> Pythia:
         logger.exception("Failed to initialize Pythia.")
         raise
 
-def initialize_data(features):
+def initialize_data(features: list, suffix: str):
     """Initialize dictionary for each feature with an empty list."""
-    return {f"{key}": [] for key in features}
+    return {f"{key}{suffix}": [] for key in features}
 
-def append_empty_event(data, features):
+def append_empty_event(data, features, suffix: str):
     """Append an empty list for a new event to each feature key."""
     for feature in features:
-        data[f"{feature}"].append([])
+        data[f"{feature}{suffix}"].append([])
 
-def record_particle(particle, features, data, suffix):
+def record_particle(particle, features, data, suffix: str):
     """Append particle data to the latest event list."""
     for feature in features:
         try:
             value = getattr(particle, feature)()
             data[f"{feature}{suffix}"][-1].append(value)
         except Exception as e:
-            logger.warning(f"Failed to record feature '{feature}' for a particle: {e}")
+            logger.warning(
+                f"Failed to record feature '{feature}{suffix}'" 
+                f" for a particle: {e}"
+            )
             continue
 
-def cleanup_event(data_23, data_final, features):
+def cleanup_event(data, features, suffix: str):
     """Discard the last event by removing the most recent sublist for
     each feature, if the event did not contain valid particles.
     """
     for feature in features:
         try:
-            data_23[f"{feature}_23"].pop()
-            data_final[f"{feature}_final"].pop()
+            data[f"{feature}{suffix}"].pop()
         except IndexError:
-            logger.warning(f"No event data found for feature '{feature}' — the mother list is empty")
+            logger.warning(
+                f"No event data found for feature '{feature}{suffix}'"
+                f" — the mother list is empty"
+            )
 
-def convert_to_numpy(data_dict):
-    """Convert list of lists to numpy array with dtype=object."""
+def convert_to_awkward(data_dict):
+    """Convert list of lists to Awkward Array."""
     try:
-        return {
-            key: np.array(value, dtype=object)
-            for key, value in data_dict.items()
-        }
+        return ak.Array(data_dict)
     except Exception as e:
-        logger.exception("Failed to convert data to numpy arrays.")
+        logger.exception("Failed to convert data to Awkward Array.")
         raise
 
-def save_to_root(output_file, data_to_save_23, data_to_save_final):
+def save_to_root(output_file, data_23, data_final):
     """Save particle data to ROOT file using uproot."""
     try:
         with uproot.recreate(output_file) as root_file:
-            root_file["tree_23"] = data_to_save_23
-            root_file["tree_final"] = data_to_save_final
+            root_file["tree_23"] = {key: data_23[key] for key in data_23.fields}
+            root_file["tree_final"] = {key: data_final[key] for key in data_final.fields}
     except Exception as e:
         logger.exception("Failed to save data to ROOT file.")
         raise
@@ -80,12 +83,13 @@ def generate_events(output_file: str, n_events: int):
     for each feature. Variable-length arrays are used to preserve
     per-event multiplicity.
     """
+    events_true = 0
     output_file = Path(output_file)
     features = ["id", "status", "px", "py", "pz", "e", "m"]
     pythia = setup_pythia()
 
-    data_23 = initialize_data([f"{key}_23" for key in features])
-    data_final = initialize_data([f"{key}_final" for key in features])
+    data_23 = initialize_data(features, "_23")
+    data_final = initialize_data(features, "_final")
 
     for i in range(n_events):
         try:
@@ -98,8 +102,8 @@ def generate_events(output_file: str, n_events: int):
             counter_23 = 0
             counter_final = 0
 
-            append_empty_event(data_23, [f"{key}_23" for key in features])
-            append_empty_event(data_final, [f"{key}_23" for key in features])
+            append_empty_event(data_23, features, "_23")
+            append_empty_event(data_final, features, "_final")
 
             for particle in pythia.event:
                 if particle.status() == 23:
@@ -112,35 +116,81 @@ def generate_events(output_file: str, n_events: int):
                     record_particle(particle, features, data_final, "_final")
 
             if found_final:
-                logger.info(f"Found {counter_23} 23-status particles and {counter_final} final particles for event {i}")
+                events_true += 1
+                logger.info(f"Found {counter_23} 23-status particles and"
+                            f" {counter_final} final particles for event {i}"
+                )
             else:
-                cleanup_event(data_23, data_final, features)
-                logger.info(f"Event {i} discarded: no status-23 or final particles found.")
+                cleanup_event(data_23, features, "_23")
+                cleanup_event(data_final, features, "_final")
+                logger.info(
+                    f"Event {i} discarded: no status-23"
+                    f" or final particles found."
+                )
 
         except Exception as e:
             logger.exception(f"Unexpected error during event {i}: {e}")
 
-    
+    logger.info(f"{events_true} saved events / {n_events} total events")
     save_to_root(
         output_file,
-        convert_to_numpy(data_23),
-        convert_to_numpy(data_final),
+        convert_to_awkward(data_23),
+        convert_to_awkward(data_final),
     )
 
 if __name__ == "__main__":
     generate_events("events.root", n_events=100)
-    
 
-"""
-    # Debug: print event sizes.
-    for key, values in data_23.items():
-        print(f"Key: {key}")
-        for i, sublist in enumerate(values):
-            print(f"  Event {i + 1}: Length = {len(sublist)}")
 
-    for key, values in data_final.items():
-        print(f"Key: {key}")
-        for i, sublist in enumerate(values):
-            print(f"  Event {i + 1}: Length = {len(sublist)}")
-"""
+
+
+
+
+
+
+# import torch
+# from torch.nn.utils.rnn import pad_sequence
+
+
+# # Dati di esempio con lunghezze variabili
+# data = {
+#     "id_23": [[2, 1], [2, 2, 4], [2]],
+#     "px_23": [[0.2, 1.], [0.3, 0.4, 0.5], [2.1]],
+# }
+
+# # Creazione di un Awkward Array con lunghezze variabili
+# awkward_data = ak.Array(data)
+# # Verifica della struttura dei dati
+# print("Awkward Array:\n")
+# for key in awkward_data.fields:
+#     print(f"type of ak_data[key] is {type(awkward_data[key])}")
+#     print(f"ak_data[key] is{awkward_data[key]}")
+#     for sublist in awkward_data[key]:
+#         print("begin sublist")
+#         print(f"sublist {sublist}")
+#         print(f"sublist[0] {sublist[0]}")
+#         print(type(sublist))
+#         for value in sublist:
+#             print(value)
+#             print(type(value))
+
+
+# # Converting each list in awkward array into a tensor
+# tensor_data = {
+#     key: [torch.tensor(item, dtype=torch.float) for item in awkward_data[key]]
+#     for key in awkward_data.fields
+# }
+
+# # Padding the sequences so they have the same length
+# padded_tensor_data = {
+#     key: pad_sequence(tensor_data[key], batch_first=True, padding_value=0)
+#     for key in tensor_data
+# }
+
+# # Stampa del risultato
+# for key, tensor in padded_tensor_data.items():
+#     print(f"{key}: {tensor}")
+
+
+
 

@@ -1,0 +1,5 @@
+awkward
+numpy
+loguru
+torch
+uproot
