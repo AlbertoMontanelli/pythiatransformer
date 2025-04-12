@@ -210,18 +210,19 @@ padded_tensor_final, attention_mask_final = dataframe_to_padded_tensor(
 
 """Splitting the two tensors in training, validation and test set.
 """
+n = len(padded_tensor_23)
+len_train = int(0.6*n)
+len_val = int(0.2*n)
+len_test = n - len_train - len_val
+
 training_set_23, validation_set_23, test_set_23 = random_split(
     padded_tensor_23,
-    [0.6*len(padded_tensor_23),
-    0.2*len(padded_tensor_23),
-    0.2*len(padded_tensor_23)],
+    [len_train, len_val, len_test],
     generator = torch.Generator().manual_seed(1)
 )
 
 training_set_final, validation_set_final, test_set_final = random_split(
     padded_tensor_final,
-    [0.6*len(padded_tensor_final),
-    0.2*len(padded_tensor_final),
-    0.2*len(padded_tensor_final)],
+    [len_train, len_val, len_test],
     generator = torch.Generator().manual_seed(1)
 )
