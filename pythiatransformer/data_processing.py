@@ -5,7 +5,7 @@ import pandas as pd
 from sklearn.preprocessing import StandardScaler
 import torch
 from torch.nn.utils.rnn import pad_sequence
-from torch.utils.data import TensorDataset, DataLoader, random_split
+from torch.utils.data import random_split
 import uproot
 
 """Memento: features = ["id", "status", "px", "py", "pz", "e", "m"]
@@ -31,7 +31,6 @@ is the most appropriate normalization method.
 with uproot.open("events.root") as file:
     df_23 = file["tree_23"].arrays(library="pd")
     df_final = file["tree_final"].arrays(library="pd")
-
 
 def convert_to_list(value):
     """
@@ -104,12 +103,12 @@ def preprocess_dataframe(df, event_particles_col = "nid_23",
         ignore_index=True
     )
 
-    # ===== Standardization of px_23, py_23 and pz_23. =====
+    # ===== Standardization of px, py and pz. =====
     df_exploded[[px_col, py_col, pz_col]] = StandardScaler().fit_transform(
         df_exploded[[px_col, py_col, pz_col]]
     )
 
-    # ===== Log-scaling of e_23 and m_23. =====
+    # ===== Log-scaling of e and m. =====
     # In order to apply np.log1p(), the entries of the dataframe need to
     # be converted to floats.
     df_exploded[e_col] = pd.to_numeric(
@@ -211,12 +210,18 @@ padded_tensor_final, attention_mask_final = dataframe_to_padded_tensor(
 
 """Splitting the two tensors in training, validation and test set.
 """
-data = TensorDataset(padded_tensor_23, padded_tensor_final)
-training_set, validation_set, test_set = random_split(
-    data, [0.6*len(data), 0.2*len(data), 0.2*len(data)],
+training_set_23, validation_set_23, test_set_23 = random_split(
+    padded_tensor_23,
+    [0.6*len(padded_tensor_23),
+    0.2*len(padded_tensor_23),
+    0.2*len(padded_tensor_23)],
     generator = torch.Generator().manual_seed(1)
 )
 
-training_ready = DataLoader(training_set, batch_size = 32, shuffle = True)
-validation_ready = DataLoader(validation_set, batch_size = 32)
-test_ready = DataLoader(test_set, batch_size = 32)
+training_set_final, validation_set_final, test_set_final = random_split(
+    padded_tensor_final,
+    [0.6*len(padded_tensor_final),
+    0.2*len(padded_tensor_final),
+    0.2*len(padded_tensor_final)],
+    generator = torch.Generator().manual_seed(1)
+)

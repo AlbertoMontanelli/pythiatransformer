@@ -5,14 +5,14 @@ from pathlib import Path
 
 import awkward as ak
 from loguru import logger
-import numpy as np
 import uproot
 
 from pythia8 import Pythia
  
 
 def setup_pythia() -> Pythia:
-    """Configure and return a Pythia instance."""
+    """Configure and return a Pythia instance.
+    """
     try:
         pythia = Pythia()
         pythia.readString("Beams:eCM = 13000.")
@@ -23,7 +23,7 @@ def setup_pythia() -> Pythia:
         logger.exception("Failed to initialize Pythia.")
         raise
 
-def initialize_data(features: list, suffix: str):
+def initialize_data(features: list, suffix: str) -> dict:
     """Initialize dictionary for each feature with an empty list."""
     return {f"{key}{suffix}": [] for key in features}
 
