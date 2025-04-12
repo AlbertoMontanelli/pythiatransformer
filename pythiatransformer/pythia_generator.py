@@ -27,12 +27,12 @@ def initialize_data(features: list, suffix: str):
     """Initialize dictionary for each feature with an empty list."""
     return {f"{key}{suffix}": [] for key in features}
 
-def append_empty_event(data, features, suffix: str):
+def append_empty_event(data: dict, features: list, suffix: str):
     """Append an empty list for a new event to each feature key."""
     for feature in features:
         data[f"{feature}{suffix}"].append([])
 
-def record_particle(particle, features, data, suffix: str):
+def record_particle(particle, features: list, data: dict, suffix: str):
     """Append particle data to the latest event list."""
     for feature in features:
         try:
@@ -45,7 +45,7 @@ def record_particle(particle, features, data, suffix: str):
             )
             continue
 
-def cleanup_event(data, features, suffix: str):
+def cleanup_event(data: dict, features: list, suffix: str):
     """Discard the last event by removing the most recent sublist for
     each feature, if the event did not contain valid particles.
     """
@@ -58,7 +58,7 @@ def cleanup_event(data, features, suffix: str):
                 f" — the mother list is empty"
             )
 
-def convert_to_awkward(data_dict):
+def convert_to_awkward(data_dict: dict):
     """Convert list of lists to Awkward Array."""
     try:
         return ak.Array(data_dict)
@@ -66,7 +66,7 @@ def convert_to_awkward(data_dict):
         logger.exception("Failed to convert data to Awkward Array.")
         raise
 
-def save_to_root(output_file, data_23, data_final):
+def save_to_root(output_file: str, data_23: dict, data_final: dict):
     """Save particle data to ROOT file using uproot."""
     try:
         with uproot.recreate(output_file) as root_file:
