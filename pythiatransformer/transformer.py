@@ -118,16 +118,6 @@ class ParticleTransformer(nn.Module):
 
         self.activation = activation
 
-        logger.info(
-            f"Initialized ParticleTransformer with "
-            f"dim_features={dim_features}, "
-            f"num_heads={num_heads}, "
-            f"num_encoder_layers={num_encoder_layers}, "
-            f"num_decoder_layers={num_decoder_layers}, "
-            f"num_units={num_units}, "
-            f"dropout={dropout}, activation={activation}"
-        )
-
         self.build_projection_layer()
         self.initialize_transformer()
         self.train_data, self.val_data, self.test_data = self.data_processing()
@@ -143,7 +133,7 @@ class ParticleTransformer(nn.Module):
         """
         self.input_projection = nn.Linear(self.dim_features, self.num_units)
         self.output_projection = nn.Linear(self.num_units, self.dim_features)
-        logger.debug("Projection layers input/output created.")
+        logger.info("Projection layers input/output created.")
 
     def initialize_transformer(self):
         """This function initializes the transformer with the specified
@@ -160,11 +150,15 @@ class ParticleTransformer(nn.Module):
             batch_first = True
         )
 
-        logger.debug(
+        logger.info(
             f"Transformer initialized with "
-            f"d_model={self.num_units}, nhead={self.num_heads}, "
-            f"num_encoder_layers={self.num_encoder_layers}, "
-            f"num_decoder_layers={self.num_decoder_layers}"
+            f"number of hidden units: {self.num_units}, "
+            f"number of heads: {self.num_heads}, "
+            f"number of encoder layers: {self.num_encoder_layers}, "
+            f"number of decoder layers: {self.num_decoder_layers}, "
+            f"number of feedforward units: {4 * self.num_units}, "
+            f"dropout probability: {self.dropout}, "
+            f"activation function: {self.activation}."
         )
 
     def data_processing(self):
@@ -193,6 +187,8 @@ class ParticleTransformer(nn.Module):
         )
         validation_loader = DataLoader(validation_set, self.batch_size)
         test_loader = DataLoader(test_set, self.batch_size)
+
+        logger.info("Data preprocessed.")
 
         return training_loader, validation_loader, test_loader
 
@@ -246,7 +242,7 @@ class ParticleTransformer(nn.Module):
             loss.backward()
             optim.step()
             loss_epoch += loss.item()
-        logger.info(f"Loss at epoch {epoch + 1}: {loss_epoch}")
+        logger.debug(f"Loss at epoch {epoch + 1}: {loss_epoch}")
         return loss_epoch
 
     def val_one_epoch(self, epoch, loss_func, val):
@@ -279,12 +275,12 @@ class ParticleTransformer(nn.Module):
                     )
                 loss_epoch += loss.item()
         if val:
-            logger.info(f"Validation loss at epoch {epoch + 1}: {loss_epoch}")
+            logger.debug(f"Validation loss at epoch {epoch + 1}: {loss_epoch}")
         else:
-            logger.info(f"Test loss at epoch {epoch + 1}: {loss_epoch}")
+            logger.debug(f"Test loss at epoch {epoch + 1}: {loss_epoch}")
         return loss_epoch
 
-    def train_val(self, num_epochs, loss_func, optim, patient = 10, val = True):
+    def train_val(self, num_epochs, loss_func, optim, val = True, patient = 10):
         """This function trains and validates the model for the given
         number of epochs.
         Args:
@@ -313,6 +309,7 @@ class ParticleTransformer(nn.Module):
         train_loss = []
         val_loss = []
         counter = 0
+        logger.info("Training started!")
         for epoch in range(num_epochs):
             train_loss.append(self.train_one_epoch(epoch, loss_func, optim))
             val_loss.append(self.val_one_epoch(epoch, loss_func, val))
@@ -327,6 +324,7 @@ class ParticleTransformer(nn.Module):
                 if counter >= patient:
                     logger.warning(f"Early stopping at epoch {epoch + 1}.")
                     break
+        logger.info("Training completed!")
         return train_loss, val_loss
 
     def early_stopping(self, val_loss, current_epoch):
