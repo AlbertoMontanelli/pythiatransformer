@@ -29,7 +29,7 @@ class ParticleTransformer(nn.Module):
         activation
     ):
         """
-        Args:  
+        Args:
             input_train (torch.Tensor): Input tensor representing
                                         status 23 particles used during
                                         the model training.
@@ -56,11 +56,10 @@ class ParticleTransformer(nn.Module):
             num_units (int): number of units of each hidden layer.
             dropout (float): probability of each neuron to be
                              switched off.
-            batch_size (int): 
+            batch_size (int):
             activation (nn.function): activation function of encoder
                                       and/or decoder layers.
         """
-        # da aggiungere le varie exception per controllare i tipi
         super(ParticleTransformer, self).__init__()
         self.input_train = input_train
         self.input_val = input_val
@@ -87,7 +86,7 @@ class ParticleTransformer(nn.Module):
                 f"The number of encoder layers must be int, "
                 f"got {type(num_encoder_layers)}"
             )
-        
+
         self.num_decoder_layers = num_decoder_layers
         if not isinstance(num_decoder_layers, int):
             raise TypeError(
@@ -106,7 +105,7 @@ class ParticleTransformer(nn.Module):
             raise TypeError(f"dropout must be float, got {type(dropout)}")
         if not (0.0 <= dropout <= 1.0):
             raise ValueError("dropout must be between 0.0 and 1.0")
-        
+
         self.batch_size = batch_size
         if not isinstance(batch_size, int):
             raise TypeError(
@@ -116,7 +115,7 @@ class ParticleTransformer(nn.Module):
             raise ValueError(
                 f"Batch size must be smaller than the input dataset size."
             )
-        
+
         self.activation = activation
 
         logger.info(
@@ -144,11 +143,11 @@ class ParticleTransformer(nn.Module):
         """
         self.input_projection = nn.Linear(self.dim_features, self.num_units)
         self.output_projection = nn.Linear(self.num_units, self.dim_features)
-        logger.debug("Projection layers (input/output) created.")
+        logger.debug("Projection layers input/output created.")
 
     def initialize_transformer(self):
         """This function initializes the transformer with the specified
-        configuration parameters. 
+        configuration parameters.
         """
         self.transformer = nn.Transformer(
             d_model = self.num_units,
@@ -200,7 +199,7 @@ class ParticleTransformer(nn.Module):
     def forward(self, input, target):
         """The aim of this function is computed the output of the model by
         projecting the input and the target into an hidden
-        representation space, processing them through a Transformer, 
+        representation space, processing them through a Transformer,
         and projecting the result back to the original feature space.
 
         Args:
@@ -208,7 +207,7 @@ class ParticleTransformer(nn.Module):
                                   particles.
             target (torch.Tensor): Input tensor representing stable
                                    particles.
-        
+
         Returns:
             output (torch.Tensor): The output tensor after processing
                                    through the model.
@@ -218,7 +217,7 @@ class ParticleTransformer(nn.Module):
         output = self.transformer(input, target)
         output = self.output_projection(output)
         return output
-    
+
     def train_one_epoch(self, epoch, loss_func, optim):
         """This function trains the model for one epoch. It iterates
         through the training data, computes the model's output and the
@@ -244,14 +243,13 @@ class ParticleTransformer(nn.Module):
                 raise ValueError(
                     f"Loss is not finite at epoch {epoch + 1}"
                 )
-            #NaN
             loss.backward()
             optim.step()
             loss_epoch += loss.item()
         logger.info(f"Loss at epoch {epoch + 1}: {loss_epoch}")
         return loss_epoch
 
-    def val_one_epoch(self, epoch, loss_func):
+    def val_one_epoch(self, epoch, loss_func, val):
         """This function validates the model for one epoch. It iterates
         through the validation data, computes the model's output and
         the loss.
@@ -260,13 +258,19 @@ class ParticleTransformer(nn.Module):
             epoch (int): current epoch.
             loss_func (nn.Module): Loss function used to compute the
                                    loss.
+            val (bool): Default True. Set to False when using the test
+                        set
         Returns:
             loss_epoch (float):
         """
+        if val:
+            data_loader = self.val_data
+        else: 
+            data_loader = self.test_data
         self.eval()
         loss_epoch = 0
-        with torch.no_grad(): # compute only the loss value
-            for inputs, targets in self.val_data:
+        with torch.no_grad(): # Compute only the loss value
+            for inputs, targets in data_loader:
                 outputs = self.forward(inputs, targets)
                 loss = loss_func(outputs, targets)
                 if not torch.isfinite(loss):
@@ -274,10 +278,13 @@ class ParticleTransformer(nn.Module):
                         f"Loss is not finite at epoch {epoch + 1}"
                     )
                 loss_epoch += loss.item()
-        logger.info(f"Validation loss at epoch {epoch + 1}: {loss_epoch}")
+        if val:
+            logger.info(f"Validation loss at epoch {epoch + 1}: {loss_epoch}")
+        else:
+            logger.info(f"Test loss at epoch {epoch + 1}: {loss_epoch}")
         return loss_epoch
-    
-    def train_val(self, num_epochs, loss_func, optim, patient = 10):
+
+    def train_val(self, num_epochs, loss_func, optim, patient = 10, val = True):
         """This function trains and validates the model for the given
         number of epochs.
         Args:
@@ -305,44 +312,32 @@ class ParticleTransformer(nn.Module):
             )
         train_loss = []
         val_loss = []
+        counter = 0
         for epoch in range(num_epochs):
             train_loss.append(self.train_one_epoch(epoch, loss_func, optim))
-            val_loss.append(self.val_one_epoch(epoch, loss_func))
-            if epoch > patient and val_loss[-1] > val_loss[-2] and train_loss[-1] < train_loss[-2]:
-                logger.warning(f"Possible overfitting at epoch {epoch + 1}.")
-            # earlystop = self.early_stopping(epoch)
-            # if earlystop:
-            #     break
+            val_loss.append(self.val_one_epoch(epoch, loss_func, val))
+            # if epoch > patient and val_loss[-1] > val_loss[-2] and train_loss[-1] < train_loss[-2]:
+            #     logger.warning(f"Possible overfitting at epoch {epoch + 1}.")
+            if epoch > num_epochs/10:
+                stop = self.early_stopping(val_loss, epoch)
+                if stop:
+                    counter += 1
+                else:
+                    counter = 0
+                if counter >= patient:
+                    logger.warning(f"Early stopping at epoch {epoch + 1}.")
+                    break
         return train_loss, val_loss
 
-    def test(self, loss_func):
-        """This function computes the total loss of the model on the
-        test data without updating the model's parameters.
-        Args:
-            loss_func (nn.Module): Loss function used to compute the
-                                   loss. 
+    def early_stopping(self, val_loss, current_epoch):
         """
-        self.eval()
-        total_loss = 0
-        with torch.no_grad():
-            for inputs, targets in self.test_data:
-                outputs = self(inputs, targets)
-                loss = loss_func(outputs, targets)
-                total_loss += loss.item()
-        logger.info(f"Test loss: {total_loss}")
-
-    # def early_stopping(val_loss, current_epoch, patience = 10):
-    #     """ da sistemare e testare
-    #     """
-    #     stop = False
-    #     if current_epoch == 0:
-    #         counter = 0
-    #     elif current_epoch > 0:
-    #         if val_loss[-1] < val_loss[0]:
-    #             counter += 1
-    #     else:
-    #         counter = 0
-    #     if counter >= patience:
-    #         logger.warning("Early stopping.")
-    #         stop = True
-    #     return stop
+        Args:
+            val_loss (list):
+            current_epoch (int):
+        Returns:
+            stop (bool):
+        """
+        stop = False
+        if val_loss[current_epoch-1] < val_loss[current_epoch]:
+            stop = True
+        return stop
