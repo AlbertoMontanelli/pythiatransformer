@@ -1,12 +1,10 @@
 """
 Transformer class.
 """
-import argparse
+from loguru import logger
 import torch
 import torch.nn as nn
 from torch.utils.data import TensorDataset, DataLoader
-
-from loguru import logger
 
 class ParticleTransformer(nn.Module):
     """Transformer taking in input particles having status 23
@@ -160,7 +158,7 @@ class ParticleTransformer(nn.Module):
             dim_feedforward = 4 * self.num_units,
             dropout = self.dropout,
             activation = self.activation,
-            batch_first=True
+            batch_first = True
         )
 
         logger.debug(
@@ -246,6 +244,7 @@ class ParticleTransformer(nn.Module):
                 raise ValueError(
                     f"Loss is not finite at epoch {epoch + 1}"
                 )
+            #NaN
             loss.backward()
             optim.step()
             loss_epoch += loss.item()
@@ -266,7 +265,7 @@ class ParticleTransformer(nn.Module):
         """
         self.eval()
         loss_epoch = 0
-        with torch.no_grad():
+        with torch.no_grad(): # compute only the loss value
             for inputs, targets in self.val_data:
                 outputs = self.forward(inputs, targets)
                 loss = loss_func(outputs, targets)

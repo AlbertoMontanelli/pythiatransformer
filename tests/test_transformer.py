@@ -27,8 +27,8 @@ class TestParticleTransformer(unittest.TestCase):
         This method is automatically called before each test to set up
         a consistent test environment.
         """
-        seed = 4
-        torch.manual_seed(seed)
+        seed = 1
+        torch.Generator().manual_seed(seed)
         self.input_train = torch.rand(100, 2, 6)
         self.input_test = torch.rand(25, 2, 6)
         self.input_val = torch.rand(20, 2, 6)
