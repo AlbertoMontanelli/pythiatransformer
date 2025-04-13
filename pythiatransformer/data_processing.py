@@ -202,8 +202,8 @@ def train_val_test_split(
     len_val = int(val_perc*nn)
 
     training_set = tensor[:len_train]
-    validation_set = tensor[len_train+1:len_val]
-    test_set = tensor[len_val+1:]
+    validation_set = tensor[len_train + 1:len_train + len_val]
+    test_set = tensor[len_train + len_val + 1:]
 
     return training_set, validation_set, test_set
 
