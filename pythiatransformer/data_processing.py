@@ -198,7 +198,7 @@ def train_val_test_split(
         test_set (Torch tensor): test set.
     """
     if not (train_perc + val_perc + test_perc == 1):
-        raise ValueError(f"Invalid values for data splitting fractions. Expected fractions that sum up to 1.")
+        raise ValueError(f"Invalid values for data splitting fractions. Expected positive fractions that sum up to 1.")
     
     invalids = []
     if not (0 <= train_perc <= 1):
@@ -208,7 +208,7 @@ def train_val_test_split(
     if not (0 <= test_perc <= 1):
         invalids.append(f"test_perc = {test_perc}")
     if invalids:
-        raise ValueError(f"Invalid value for {','.join(invalids)}. Expected value between 0 and 1, included.")
+        raise ValueError(f"Invalid value(s) for {','.join(invalids)}. Expected value(s) between 0 and 1, included.")
     
     nn = len(tensor)
     len_train = int(train_perc*nn)
