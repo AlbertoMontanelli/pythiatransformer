@@ -2,6 +2,7 @@ awkward
 numpy
 pandas
 loguru
+sklearn
 torch
 uproot
 matplotlib

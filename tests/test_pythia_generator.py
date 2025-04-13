@@ -217,7 +217,6 @@ class PythiaTransformerTest(unittest.TestCase):
             for particles in [event_1, event_2]:
                 mock_pythia.event = particles
                 yield True
-            yield StopIteration
 
         # Simulate each different event for each call.
         mock_pythia.next.side_effect = side_effect_for_event()
