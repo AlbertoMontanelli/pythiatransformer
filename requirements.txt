@@ -1,4 +1,5 @@
 awkward
+awkward_pandas
 numpy
 pandas
 loguru
