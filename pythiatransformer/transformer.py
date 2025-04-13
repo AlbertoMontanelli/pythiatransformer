@@ -115,6 +115,11 @@ class ParticleTransformer(nn.Module):
             raise ValueError(
                 f"Batch size must be smaller than the input dataset size."
             )
+        
+        if not (num_units % num_heads == 0):
+            raise ValueError(
+                "Number of units must be a multiple of number of heads."
+            )
 
         self.activation = activation
 
