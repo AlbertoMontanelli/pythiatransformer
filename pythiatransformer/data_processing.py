@@ -182,18 +182,6 @@ def dataframe_to_padded_tensor(df_stand, event_particles_col = "nid_23",
     
     return padded_tensor, attention_mask
 
-
-df_23_stand = preprocess_dataframe(df_23)
-padded_tensor_23, attention_mask_23 = dataframe_to_padded_tensor(df_23_stand)
-
-df_final_stand = preprocess_dataframe(df_final, "nid_final", "id_final",
-                                      "status_final", "px_final", "py_final",
-                                      "pz_final", "e_final", "m_final")
-padded_tensor_final, attention_mask_final = dataframe_to_padded_tensor(
-    df_final_stand, "nid_final", "id_final", "px_final", "py_final",
-    "pz_final", "e_final", "m_final"
-)
-
 def train_val_test_split(
         tensor, train_perc = 0.6, val_perc = 0.2
         ):
@@ -218,6 +206,18 @@ def train_val_test_split(
     test_set = tensor[len_val+1:]
 
     return training_set, validation_set, test_set
+
+
+df_23_stand = preprocess_dataframe(df_23)
+padded_tensor_23, attention_mask_23 = dataframe_to_padded_tensor(df_23_stand)
+
+df_final_stand = preprocess_dataframe(df_final, "nid_final", "id_final",
+                                      "status_final", "px_final", "py_final",
+                                      "pz_final", "e_final", "m_final")
+padded_tensor_final, attention_mask_final = dataframe_to_padded_tensor(
+    df_final_stand, "nid_final", "id_final", "px_final", "py_final",
+    "pz_final", "e_final", "m_final"
+)
 
 training_set_23, validation_set_23, test_set_23 = train_val_test_split(padded_tensor_23)
 training_set_final, validation_set_final, test_set_final = train_val_test_split(padded_tensor_final)
