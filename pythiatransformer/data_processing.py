@@ -1,3 +1,9 @@
+"""In this code the data from pythia_generator.py is processed.
+First, the ROOT files are imported as pandas dataframes.
+Then, the features are standardized.
+Last, the dataframes are converted to Torch tensors and split
+between training, validation and test sets.
+"""
 import ast
 
 import numpy as np
@@ -8,25 +14,6 @@ from torch.nn.utils.rnn import pad_sequence
 from torch.utils.data import random_split
 import uproot
 
-"""Memento: features = ["id", "status", "px", "py", "pz", "e", "m"]
-
-What kind of processing?
-
-id is a categorical input. Embedding learnable technique
-might be more efficient than one-hot-encoding.
-
-status does not need to be processed: it is 23 for
-particles in data_23 dataset, and whatever it needs to
-be for particles in data_final dataset.
-
-px, py and pz are continuous variables, hence why
-standardization is the most appropriate processing
-method.
-
-e and m are continuous variables too, but unlike
-px, py and pz they can not be negative. Log-scaling
-is the most appropriate normalization method.
-"""
 
 with uproot.open("events.root") as file:
     df_23 = file["tree_23"].arrays(library="pd")
