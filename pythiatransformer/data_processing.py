@@ -11,7 +11,6 @@ import pandas as pd
 from sklearn.preprocessing import StandardScaler
 import torch
 from torch.nn.utils.rnn import pad_sequence
-from torch.utils.data import random_split
 import uproot
 
 
@@ -183,6 +182,44 @@ def dataframe_to_padded_tensor(df_stand, event_particles_col = "nid_23",
     
     return padded_tensor, attention_mask
 
+def train_val_test_split(
+        tensor, train_perc = 0.6, val_perc = 0.2, test_perc = 0.2
+        ):
+    """Function that splits a tensor in training, validation and test sets.
+
+    Args:
+        tensor (Torch tensor): data in the form of a Torch tensor.
+        train_perc (float): fraction of the data used for training.
+        val_perc (float): fraction of the data used for validation.
+
+    Return:
+        training_set (Torch tensor): training set.
+        validation_set (Torch tensor): validation set.
+        test_set (Torch tensor): test set.
+    """
+    if not (train_perc + val_perc + test_perc == 1):
+        raise ValueError(f"Invalid values for data splitting fractions. Expected positive fractions that sum up to 1.")
+    
+    invalids = []
+    if not (0 <= train_perc <= 1):
+        invalids.append(f"train_perc = {train_perc}")
+    if not (0 <= val_perc <= 1):
+        invalids.append(f"val_perc = {val_perc}")
+    if not (0 <= test_perc <= 1):
+        invalids.append(f"test_perc = {test_perc}")
+    if invalids:
+        raise ValueError(f"Invalid value(s) for {','.join(invalids)}. Expected value(s) between 0 and 1, included.")
+    
+    nn = len(tensor)
+    len_train = int(train_perc*nn)
+    len_val = int(val_perc*nn)
+
+    training_set = tensor[:len_train]
+    validation_set = tensor[len_train + 1:len_train + len_val]
+    test_set = tensor[len_train + len_val + 1:]
+
+    return training_set, validation_set, test_set
+
 
 df_23_stand = preprocess_dataframe(df_23)
 padded_tensor_23, attention_mask_23 = dataframe_to_padded_tensor(df_23_stand)
@@ -195,30 +232,7 @@ padded_tensor_final, attention_mask_final = dataframe_to_padded_tensor(
     "pz_final", "e_final", "m_final"
 )
 
-"""Splitting the two tensors in training, validation and test set.
-"""
-n = len(padded_tensor_23)
-len_train = int(0.6*n)
-print(len_train)
-len_val = int(0.2*n)
-len_test = n - len_train - len_val
-
-training_set_23, validation_set_23, test_set_23 = random_split(
-    padded_tensor_23,
-    [len_train, len_val, len_test],
-    generator = torch.Generator().manual_seed(1)
-)
-
-training_set_final, validation_set_final, test_set_final = random_split(
-    padded_tensor_final,
-    [len_train, len_val, len_test],
-    generator = torch.Generator().manual_seed(1)
-)
-
-training_set_23_tensor = torch.stack([training_set_23[i][0] for i in range(len(training_set_23))])
-validation_set_23_tensor = torch.stack([validation_set_23[i][0] for i in range(len(validation_set_23))])
-test_set_23_tensor = torch.stack([test_set_23[i][0] for i in range(len(test_set_23))])
-
-training_set_final_tensor = torch.stack([training_set_final[i][0] for i in range(len(training_set_final))])
-validation_set_final_tensor = torch.stack([validation_set_final[i][0] for i in range(len(validation_set_final))])
-test_set_final_tensor = torch.stack([test_set_final[i][0] for i in range(len(test_set_final))])
+training_set_23, validation_set_23, test_set_23 = train_val_test_split(padded_tensor_23)
+attention_train_23, attention_val_23, attention_test_23 = train_val_test_split(attention_mask_23)
+training_set_final, validation_set_final, test_set_final = train_val_test_split(padded_tensor_final)
+attention_train_final, attention_val_final, attention_test_final = train_val_test_split(attention_mask_final)

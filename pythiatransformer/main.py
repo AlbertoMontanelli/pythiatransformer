@@ -11,6 +11,8 @@ from data_processing import training_set_final, training_set_23
 from data_processing import validation_set_final, validation_set_23
 from data_processing import test_set_final, test_set_23
 
+print(f"len train: {training_set_23.shape[0]}, len val: {validation_set_23.shape[0]}, len test: {test_set_23.shape[0]}")
+
 def plot_losses(train_loss, val_loss):
     """
     """
@@ -35,9 +37,9 @@ transformer = ParticleTransformer(
     num_heads = 8,
     num_encoder_layers = 2,
     num_decoder_layers = 2,
-    num_units = 12,
+    num_units = 16,
     dropout = 0.1,
-    batch_size = 64,
+    batch_size = 8,
     activation = nn.ReLU()
 )
 
@@ -50,7 +52,7 @@ logger.info(
 )
 
 train_loss, val_loss = transformer.train_val(
-    epoch = epochs,
+    num_epochs = epochs,
     loss_func = loss_func,
     optim = optimizer.Adam(transformer.parameters(), lr=learning_rate)
 )
