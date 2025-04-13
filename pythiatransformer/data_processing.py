@@ -199,6 +199,7 @@ padded_tensor_final, attention_mask_final = dataframe_to_padded_tensor(
 """
 n = len(padded_tensor_23)
 len_train = int(0.6*n)
+print(len_train)
 len_val = int(0.2*n)
 len_test = n - len_train - len_val
 
@@ -213,3 +214,11 @@ training_set_final, validation_set_final, test_set_final = random_split(
     [len_train, len_val, len_test],
     generator = torch.Generator().manual_seed(1)
 )
+
+training_set_23_tensor = torch.stack([training_set_23[i][0] for i in range(len(training_set_23))])
+validation_set_23_tensor = torch.stack([validation_set_23[i][0] for i in range(len(validation_set_23))])
+test_set_23_tensor = torch.stack([test_set_23[i][0] for i in range(len(test_set_23))])
+
+training_set_final_tensor = torch.stack([training_set_final[i][0] for i in range(len(training_set_final))])
+validation_set_final_tensor = torch.stack([validation_set_final[i][0] for i in range(len(validation_set_final))])
+test_set_final_tensor = torch.stack([test_set_final[i][0] for i in range(len(test_set_final))])
