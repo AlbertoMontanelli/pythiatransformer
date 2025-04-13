@@ -233,4 +233,6 @@ padded_tensor_final, attention_mask_final = dataframe_to_padded_tensor(
 )
 
 training_set_23, validation_set_23, test_set_23 = train_val_test_split(padded_tensor_23)
+attention_train_23, attention_val_23, attention_test_23 = train_val_test_split(attention_mask_23)
 training_set_final, validation_set_final, test_set_final = train_val_test_split(padded_tensor_final)
+attention_train_final, attention_val_final, attention_test_final = train_val_test_split(attention_mask_final)
