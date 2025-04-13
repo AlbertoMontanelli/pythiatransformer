@@ -183,7 +183,7 @@ def dataframe_to_padded_tensor(df_stand, event_particles_col = "nid_23",
     return padded_tensor, attention_mask
 
 def train_val_test_split(
-        tensor, train_perc = 0.6, val_perc = 0.2
+        tensor, train_perc = 0.6, val_perc = 0.2, test_perc = 0.2
         ):
     """Function that splits a tensor in training, validation and test sets.
 
@@ -197,6 +197,19 @@ def train_val_test_split(
         validation_set (Torch tensor): validation set.
         test_set (Torch tensor): test set.
     """
+    if not (train_perc + val_perc + test_perc == 1):
+        raise ValueError(f"Invalid values for data splitting fractions. Expected fractions that sum up to 1.")
+    
+    invalids = []
+    if not (0 <= train_perc <= 1):
+        invalids.append(f"train_perc = {train_perc}")
+    if not (0 <= val_perc <= 1):
+        invalids.append(f"val_perc = {val_perc}")
+    if not (0 <= test_perc <= 1):
+        invalids.append(f"test_perc = {test_perc}")
+    if invalids:
+        raise ValueError(f"Invalid value for {','.join(invalids)}. Expected value between 0 and 1, included.")
+    
     nn = len(tensor)
     len_train = int(train_perc*nn)
     len_val = int(val_perc*nn)

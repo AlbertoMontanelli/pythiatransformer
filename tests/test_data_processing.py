@@ -22,3 +22,21 @@ class TestPreprocessDataframe(unittest.TestCase):
         df_stand = preprocess_dataframe(self.df)
         self.assertEqual(df_stand.shape[0], 1)
         self.assertIn("id_23", df_stand.columns)
+
+class TestTrainValTestSplit(unittest.TestCase):
+    def setUp(self):
+        self.tensor = torch.tensor([
+            [[1, 2, 3, 4, 5, 6], [7, 8, 9, 10, 11, 12]],
+            [[-1, -2, -3, -4, -5, -6], [-7, -8, -9, -10, -11, -12]],
+            [[1, 2, 3, 4, 5, 6], [7, 8, 9, 10, 11, 12]],
+            [[-1, -2, -3, -4, -5, -6], [-7, -8, -9, -10, -11, -12]],
+            [[1, 2, 3, 4, 5, 6], [7, 8, 9, 10, 11, 12]],
+            [[-1, -2, -3, -4, -5, -6], [-7, -8, -9, -10, -11, -12]],
+            [[1, 2, 3, 4, 5, 6], [7, 8, 9, 10, 11, 12]],
+            [[-1, -2, -3, -4, -5, -6], [-7, -8, -9, -10, -11, -12]],
+            [[1, 2, 3, 4, 5, 6], [7, 8, 9, 10, 11, 12]],
+            [[-1, -2, -3, -4, -5, -6], [-7, -8, -9, -10, -11, -12]]
+        ])
+
+    def test_output_lenght(self):
+        train, val, test = train_val_test_split(self.tensor)
