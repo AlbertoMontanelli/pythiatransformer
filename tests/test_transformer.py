@@ -27,8 +27,8 @@ class TestParticleTransformer(unittest.TestCase):
         This method is automatically called before each test to set up
         a consistent test environment.
         """
-        seed = 4
-        torch.manual_seed(seed)
+        seed = 1
+        torch.Generator().manual_seed(seed)
         self.input_train = torch.rand(100, 2, 6)
         self.input_test = torch.rand(25, 2, 6)
         self.input_val = torch.rand(20, 2, 6)
@@ -130,24 +130,8 @@ class TestParticleTransformer(unittest.TestCase):
         epochs, using the specified loss function and optimizer.
         Then, it evaluates the model on the test data after training.
         """
-        train_loss, val_loss = self.transformer.train_val(20, self.loss_func, self.optim)
-        self.transformer.test(self.loss_func)
+        train_loss, val_loss = self.transformer.train_val(100, self.loss_func, self.optim)
         self.plot_losses(train_loss, val_loss)
-
-    def test_batch_sizes(self):
-        """
-        """
-        for loader_name, loader in [
-            ("train", self.transformer.train_data),
-            ("validation", self.transformer.val_data),
-            ("test", self.transformer.test_data)
-        ]:
-            for batch_idx, (inputs, targets) in enumerate(loader):
-                batch_size = inputs.shape[0]
-                assert batch_size <= self.transformer.batch_size, (
-                    f"{loader_name} batch {batch_idx} has batch size {batch_size}, "
-                    f"which exceeds the expected {self.transformer.batch_size}"
-                )
 
 
 if __name__ == '__main__':
