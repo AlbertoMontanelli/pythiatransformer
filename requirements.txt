@@ -1,5 +1,6 @@
 awkward
 numpy
+pandas
 loguru
 torch
 uproot
