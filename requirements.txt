@@ -2,7 +2,7 @@ awkward
 numpy
 pandas
 loguru
-sklearn
+scikit-learn
 torch
 uproot
 matplotlib
