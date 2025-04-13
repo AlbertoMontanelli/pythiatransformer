@@ -11,7 +11,6 @@ import pandas as pd
 from sklearn.preprocessing import StandardScaler
 import torch
 from torch.nn.utils.rnn import pad_sequence
-from torch.utils.data import random_split
 import uproot
 
 
