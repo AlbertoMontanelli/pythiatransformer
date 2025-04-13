@@ -24,16 +24,19 @@ def setup_pythia() -> Pythia:
         raise
 
 def initialize_data(features: list, suffix: str) -> dict:
-    """Initialize dictionary for each feature with an empty list."""
+    """Initialize dictionary for each feature with an empty list.
+    """
     return {f"{key}{suffix}": [] for key in features}
 
 def append_empty_event(data: dict, features: list, suffix: str):
-    """Append an empty list for a new event to each feature key."""
+    """Append an empty list for a new event to each feature key.
+    """
     for feature in features:
         data[f"{feature}{suffix}"].append([])
 
 def record_particle(particle, features: list, data: dict, suffix: str):
-    """Append particle data to the latest event list."""
+    """Append particle data to the latest event list.
+    """
     for feature in features:
         try:
             value = getattr(particle, feature)()
@@ -59,7 +62,8 @@ def cleanup_event(data: dict, features: list, suffix: str):
             )
 
 def convert_to_awkward(data_dict: dict):
-    """Convert list of lists to Awkward Array."""
+    """Convert list of lists to Awkward Array.
+    """
     try:
         return ak.Array(data_dict)
     except Exception as e:
@@ -67,7 +71,8 @@ def convert_to_awkward(data_dict: dict):
         raise
 
 def save_to_root(output_file: str, data_23: dict, data_final: dict):
-    """Save particle data to ROOT file using uproot."""
+    """Save particle data to ROOT file using uproot.
+    """
     try:
         with uproot.recreate(output_file) as root_file:
             root_file["tree_23"] = {key: data_23[key] for key in data_23.fields}
@@ -83,7 +88,8 @@ def generate_events(output_file: str, n_events: int):
     for each feature. Variable-length arrays are used to preserve
     per-event multiplicity.
     """
-    events_true = 0
+    event = 1
+    true_event = 1
     output_file = Path(output_file)
     features = ["id", "status", "px", "py", "pz", "e", "m"]
     pythia = setup_pythia()
@@ -91,10 +97,10 @@ def generate_events(output_file: str, n_events: int):
     data_23 = initialize_data(features, "_23")
     data_final = initialize_data(features, "_final")
 
-    for i in range(n_events):
+    while true_event <= n_events:
         try:
             if not pythia.next():
-                logger.warning(f"Event {i} failed to generate.")
+                logger.warning(f"Event {event} failed to generate.")
                 continue
 
             found_23 = False
@@ -116,22 +122,25 @@ def generate_events(output_file: str, n_events: int):
                     record_particle(particle, features, data_final, "_final")
 
             if found_final:
-                events_true += 1
                 logger.info(f"Found {counter_23} 23-status particles and"
-                            f" {counter_final} final particles for event {i}"
+                            f" {counter_final} final particles for event" 
+                            f" {event}.\n"
+                            f"This is the recorded event {true_event}"
+                            f"/{n_events} total."
                 )
+                true_event += 1
             else:
                 cleanup_event(data_23, features, "_23")
                 cleanup_event(data_final, features, "_final")
                 logger.info(
-                    f"Event {i} discarded: no status-23"
+                    f"Event {event} discarded: no status-23"
                     f" or final particles found."
                 )
+            event += 1
 
         except Exception as e:
-            logger.exception(f"Unexpected error during event {i}: {e}")
+            logger.exception(f"Unexpected error during event {event}: {e}")
 
-    logger.info(f"{events_true} saved events / {n_events} total events")
     save_to_root(
         output_file,
         convert_to_awkward(data_23),
