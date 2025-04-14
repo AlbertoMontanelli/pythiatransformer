@@ -1,6 +1,9 @@
 awkward
+awkward_pandas
 numpy
+pandas
 loguru
+scikit-learn
 torch
 uproot
 matplotlib

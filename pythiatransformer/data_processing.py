@@ -183,7 +183,7 @@ def dataframe_to_padded_tensor(df_stand, event_particles_col = "nid_23",
     return padded_tensor, attention_mask
 
 def train_val_test_split(
-        tensor, train_perc = 0.6, val_perc = 0.2
+        tensor, train_perc = 0.6, val_perc = 0.2, test_perc = 0.2
         ):
     """Function that splits a tensor in training, validation and test sets.
 
@@ -197,13 +197,26 @@ def train_val_test_split(
         validation_set (Torch tensor): validation set.
         test_set (Torch tensor): test set.
     """
+    if not (train_perc + val_perc + test_perc == 1):
+        raise ValueError(f"Invalid values for data splitting fractions. Expected positive fractions that sum up to 1.")
+    
+    invalids = []
+    if not (0 <= train_perc <= 1):
+        invalids.append(f"train_perc = {train_perc}")
+    if not (0 <= val_perc <= 1):
+        invalids.append(f"val_perc = {val_perc}")
+    if not (0 <= test_perc <= 1):
+        invalids.append(f"test_perc = {test_perc}")
+    if invalids:
+        raise ValueError(f"Invalid value(s) for {','.join(invalids)}. Expected value(s) between 0 and 1, included.")
+    
     nn = len(tensor)
     len_train = int(train_perc*nn)
     len_val = int(val_perc*nn)
 
     training_set = tensor[:len_train]
-    validation_set = tensor[len_train + 1:len_train + len_val]
-    test_set = tensor[len_train + len_val + 1:]
+    validation_set = tensor[len_train:len_train + len_val]
+    test_set = tensor[len_train + len_val:]
 
     return training_set, validation_set, test_set
 
@@ -220,4 +233,6 @@ padded_tensor_final, attention_mask_final = dataframe_to_padded_tensor(
 )
 
 training_set_23, validation_set_23, test_set_23 = train_val_test_split(padded_tensor_23)
+attention_train_23, attention_val_23, attention_test_23 = train_val_test_split(attention_mask_23)
 training_set_final, validation_set_final, test_set_final = train_val_test_split(padded_tensor_final)
+attention_train_final, attention_val_final, attention_test_final = train_val_test_split(attention_mask_final)
