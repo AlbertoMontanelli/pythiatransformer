@@ -11,7 +11,17 @@ from transformer import ParticleTransformer
 from data_processing import training_set_final, training_set_23
 from data_processing import validation_set_final, validation_set_23
 from data_processing import test_set_final, test_set_23
-from data_processing import attention_mask_23, attention_mask_final
+from data_processing import attention_train_23, attention_train_final
+from data_processing import attention_val_23, attention_val_final
+from data_processing import attention_test_23, attention_test_final
+
+# from attenzione_mask (1 = real, 0 = PAD) to key_padding_mask (True = PAD, False = real)
+attention_train_23 = ~attention_train_23.bool()
+attention_train_final = ~attention_train_final.bool()
+attention_val_23 = ~attention_val_23.bool()
+attention_val_final = ~attention_val_final.bool()
+attention_test_23 = ~attention_test_23.bool()
+attention_test_final = ~attention_test_final.bool()
 
 print(f"len train: {training_set_23.shape[0]}, len val: {validation_set_23.shape[0]}, len test: {test_set_23.shape[0]}")
 print(torch.mean(training_set_23), torch.std(training_set_23))
@@ -36,6 +46,12 @@ transformer = ParticleTransformer(
     target_train = training_set_final,
     target_val = validation_set_final,
     target_test = test_set_final,
+    attention_input_train = attention_train_23,
+    attention_target_train = attention_train_final,
+    attention_input_val = attention_val_23,
+    attention_target_val = attention_val_final,
+    attention_input_test = attention_test_23,
+    attention_target_test = attention_test_final,
     dim_features = training_set_23.shape[2],
     num_heads = 8,
     num_encoder_layers = 2,

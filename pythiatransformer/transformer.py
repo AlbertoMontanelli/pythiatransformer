@@ -19,6 +19,12 @@ class ParticleTransformer(nn.Module):
         target_train,
         target_val,
         target_test,
+        attention_input_train,
+        attention_target_train,
+        attention_input_val,
+        attention_target_val,
+        attention_input_test,
+        attention_target_test,
         dim_features,
         num_heads,
         num_encoder_layers,
@@ -48,6 +54,12 @@ class ParticleTransformer(nn.Module):
             target_test (torch.Tensor): Target tensor representing
                                         stable particles used during
                                         the model test.
+                                        attention_input_train,
+            attention_target_train (torch.Tensor):
+            attention_input_val (torch.Tensor):
+            attention_target_val (torch.Tensor):
+            attention_input_test (torch.Tensor):
+            attention_target_test (torch.Tensor):
             dim_features (int): number of features of each particle
                                 (px, py, pz, E, M, ID).
             num_heads (int): heads number of the attention system.
@@ -67,6 +79,13 @@ class ParticleTransformer(nn.Module):
         self.target_train = target_train
         self.target_val = target_val
         self.target_test = target_test
+
+        self.attention_input_train = attention_input_train
+        self.attention_target_train = attention_target_train
+        self.attention_input_val = attention_input_val
+        self.attention_target_val = attention_target_val
+        self.attention_input_test = attention_input_test
+        self.attention_target_test = attention_target_test
 
         self.dim_features = dim_features
         if not isinstance(dim_features, int):
@@ -125,7 +144,25 @@ class ParticleTransformer(nn.Module):
 
         self.build_projection_layer()
         self.initialize_transformer()
-        self.train_data, self.val_data, self.test_data = self.data_processing()
+        logger.info("Data preprocessing...")
+        self.train_data = self.data_processing(input_train, target_train)
+        self.val_data = self.data_processing(input_val, target_val, False)
+        self.test_data = self.data_processing(input_test, target_test, False)
+        self.attention_train_data = self.data_processing(
+            attention_input_train,
+            attention_target_train
+        )
+        self.attention_val_data = self.data_processing(
+            attention_input_val,
+            attention_target_val,
+            False
+        )
+        self.attention_test_data = self.data_processing(
+            attention_input_test,
+            attention_target_test,
+            False
+        )
+        logger.info("Data preprocessed.")
 
     def build_projection_layer(self):
         """This function transforms input and output data into a
@@ -166,38 +203,35 @@ class ParticleTransformer(nn.Module):
             f"activation function: {self.activation}."
         )
 
-    def data_processing(self):
+    def data_processing(self, input, target, shuffle = True):
         """This function prepares the data for training by splitting it
         into batches and shuffling the training data.
 
+        Args: 
+            shuffle (bool):
         Returns:
-            training_loader (Iterator): An iterator for the training
+            loader (Iterator): An iterator for the training
                                         data, with batching and
                                         shuffling enabled.
-            validation_loader (Iterator): An iterator for the
-                                          validation data, with
-                                          batching and shuffling
-                                          enabled.
-            test_loader (Iterator): An iterator for the test data, with
+            loader (Iterator): An iterator for the test data, with
                                     batching and shuffling enabled.
+            
         """
-        training_set = TensorDataset(self.input_train, self.target_train)
-        validation_set = TensorDataset(self.input_val, self.target_val)
-        test_set = TensorDataset(self.input_test, self.target_test)
+        seed = 1
+        generator = torch.Generator() # creation of a new generator
+        generator.manual_seed(seed)
+        set = TensorDataset(input, target)
 
-        training_loader = DataLoader(
-            training_set,
+        loader = DataLoader(
+            set,
             self.batch_size,
-            shuffle = True
+            shuffle = shuffle,
+            generator = generator if shuffle else None
         )
-        validation_loader = DataLoader(validation_set, self.batch_size)
-        test_loader = DataLoader(test_set, self.batch_size)
+        
+        return loader
 
-        logger.info("Data preprocessed.")
-
-        return training_loader, validation_loader, test_loader
-
-    def forward(self, input, target):
+    def forward(self, input, target, input_mask, target_mask):
         """The aim of this function is computed the output of the model by
         projecting the input and the target into an hidden
         representation space, processing them through a Transformer,
@@ -215,7 +249,12 @@ class ParticleTransformer(nn.Module):
         """
         input = self.input_projection(input)
         target = self.input_projection(target)
-        output = self.transformer(input, target)
+        output = self.transformer(
+            src = input,
+            tgt = target,
+            src_key_padding_mask = input_mask, 
+            tgt_key_padding_mask = target_mask
+        )
         # print(f"output shape: {output.shape}")
         output = self.output_projection(output)
         # print(f"output shape: {output.shape}")
@@ -238,9 +277,9 @@ class ParticleTransformer(nn.Module):
         """
         self.train()
         loss_epoch = 0
-        for inputs, targets in self.train_data:
+        for (inputs, targets), (inputs_mask, targets_mask) in zip(self.train_data, self.attention_train_data):
             optim.zero_grad()
-            outputs = self.forward(inputs, targets)
+            outputs = self.forward(inputs, targets, inputs_mask, targets_mask)
             loss = loss_func(outputs, targets)
             # print(f"output shape: {outputs.shape}")
             # print(f"target shape: {targets.shape}")
@@ -270,13 +309,15 @@ class ParticleTransformer(nn.Module):
         """
         if val:
             data_loader = self.val_data
+            mask_loader = self.attention_val_data
         else: 
             data_loader = self.test_data
+            mask_loader = self.attention_test_data
         self.eval()
         loss_epoch = 0
         with torch.no_grad(): # Compute only the loss value
-            for inputs, targets in data_loader:
-                outputs = self.forward(inputs, targets)
+            for (inputs, targets), (inputs_mask, targets_mask) in zip(data_loader, mask_loader):
+                outputs = self.forward(inputs, targets, inputs_mask, targets_mask)
                 loss = loss_func(outputs, targets)
                 if not torch.isfinite(loss):
                     raise ValueError(
