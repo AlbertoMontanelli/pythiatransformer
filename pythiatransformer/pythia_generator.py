@@ -112,6 +112,8 @@ def generate_events(output_file: str, n_events: int):
             append_empty_event(data_final, features, "_final")
 
             for particle in pythia.event:
+                if event == 1 and abs(particle.status()) == 23:
+                    print(f"particle status: {particle.status()}, id: {particle.id()}")
                 if particle.status() == 23:
                     found_23 = True
                     counter_23 += 1
@@ -148,7 +150,7 @@ def generate_events(output_file: str, n_events: int):
     )
 
 if __name__ == "__main__":
-    generate_events("events.root", n_events=100)
+    generate_events("events.root", n_events=1)
 
 
 
