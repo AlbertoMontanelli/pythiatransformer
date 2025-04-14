@@ -15,8 +15,8 @@ def setup_pythia() -> Pythia:
     """
     try:
         pythia = Pythia()
-        pythia.readString("Beams:eCM = 13000.")
-        pythia.readString("Top:qqbar2ttbar = on")
+        pythia.readString("HardQCD:all = on")
+        pythia.readString("PhaseSpace:pTHatMin = 100.")
         pythia.init()
         return pythia
     except Exception as e:
@@ -88,16 +88,15 @@ def generate_events(output_file: str, n_events: int):
     for each feature. Variable-length arrays are used to preserve
     per-event multiplicity.
     """
-    event = 1
-    true_event = 1
     output_file = Path(output_file)
-    features = ["id", "status", "px", "py", "pz", "e", "m"]
+    features = ["id", "status", "px", "py", "pz", "e", "m", "pT", "theta", "phi", "y", "eta"]
+    
     pythia = setup_pythia()
 
     data_23 = initialize_data(features, "_23")
     data_final = initialize_data(features, "_final")
 
-    while true_event <= n_events:
+    for event in range(n_events):
         try:
             if not pythia.next():
                 logger.warning(f"Event {event} failed to generate.")
@@ -112,9 +111,7 @@ def generate_events(output_file: str, n_events: int):
             append_empty_event(data_final, features, "_final")
 
             for particle in pythia.event:
-                if event == 1 and abs(particle.status()) == 23:
-                    print(f"particle status: {particle.status()}, id: {particle.id()}")
-                if particle.status() == 23:
+                if abs(particle.status()) == 23:
                     found_23 = True
                     counter_23 += 1
                     record_particle(particle, features, data_23, "_23")
@@ -122,26 +119,26 @@ def generate_events(output_file: str, n_events: int):
                     found_final = True
                     counter_final += 1
                     record_particle(particle, features, data_final, "_final")
-
-            if found_final:
-                logger.info(f"Found {counter_23} 23-status particles and"
-                            f" {counter_final} final particles for event" 
-                            f" {event}.\n"
-                            f"This is the recorded event {true_event}"
-                            f"/{n_events} total."
-                )
-                true_event += 1
-            else:
+            try:
+                if found_final:
+                    logger.info(f"Found {counter_23} 23-status particles and"
+                                f" {counter_final} final particles for event" 
+                                f" {event+1}.\n"
+                    )
+                else:
+                    raise ValueError(
+                        f"Event {event} discarded: no status-23 or final"
+                        f" particles found."
+                    )
+            
+            except ValueError as e:
                 cleanup_event(data_23, features, "_23")
                 cleanup_event(data_final, features, "_final")
-                logger.info(
-                    f"Event {event} discarded: no status-23"
-                    f" or final particles found."
-                )
-            event += 1
+                logger.warning(str(e))
+                raise # Re-raise the exception to halt the program.
 
         except Exception as e:
-            logger.exception(f"Unexpected error during event {event}: {e}")
+            logger.exception(f"Unexpected error during event {event+1}: {e}")
 
     save_to_root(
         output_file,
@@ -150,7 +147,7 @@ def generate_events(output_file: str, n_events: int):
     )
 
 if __name__ == "__main__":
-    generate_events("events.root", n_events=1)
+    generate_events("events.root", n_events=1000)
 
 
 
