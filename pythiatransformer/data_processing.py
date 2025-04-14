@@ -174,8 +174,8 @@ def dataframe_to_padded_tensor(df_stand, event_particles_col = "nid_23",
     vs padding. In order to do so, an attention_mask is implemented.
     """
     attention_mask = torch.tensor(
-        [[1]*len(event) 
-        + [0]*(padded_tensor.shape[1] 
+        [[0]*len(event) 
+        + [1]*(padded_tensor.shape[1] 
         - len(event)) for event in events],
         dtype=torch.bool
     )
