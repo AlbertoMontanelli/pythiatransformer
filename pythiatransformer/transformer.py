@@ -361,12 +361,14 @@ class ParticleTransformer(nn.Module):
         counter = 0
         logger.info("Training started!")
         for epoch in range(num_epochs):
-            train_loss.append(self.train_one_epoch(epoch, loss_func, optim))
-            val_loss.append(self.val_one_epoch(epoch, loss_func, val))
+            train_loss_epoch = self.train_one_epoch(epoch, loss_func, optim)
+            val_loss_epoch = self.val_one_epoch(epoch, loss_func, val)
+            train_loss.append(train_loss_epoch)
+            val_loss.append(val_loss_epoch)
             # if epoch > patient and val_loss[-1] > val_loss[-2] and train_loss[-1] < train_loss[-2]:
             #     logger.warning(f"Possible overfitting at epoch {epoch + 1}.")
             if epoch > num_epochs/10:
-                stop = self.early_stopping(val_loss, epoch)
+                stop, best_loss = self.early_stopping(val_loss_epoch, epoch, best_loss)
                 if stop:
                     counter += 1
                 else:
@@ -380,12 +382,18 @@ class ParticleTransformer(nn.Module):
     def early_stopping(self, val_loss, current_epoch):
         """
         Args:
-            val_loss (list):
+            val_loss (float):
             current_epoch (int):
         Returns:
             stop (bool):
+            best_loss (float)
         """
         stop = False
-        if val_loss[current_epoch-1] < val_loss[current_epoch]:
-            stop = True
-        return stop
+        if current_epoch == 0:
+            best_loss = val_loss
+        else:
+            if val_loss <= best_loss:
+                best_loss = val_loss
+            else:
+                stop = True
+        return stop, best_loss

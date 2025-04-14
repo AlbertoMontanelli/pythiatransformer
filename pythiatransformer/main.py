@@ -15,14 +15,6 @@ from data_processing import attention_train_23, attention_train_final
 from data_processing import attention_val_23, attention_val_final
 from data_processing import attention_test_23, attention_test_final
 
-# from attenzione_mask (1 = real, 0 = PAD) to key_padding_mask (True = PAD, False = real)
-attention_train_23 = ~attention_train_23.bool()
-attention_train_final = ~attention_train_final.bool()
-attention_val_23 = ~attention_val_23.bool()
-attention_val_final = ~attention_val_final.bool()
-attention_test_23 = ~attention_test_23.bool()
-attention_test_final = ~attention_test_final.bool()
-
 print(f"len train: {training_set_23.shape[0]}, len val: {validation_set_23.shape[0]}, len test: {test_set_23.shape[0]}")
 print(torch.mean(training_set_23), torch.std(training_set_23))
 
