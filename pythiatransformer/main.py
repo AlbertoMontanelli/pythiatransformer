@@ -1,6 +1,7 @@
 """
 """
 import matplotlib.pyplot as plt
+import torch
 import torch.nn as nn
 import torch.optim as optimizer
 
@@ -10,8 +11,10 @@ from transformer import ParticleTransformer
 from data_processing import training_set_final, training_set_23
 from data_processing import validation_set_final, validation_set_23
 from data_processing import test_set_final, test_set_23
+from data_processing import attention_mask_23, attention_mask_final
 
 print(f"len train: {training_set_23.shape[0]}, len val: {validation_set_23.shape[0]}, len test: {test_set_23.shape[0]}")
+print(torch.mean(training_set_23), torch.std(training_set_23))
 
 def plot_losses(train_loss, val_loss):
     """
@@ -37,9 +40,9 @@ transformer = ParticleTransformer(
     num_heads = 8,
     num_encoder_layers = 2,
     num_decoder_layers = 2,
-    num_units = 16,
+    num_units = 64,
     dropout = 0.1,
-    batch_size = 8,
+    batch_size = 1,
     activation = nn.ReLU()
 )
 
@@ -58,3 +61,11 @@ train_loss, val_loss = transformer.train_val(
 )
 
 plot_losses(train_loss, val_loss)
+
+# girare fastjet sull'output
+# cluster sequence
+# one hot encoding ID
+# id px, py, pz
+# ordinare le particelle dentro l'evento
+# sorting sui pt
+# utilizzare eventi più semplici (QCD)

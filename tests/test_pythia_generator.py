@@ -199,7 +199,7 @@ class PythiaTransformerTest(unittest.TestCase):
         event_1 = [
             self.DummyParticle(23, False, 1),  
             self.DummyParticle(23, True, -1),  
-            self.DummyParticle(1, False, 11),  
+            self.DummyParticle(-23, False, 11),  
             self.DummyParticle(0, True, -11),
             self.DummyParticle(0, True, -12)  
         ]
@@ -207,7 +207,7 @@ class PythiaTransformerTest(unittest.TestCase):
             self.DummyParticle(0, True, 55),
             self.DummyParticle(23, True, 2),  
             self.DummyParticle(23, False, -2), 
-            self.DummyParticle(23, False, -3), 
+            self.DummyParticle(-23, False, -3), 
             self.DummyParticle(1, True, 22),  
             self.DummyParticle(0, False, -22)  
         ]
@@ -222,7 +222,7 @@ class PythiaTransformerTest(unittest.TestCase):
         mock_pythia.next.side_effect = side_effect_for_event()
 
         # Define expected results for data_23 and data_final.
-        expected_data_23 = {"id_23": [[1, -1], [2, -2, -3]]}
+        expected_data_23 = {"id_23": [[1, -1, 11], [2, -2, -3]]}
         expected_data_final = {"id_final": [[-1, -11, -12], [2, 22]]}
 
         # Define dictionaries for status 23 and final particles.

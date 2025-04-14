@@ -216,7 +216,9 @@ class ParticleTransformer(nn.Module):
         input = self.input_projection(input)
         target = self.input_projection(target)
         output = self.transformer(input, target)
+        # print(f"output shape: {output.shape}")
         output = self.output_projection(output)
+        # print(f"output shape: {output.shape}")
         return output
 
     def train_one_epoch(self, epoch, loss_func, optim):
@@ -240,6 +242,8 @@ class ParticleTransformer(nn.Module):
             optim.zero_grad()
             outputs = self.forward(inputs, targets)
             loss = loss_func(outputs, targets)
+            # print(f"output shape: {outputs.shape}")
+            # print(f"target shape: {targets.shape}")
             if not torch.isfinite(loss):
                 raise ValueError(
                     f"Loss is not finite at epoch {epoch + 1}"
