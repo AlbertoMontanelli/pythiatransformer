@@ -359,6 +359,7 @@ class ParticleTransformer(nn.Module):
         train_loss = []
         val_loss = []
         counter = 0
+        best_loss = 0
         logger.info("Training started!")
         for epoch in range(num_epochs):
             train_loss_epoch = self.train_one_epoch(epoch, loss_func, optim)
