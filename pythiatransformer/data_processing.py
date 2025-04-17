@@ -1,196 +1,81 @@
 """In this code the data from pythia_generator.py is processed.
-First, the ROOT files are imported as pandas dataframes.
+First, the ROOT files are imported as awkward arrays.
 Then, the features are standardized.
-Last, the dataframes are converted to Torch tensors and split
+Last, the data is converted to Torch tensors and split
 between training, validation and test sets.
 """
-import ast
-
+import awkward as ak
 import numpy as np
-import pandas as pd
-from sklearn.preprocessing import StandardScaler
 import torch
-from torch.nn.utils.rnn import pad_sequence
 import uproot
 
 
-with uproot.open("events.root") as file:
-    df_23 = file["tree_23"].arrays(library="pd")
-    df_final = file["tree_final"].arrays(library="pd")
+def standardize_features(data, features):
+    """Standardize features (mean=0, std=1) directly on Awkward Arrays.
+        Args:
+        data (ak.Array): Input Awkward Array.
+        feature (list): Features to standardize.
 
-def convert_to_list(value):
+    Returns:
+        data (ak.Array): Standardized Awkward Array.
     """
-    Function aimed at converting strings into lists. Helper function.
+    for feature in features:
+        mean = ak.mean(data[feature])
+        std = ak.std(data[feature])
+        data[feature] = (data[feature] - mean) / std
+    return data
+
+def awkward_to_padded_tensor(data, features):
+    """
+    Convert Awkward Array to padded Torch tensor.
 
     Args:
-        value (any): the input value, can be any type.
+        data (ak.Array): Input Awkward Array.
+        feature_cols (list): List of feature columns to stack.
 
-    Return:
-        value: it is the value in input with a list type if the type of
-        the input is str, otherwise it is the input value unchanged.
+    Returns:
+        padded_tensor (torch.Tensor): Padded tensor of  shape:
+                                      (num_events, max_particles,
+                                      num_features).
+        attention_mask (torch.Tensor): Attention mask (0 for actual,
+                                       1 for padding).
     """
-    if isinstance(value, str):
-        try:
-            return ast.literal_eval(value)  # ast.literal_eval raises an
-                                            # exception if value is not
-                                            # a valid datatype.
-        except (ValueError, SyntaxError):
-            return value
-    return value
-
-def preprocess_dataframe(df, event_particles_col = "nid_23",
-                         id_col="id_23", status_col="status_23",
-                         px_col="px_23", py_col="py_23", pz_col="pz_23",
-                         e_col="e_23", m_col="m_23"):
-    """Function that preprocesses the DataFrame, dropping repetitive
-    columns, exploding the dataframe, doing normalization, and
-    re-building its original structure. The function is initialized
-    with respect to df_23.
-
-    Args:
-        df (pandas DataFrame): DataFrame.
-        event_particles_col (str): name of the event particles column.
-        id_col (str): name of the particle ID column.
-        status_col (str): name of the particle status column.
-        px_col (str): name of the particle px column.
-        py_col (str): name of the particle py column.
-        pz_col (str): name of the particle pz column.
-        e_col (str): name of the particle energy column.
-        m_col (str): name of the particle mass column.
-
-    Return:
-        df_stand (pandas DataFrame): standardized DataFrame.
-    """
-    
-    # Dropping repetitive columns.
-    drop_cols = [f"n{col}" for col in [
-        status_col, px_col, py_col, pz_col, e_col, m_col
-    ]]
-    for col in drop_cols:
-        if col in df.columns:
-            df = df.drop(columns=[col])
-
-    # Adding the event ID
-    # (useful to rebuild the dataframe after the explosion).
-    df["event_number"] = [ii + 1 for ii in range(len(df))]
-
-    """The problem at hand regards the fact that columns are made
-    by arrays, hence why it is not possible to standardize the df
-    using StandardScaler() or such. In order to do it anyway, the
-    dataframe needs to explode, so that every row has only one value.
-    """
-    # Converting to lists.
-    for col in [id_col, status_col, px_col, py_col, pz_col, e_col, m_col]:
-        df[col] = df[col].apply(convert_to_list)
-
-    # Exploding the dataframe.
-    df_exploded = df.explode(
-        [id_col, status_col, px_col, py_col, pz_col, e_col, m_col],
-        ignore_index=True
-    )
-
-    # ===== Standardization of px, py and pz. =====
-    df_exploded[[px_col, py_col, pz_col]] = StandardScaler().fit_transform(
-        df_exploded[[px_col, py_col, pz_col]]
-    )
-
-    # ===== Log-scaling of e and m. =====
-    # In order to apply np.log1p(), the entries of the dataframe need to
-    # be converted to floats.
-    df_exploded[e_col] = pd.to_numeric(
-        df_exploded[e_col], errors="coerce")
-    df_exploded[m_col] = pd.to_numeric(
-        df_exploded[m_col], errors="coerce")
-
-    df_exploded[[e_col, m_col]] = df_exploded[
-        [e_col, m_col]].apply(np.log1p)
-
-    """Once the normalization process is finished, the dataframe
-    is reconstitued with its initial shape.
-    """
-    df_stand = (df_exploded.groupby(["event_number"]).agg({
-        event_particles_col: 'min', id_col: list, status_col: list,
-        px_col: list, py_col: list, pz_col: list, e_col: list, m_col: list
-    }).reset_index())
-
-    df_stand = df_stand.drop(columns=[status_col, "event_number"])
-
-    return df_stand
-
-
-def dataframe_to_padded_tensor(df_stand, event_particles_col = "nid_23",
-                         id_col="id_23", px_col="px_23", py_col="py_23",
-                         pz_col="pz_23", e_col="e_23", m_col="m_23"):
-    """Function that converts the standardized DataFrame to a Torch
-    padded tensor.
-
-    Args:
-        df_stand (pandas DataFrame): DataFrame.
-        event_particles_col (str): name of the event particles column.
-        id_col (str): name of the particle ID column.
-        px_col (str): name of the particle px column.
-        py_col (str): name of the particle py column.
-        pz_col (str): name of the particle pz column.
-        e_col (str): name of the particle energy column.
-        m_col (str): name of the particle mass column.
-
-    Return:
-        padded_tensor: Torch padded tensor, obtained by the conversion
-                       of the DataFrame.
-        attention_mask: attention mask that considers the padding.
-    """
-    
-    """Once the original division per event is retrieved, the dataframe
-    needs to be converted to a Torch tensor readable by the transformer.
-    """
-    events = []
-    for _, row in df_stand.iterrows():
-        num_particles = row[event_particles_col]
-        event = []
-        for ii in range(num_particles):
-            particle = [
-                row[id_col][ii],
-                row[px_col][ii],
-                row[py_col][ii],
-                row[pz_col][ii],
-                row[e_col][ii],
-                row[m_col][ii]
-            ]
-            event.append(particle)
-        events.append(event)
-
-    event_tensor = [
-        torch.tensor(event, dtype = torch.float32) for event in events
+    # Find max number of particles for all the events.
+    max_particles = ak.max(ak.num(data[features[0]]))
+    # Pad each feature to ensure an equal number of particles
+    # per event. Collect each feature in a new dictionary.
+    padded_events = {
+        feature: ak.fill_none(
+            ak.pad_none(data[feature], target=max_particles, axis=1), 0
+            )
+        for feature in features
+    }
+    # Convert the features in numpy arrays and stack them to obtain the
+    # desired shape. Then convert into a Torch tensor with the same
+    # shape.
+    padded_arrays = [
+        ak.to_numpy(padded_events[feature]) for feature in features
     ]
+    padded_array = np.stack(padded_arrays, axis=-1)
+    padded_tensor = torch.tensor(padded_array, dtype=torch.float32)
 
-    """Padding is necessary since every event has a different
-    number of particles.
-    """
-    padded_tensor = pad_sequence(
-        event_tensor, batch_first=True, padding_value=0.0
-    )
+    # Compute attention mask (1 for padding, 0 for actual particles).
+    attention_mask = ak.num(data[features[0]], axis=1)
+    attention_mask = torch.tensor([[0] * num + [1] * (padded_array.shape[1] - num)
+                                    for num in attention_mask], dtype=torch.bool)
 
-    """The padded sequence needs to be discriminated: actual particles
-    vs padding. In order to do so, an attention_mask is implemented.
-    """
-    attention_mask = torch.tensor(
-        [[0]*len(event) 
-        + [1]*(padded_tensor.shape[1] 
-        - len(event)) for event in events],
-        dtype=torch.bool
-    )
-    
     return padded_tensor, attention_mask
 
 def train_val_test_split(
         tensor, train_perc = 0.6, val_perc = 0.2, test_perc = 0.2
         ):
-    """Function that splits a tensor in training, validation and test sets.
+    """Split a tensor into training, validation, and test sets.
 
     Args:
         tensor (Torch tensor): data in the form of a Torch tensor.
         train_perc (float): fraction of the data used for training.
         val_perc (float): fraction of the data used for validation.
+        test_perc (float): fraction of the data used for testing.
 
     Return:
         training_set (Torch tensor): training set.
@@ -198,7 +83,10 @@ def train_val_test_split(
         test_set (Torch tensor): test set.
     """
     if not (train_perc + val_perc + test_perc == 1):
-        raise ValueError(f"Invalid values for data splitting fractions. Expected positive fractions that sum up to 1.")
+        raise ValueError(
+            f"Invalid values for data splitting fractions."
+            f" Expected positive fractions that sum up to 1."
+        )
     
     invalids = []
     if not (0 <= train_perc <= 1):
@@ -208,31 +96,57 @@ def train_val_test_split(
     if not (0 <= test_perc <= 1):
         invalids.append(f"test_perc = {test_perc}")
     if invalids:
-        raise ValueError(f"Invalid value(s) for {','.join(invalids)}. Expected value(s) between 0 and 1, included.")
+        raise ValueError(
+            f"Invalid value(s) for {','.join(invalids)}."
+            f" Expected value(s) between 0 and 1, included."
+        )
     
     nn = len(tensor)
     len_train = int(train_perc*nn)
     len_val = int(val_perc*nn)
 
     training_set = tensor[:len_train]
-    validation_set = tensor[len_train:len_train + len_val]
-    test_set = tensor[len_train + len_val:]
+    validation_set = tensor[len_train:(len_train + len_val)]
+    test_set = tensor[(len_train + len_val):]
 
     return training_set, validation_set, test_set
 
+if __name__== "__main__":
+    with uproot.open("events.root") as file:
+        data_23 = file["tree_23"].arrays(library="ak")
+        data_final = file["tree_final"].arrays(library="ak")
 
-df_23_stand = preprocess_dataframe(df_23)
-padded_tensor_23, attention_mask_23 = dataframe_to_padded_tensor(df_23_stand)
+    # Standardization.
+    data_23 = standardize_features(
+        data_23, 
+        features=["px_23", "py_23", "pz_23", "pT_23"]
+    )
+    for values in data_23[0].fields:
+        print(values)
+        print(data_23[0][values])
+    data_final = standardize_features(
+        data_final, 
+        features=["px_final", "py_final", "pz_final", "pT_final"]
+    )
 
-df_final_stand = preprocess_dataframe(df_final, "nid_final", "id_final",
-                                      "status_final", "px_final", "py_final",
-                                      "pz_final", "e_final", "m_final")
-padded_tensor_final, attention_mask_final = dataframe_to_padded_tensor(
-    df_final_stand, "nid_final", "id_final", "px_final", "py_final",
-    "pz_final", "e_final", "m_final"
-)
+    padded_tensor_23, attention_mask_23 = awkward_to_padded_tensor(
+        data_23,
+        features=["id_23", "px_23", "py_23", "pz_23", "pT_23"]
+    )
+    padded_tensor_final, attention_mask_final = awkward_to_padded_tensor(
+        data_final,
+        features=["id_final", "px_final", "py_final", "pz_final", "pT_final"]
+    )
 
-training_set_23, validation_set_23, test_set_23 = train_val_test_split(padded_tensor_23)
-attention_train_23, attention_val_23, attention_test_23 = train_val_test_split(attention_mask_23)
-training_set_final, validation_set_final, test_set_final = train_val_test_split(padded_tensor_final)
-attention_train_final, attention_val_final, attention_test_final = train_val_test_split(attention_mask_final)
+    training_set_23, validation_set_23, test_set_23 = (
+        train_val_test_split(padded_tensor_23)
+    )
+    attention_train_23, attention_val_23, attention_test_23 = (
+        train_val_test_split(attention_mask_23)
+    )
+    training_set_final, validation_set_final, test_set_final = (
+        train_val_test_split(padded_tensor_final)
+    )
+    attention_train_final, attention_val_final, attention_test_final = (
+        train_val_test_split(attention_mask_final)
+    )
