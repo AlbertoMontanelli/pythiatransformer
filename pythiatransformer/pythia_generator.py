@@ -149,60 +149,6 @@ def generate_events(output_file: str, n_events: int):
 if __name__ == "__main__":
     import time
     start = time.time()
-    generate_events("events.root", n_events=1000)
+    generate_events("events.root", n_events=10000)
     end = time.time()
     print(f"total time: {end-start} s")
-
-
-
-
-
-
-
-
-# import torch
-# from torch.nn.utils.rnn import pad_sequence
-
-
-# # Dati di esempio con lunghezze variabili
-# data = {
-#     "id_23": [[2, 1], [2, 2, 4], [2]],
-#     "px_23": [[0.2, 1.], [0.3, 0.4, 0.5], [2.1]],
-# }
-
-# # Creazione di un Awkward Array con lunghezze variabili
-# awkward_data = ak.Array(data)
-# # Verifica della struttura dei dati
-# print("Awkward Array:\n")
-# for key in awkward_data.fields:
-#     print(f"type of ak_data[key] is {type(awkward_data[key])}")
-#     print(f"ak_data[key] is{awkward_data[key]}")
-#     for sublist in awkward_data[key]:
-#         print("begin sublist")
-#         print(f"sublist {sublist}")
-#         print(f"sublist[0] {sublist[0]}")
-#         print(type(sublist))
-#         for value in sublist:
-#             print(value)
-#             print(type(value))
-
-
-# # Converting each list in awkward array into a tensor
-# tensor_data = {
-#     key: [torch.tensor(item, dtype=torch.float) for item in awkward_data[key]]
-#     for key in awkward_data.fields
-# }
-
-# # Padding the sequences so they have the same length
-# padded_tensor_data = {
-#     key: pad_sequence(tensor_data[key], batch_first=True, padding_value=0)
-#     for key in tensor_data
-# }
-
-# # Stampa del risultato
-# for key, tensor in padded_tensor_data.items():
-#     print(f"{key}: {tensor}")
-
-
-
-
