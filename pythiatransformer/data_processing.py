@@ -121,9 +121,6 @@ if __name__== "__main__":
         data_23, 
         features=["px_23", "py_23", "pz_23", "pT_23"]
     )
-    for values in data_23[0].fields:
-        print(values)
-        print(data_23[0][values])
     data_final = standardize_features(
         data_final, 
         features=["px_final", "py_final", "pz_final", "pT_final"]
@@ -150,3 +147,5 @@ if __name__== "__main__":
     attention_train_final, attention_val_final, attention_test_final = (
         train_val_test_split(attention_mask_final)
     )
+
+    print(training_set_23)
