@@ -2,3 +2,5 @@ __pycache__/
 tests/__pycache__
 CMEPDA_project.egg-info/
 .ipynb_checkpoints/
+pythiatransformer/events.root
+events.root
