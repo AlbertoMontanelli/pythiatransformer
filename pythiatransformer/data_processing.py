@@ -111,41 +111,38 @@ def train_val_test_split(
 
     return training_set, validation_set, test_set
 
-if __name__== "__main__":
-    with uproot.open("events.root") as file:
-        data_23 = file["tree_23"].arrays(library="ak")
-        data_final = file["tree_final"].arrays(library="ak")
+with uproot.open("events.root") as file:
+    data_23 = file["tree_23"].arrays(library="ak")
+    data_final = file["tree_final"].arrays(library="ak")
 
-    # Standardization.
-    data_23 = standardize_features(
-        data_23, 
-        features=["px_23", "py_23", "pz_23", "pT_23"]
-    )
-    data_final = standardize_features(
-        data_final, 
-        features=["px_final", "py_final", "pz_final", "pT_final"]
-    )
+# Standardization.
+data_23 = standardize_features(
+    data_23, 
+    features=["px_23", "py_23", "pz_23", "pT_23"]
+)
+data_final = standardize_features(
+    data_final, 
+    features=["px_final", "py_final", "pz_final", "pT_final"]
+)
 
-    padded_tensor_23, attention_mask_23 = awkward_to_padded_tensor(
-        data_23,
-        features=["id_23", "px_23", "py_23", "pz_23", "pT_23"]
-    )
-    padded_tensor_final, attention_mask_final = awkward_to_padded_tensor(
-        data_final,
-        features=["id_final", "px_final", "py_final", "pz_final", "pT_final"]
-    )
+padded_tensor_23, attention_mask_23 = awkward_to_padded_tensor(
+    data_23,
+    features=["id_23", "px_23", "py_23", "pz_23", "pT_23"]
+)
+padded_tensor_final, attention_mask_final = awkward_to_padded_tensor(
+    data_final,
+    features=["id_final", "px_final", "py_final", "pz_final", "pT_final"]
+)
 
-    training_set_23, validation_set_23, test_set_23 = (
-        train_val_test_split(padded_tensor_23)
-    )
-    attention_train_23, attention_val_23, attention_test_23 = (
-        train_val_test_split(attention_mask_23)
-    )
-    training_set_final, validation_set_final, test_set_final = (
-        train_val_test_split(padded_tensor_final)
-    )
-    attention_train_final, attention_val_final, attention_test_final = (
-        train_val_test_split(attention_mask_final)
-    )
-
-    print(training_set_23)
+training_set_23, validation_set_23, test_set_23 = (
+    train_val_test_split(padded_tensor_23)
+)
+attention_train_23, attention_val_23, attention_test_23 = (
+    train_val_test_split(attention_mask_23)
+)
+training_set_final, validation_set_final, test_set_final = (
+    train_val_test_split(padded_tensor_final)
+)
+attention_train_final, attention_val_final, attention_test_final = (
+    train_val_test_split(attention_mask_final)
+)
