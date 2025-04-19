@@ -50,7 +50,7 @@ transformer = ParticleTransformer(
     num_decoder_layers = 2,
     num_units = 64,
     dropout = 0.1,
-    batch_size = 1,
+    batch_size = 100,
     activation = nn.ReLU()
 )
 
