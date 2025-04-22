@@ -12,12 +12,13 @@ import uproot
 
 def standardize_features(data, features):
     """Standardize features (mean=0, std=1) directly on Awkward Arrays.
-        Args:
-        data (ak.Array): Input Awkward Array.
-        feature (list): Features to standardize.
 
-    Returns:
-        data (ak.Array): Standardized Awkward Array.
+        Args:
+            data (ak.Array): Input Awkward Array.
+            feature (list): Features to standardize.
+
+        Returns:
+            data (ak.Array): Standardized Awkward Array.
     """
     for feature in features:
         mean = ak.mean(data[feature])
@@ -26,19 +27,18 @@ def standardize_features(data, features):
     return data
 
 def awkward_to_padded_tensor(data, features):
-    """
-    Convert Awkward Array to padded Torch tensor.
+    """Convert Awkward Array to padded Torch tensor.
 
-    Args:
-        data (ak.Array): Input Awkward Array.
-        feature_cols (list): List of feature columns to stack.
+        Args:
+            data (ak.Array): Input Awkward Array.
+            feature_cols (list): List of feature columns to stack.
 
-    Returns:
-        padded_tensor (torch.Tensor): Padded tensor of  shape:
-                                      (num_events, max_particles,
-                                      num_features).
-        attention_mask (torch.Tensor): Attention mask (0 for actual,
-                                       1 for padding).
+        Returns:
+            padded_tensor (torch.Tensor): Padded tensor of  shape:
+                                          (num_events, max_particles,
+                                          num_features).
+            attention_mask (torch.Tensor): Attention mask (0 for actual,
+                                           1 for padding).
     """
     # Find max number of particles for all the events.
     max_particles = ak.max(ak.num(data[features[0]]))
@@ -71,16 +71,16 @@ def train_val_test_split(
         ):
     """Split a tensor into training, validation, and test sets.
 
-    Args:
-        tensor (Torch tensor): data in the form of a Torch tensor.
-        train_perc (float): fraction of the data used for training.
-        val_perc (float): fraction of the data used for validation.
-        test_perc (float): fraction of the data used for testing.
+        Args:
+            tensor (Torch tensor): data in the form of a Torch tensor.
+            train_perc (float): fraction of the data used for training.
+            val_perc (float): fraction of the data used for validation.
+            test_perc (float): fraction of the data used for testing.
 
-    Return:
-        training_set (Torch tensor): training set.
-        validation_set (Torch tensor): validation set.
-        test_set (Torch tensor): test set.
+        Return:
+            training_set (Torch tensor): training set.
+            validation_set (Torch tensor): validation set.
+            test_set (Torch tensor): test set.
     """
     if not (train_perc + val_perc + test_perc == 1):
         raise ValueError(
