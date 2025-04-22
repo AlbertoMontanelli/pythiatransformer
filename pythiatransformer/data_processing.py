@@ -63,8 +63,22 @@ def awkward_to_padded_tensor(data, features):
     attention_mask = ak.num(data[features[0]], axis=1)
     attention_mask = torch.tensor([[0] * num + [1] * (padded_array.shape[1] - num)
                                     for num in attention_mask], dtype=torch.bool)
+    
+    # Sorting the padded tensor with ascending order with respect to pT
+    # (and consequently the attention mask)
+    indices_data = torch.argsort(padded_tensor[:, :, -1], dim=1)
+    padded_tensor_sorted = torch.gather(
+        padded_tensor, 
+        dim=1, 
+        index=indices_data.unsqueeze(-1).expand(-1, -1, padded_tensor.size(-1))
+    )
+    attention_mask_sorted = torch.gather(
+        attention_mask, 
+        dim=1, 
+        index=indices_data.unsqueeze(-1).expand(-1, -1, attention_mask.size(-1))
+    )
 
-    return padded_tensor, attention_mask
+    return padded_tensor_sorted, attention_mask_sorted
 
 def train_val_test_split(
         tensor, train_perc = 0.6, val_perc = 0.2, test_perc = 0.2
