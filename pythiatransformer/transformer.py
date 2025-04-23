@@ -332,7 +332,7 @@ class ParticleTransformer(nn.Module):
             logger.debug(f"Test loss at epoch {epoch + 1}: {loss_epoch}")
         return loss_epoch
 
-    def train_val(self, num_epochs, loss_func, optim, val = True, patient = 5):
+    def train_val(self, num_epochs, loss_func, optim, val = True, patient = 10):
         """This function trains and validates the model for the given
         number of epochs.
         Args:
@@ -370,13 +370,13 @@ class ParticleTransformer(nn.Module):
             val_loss.append(val_loss_epoch)
             # if epoch > patient and val_loss[-1] > val_loss[-2] and train_loss[-1] < train_loss[-2]:
             #     logger.warning(f"Possible overfitting at epoch {epoch + 1}.")
-            if epoch > num_epochs/10:
-                stop, best_loss = self.early_stopping(val_loss_epoch, epoch, best_loss)
-                if stop:
-                    counter += 1
-                if counter >= patient:
-                    logger.warning(f"Early stopping at epoch {epoch + 1}.")
-                    break
+            stop, best_loss = self.early_stopping(val_loss_epoch, epoch, best_loss)
+            logger.info(f"stop: {stop}")
+            if stop:
+                counter += 1
+            if counter >= patient:
+                logger.warning(f"Early stopping at epoch {epoch + 1}.")
+                break
         logger.info("Training completed!")
         return train_loss, val_loss
 
@@ -385,6 +385,7 @@ class ParticleTransformer(nn.Module):
         Args:
             val_loss (float):
             current_epoch (int):
+            best_loss (float)
         Returns:
             stop (bool):
             best_loss (float)

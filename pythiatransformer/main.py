@@ -56,7 +56,7 @@ transformer = ParticleTransformer(
 
 epochs = 100
 loss_func = nn.MSELoss()
-learning_rate = 1e-3
+learning_rate = 1e-2
 logger.info(
     f"Batch size: {transformer.batch_size}, Epochs: {epochs}, "
     f"Learning rate: {learning_rate}, loss function: {loss_func}."
