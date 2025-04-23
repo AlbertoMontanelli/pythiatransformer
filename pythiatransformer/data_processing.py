@@ -72,8 +72,27 @@ def awkward_to_padded_tensor(data, features):
         dim=1, 
         index=indices_data.unsqueeze(-1).expand(-1, -1, padded_tensor.size(-1))
     )
-    
+
     return padded_tensor_sorted, attention_mask
+
+def one_hot_encoding(tensor, dict_ids, num_classes):
+    """
+    """
+    # Convert id from float type to long int type.
+    tensor_ids = tensor[:, :, 0].long()
+    # Create a tensor_ids clone.
+    indices = tensor_ids.clone()
+    # When the content of tensor_ids is equal to the key of dict_ids
+    # (pdg_id), the content of indices tensor is overwritten with the
+    # value (index) corresponding to pdg_id in the dictionary.
+    for pdg_id, index in dict_ids.items():
+        indices[tensor_ids == pdg_id] = index
+    print("for finito!")
+    # Create one-hot-encoding for the ids.
+    one_hot = torch.nn.functional.one_hot(
+        indices, num_classes=num_classes
+    ).float()
+    return one_hot
 
 def train_val_test_split(
         tensor, train_perc = 0.6, val_perc = 0.2, test_perc = 0.2
@@ -142,7 +161,6 @@ data_final["pT_final"] = np.sqrt(
     data_final["px_final"]**2 + data_final["py_final"]**2
 )
 
-
 padded_tensor_23, attention_mask_23 = awkward_to_padded_tensor(
     data_23,
     features=["id_23", "px_23", "py_23", "pz_23", "pT_23"]
@@ -151,6 +169,16 @@ padded_tensor_final, attention_mask_final = awkward_to_padded_tensor(
     data_final,
     features=["id_final", "px_final", "py_final", "pz_final", "pT_final"]
 )
+
+# Finding unique ids for one_hot_encoding() function.
+id_23 = np.unique(ak.flatten(data_23["id_23"]))
+id_final = np.unique(ak.flatten(data_final["id_final"]))
+id_all = np.unique(np.concatenate([id_23, id_final]))
+dict_ids = {pdg_id.item(): index for index, pdg_id in enumerate(id_all)}
+
+one_hot_23 = one_hot_encoding(padded_tensor_23, dict_ids, len(id_all))
+one_hot_final = one_hot_encoding(padded_tensor_final, dict_ids, len(id_all))
+print(one_hot_final[0])
 
 training_set_23, validation_set_23, test_set_23 = (
     train_val_test_split(padded_tensor_23)
