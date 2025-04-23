@@ -61,7 +61,7 @@ def awkward_to_padded_tensor(data, features):
 
     # Compute attention mask (1 for padding, 0 for actual particles).
     attention_mask = ak.num(data[features[0]], axis=1)
-    attention_mask = torch.tensor([[0] * num + [1] * (padded_array.shape[1] - num)
+    attention_mask = torch.tensor([[1] * (padded_array.shape[1] - num) + [0] * num
                                     for num in attention_mask], dtype=torch.bool)
     
     # Sorting the padded tensor with ascending order with respect to pT
@@ -72,13 +72,8 @@ def awkward_to_padded_tensor(data, features):
         dim=1, 
         index=indices_data.unsqueeze(-1).expand(-1, -1, padded_tensor.size(-1))
     )
-    # attention_mask_sorted = torch.gather(
-    #     attention_mask, 
-    #     dim=1, 
-    #     index=indices_data.unsqueeze(-1).expand(-1, -1, attention_mask.size(-1))
-    # )
-
-    return padded_tensor, attention_mask
+    
+    return padded_tensor_sorted, attention_mask
 
 def train_val_test_split(
         tensor, train_perc = 0.6, val_perc = 0.2, test_perc = 0.2
@@ -129,15 +124,24 @@ with uproot.open("events.root") as file:
     data_23 = file["tree_23"].arrays(library="ak")
     data_final = file["tree_final"].arrays(library="ak")
 
+
 # Standardization.
 data_23 = standardize_features(
     data_23, 
-    features=["px_23", "py_23", "pz_23", "pT_23"]
+    features=["px_23", "py_23", "pz_23"]
 )
 data_final = standardize_features(
     data_final, 
-    features=["px_final", "py_final", "pz_final", "pT_final"]
+    features=["px_final", "py_final", "pz_final"]
 )
+# Calculating pT.
+data_23["pT_23"] = np.sqrt(
+    data_23["px_23"]**2 + data_23["py_23"]**2
+)
+data_final["pT_final"] = np.sqrt(
+    data_final["px_final"]**2 + data_final["py_final"]**2
+)
+
 
 padded_tensor_23, attention_mask_23 = awkward_to_padded_tensor(
     data_23,
