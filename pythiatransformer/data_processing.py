@@ -76,7 +76,17 @@ def awkward_to_padded_tensor(data, features):
     return padded_tensor_sorted, attention_mask
 
 def one_hot_encoding(tensor, dict_ids, num_classes):
-    """
+    """One-hot-encoding of the ids.
+
+        Args:
+            tensor (torch.Tensor): input tensor.
+            dict_ids (dict): dictionary having as keys the PDG ids and
+                             as values the integers ranging from 0 to
+                             the number of different ids.
+            num_classes (int): maximum number of different ids.
+
+        Returns:
+            one_hot (torch.Tensor): one-hot-encoded tensor of the ids. 
     """
     # Convert id from float type to long int type.
     tensor_ids = tensor[:, :, 0].long()
