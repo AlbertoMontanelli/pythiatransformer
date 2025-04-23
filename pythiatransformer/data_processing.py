@@ -72,10 +72,7 @@ def awkward_to_padded_tensor(data, features):
         dim=1, 
         index=indices_data.unsqueeze(-1).expand(-1, -1, padded_tensor.size(-1))
     )
-
-    print(padded_tensor_sorted)
-    print(attention_mask)
-
+    
     return padded_tensor_sorted, attention_mask
 
 def train_val_test_split(

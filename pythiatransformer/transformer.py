@@ -1,6 +1,8 @@
 """
 Transformer class.
 """
+# from ignite.engine import Engine, Events
+# from ingite.handlers import EarlyStopping
 from loguru import logger
 import torch
 import torch.nn as nn
@@ -330,7 +332,7 @@ class ParticleTransformer(nn.Module):
             logger.debug(f"Test loss at epoch {epoch + 1}: {loss_epoch}")
         return loss_epoch
 
-    def train_val(self, num_epochs, loss_func, optim, val = True, patient = 10):
+    def train_val(self, num_epochs, loss_func, optim, val = True, patient = 5):
         """This function trains and validates the model for the given
         number of epochs.
         Args:
@@ -372,15 +374,13 @@ class ParticleTransformer(nn.Module):
                 stop, best_loss = self.early_stopping(val_loss_epoch, epoch, best_loss)
                 if stop:
                     counter += 1
-                else:
-                    counter = 0
                 if counter >= patient:
                     logger.warning(f"Early stopping at epoch {epoch + 1}.")
                     break
         logger.info("Training completed!")
         return train_loss, val_loss
 
-    def early_stopping(self, val_loss, current_epoch):
+    def early_stopping(self, val_loss, current_epoch, best_loss):
         """
         Args:
             val_loss (float):
