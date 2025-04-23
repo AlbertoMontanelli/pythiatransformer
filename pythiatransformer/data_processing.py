@@ -72,13 +72,13 @@ def awkward_to_padded_tensor(data, features):
         dim=1, 
         index=indices_data.unsqueeze(-1).expand(-1, -1, padded_tensor.size(-1))
     )
-    attention_mask_sorted = torch.gather(
-        attention_mask, 
-        dim=1, 
-        index=indices_data.unsqueeze(-1).expand(-1, -1, attention_mask.size(-1))
-    )
+    # attention_mask_sorted = torch.gather(
+    #     attention_mask, 
+    #     dim=1, 
+    #     index=indices_data.unsqueeze(-1).expand(-1, -1, attention_mask.size(-1))
+    # )
 
-    return padded_tensor_sorted, attention_mask_sorted
+    return padded_tensor, attention_mask
 
 def train_val_test_split(
         tensor, train_perc = 0.6, val_perc = 0.2, test_perc = 0.2

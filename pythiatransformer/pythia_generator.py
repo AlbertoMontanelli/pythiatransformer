@@ -149,6 +149,6 @@ def generate_events(output_file: str, n_events: int):
 if __name__ == "__main__":
     import time
     start = time.time()
-    generate_events("events.root", n_events=10000)
+    generate_events("events.root", n_events=100)
     end = time.time()
     print(f"total time: {end-start} s")
