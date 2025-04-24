@@ -62,6 +62,10 @@ logger.info(
     f"Learning rate: {learning_rate}, loss function: {loss_func}."
 )
 
+output = transformer.forward(test_set_23, test_set_final, attention_test_23, attention_test_final)
+print(output.shape)
+print(test_set_final.shape)
+
 train_loss, val_loss = transformer.train_val(
     num_epochs = epochs,
     loss_func = loss_func,

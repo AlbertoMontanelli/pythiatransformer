@@ -136,7 +136,7 @@ class ParticleTransformer(nn.Module):
             raise ValueError(
                 f"Batch size must be smaller than the input dataset size."
             )
-        
+
         if not (num_units % num_heads == 0):
             raise ValueError(
                 "Number of units must be a multiple of number of heads."
@@ -209,7 +209,7 @@ class ParticleTransformer(nn.Module):
         """This function prepares the data for training by splitting it
         into batches and shuffling the training data.
 
-        Args: 
+        Args:
             shuffle (bool):
         Returns:
             loader (Iterator): An iterator for the training
@@ -217,7 +217,7 @@ class ParticleTransformer(nn.Module):
                                         shuffling enabled.
             loader (Iterator): An iterator for the test data, with
                                     batching and shuffling enabled.
-            
+
         """
         seed = 1
         generator = torch.Generator() # creation of a new generator
@@ -230,7 +230,7 @@ class ParticleTransformer(nn.Module):
             shuffle = shuffle,
             generator = generator if shuffle else None
         )
-        
+
         return loader
 
     def forward(self, input, target, input_mask, target_mask):
@@ -254,7 +254,7 @@ class ParticleTransformer(nn.Module):
         output = self.transformer(
             src = input,
             tgt = target,
-            src_key_padding_mask = input_mask, 
+            src_key_padding_mask = input_mask,
             tgt_key_padding_mask = target_mask
         )
         # print(f"output shape: {output.shape}")
@@ -312,7 +312,7 @@ class ParticleTransformer(nn.Module):
         if val:
             data_loader = self.val_data
             mask_loader = self.attention_val_data
-        else: 
+        else:
             data_loader = self.test_data
             mask_loader = self.attention_test_data
         self.eval()
@@ -371,11 +371,11 @@ class ParticleTransformer(nn.Module):
             if epoch >= 10:
                 stop, best_loss = self.early_stopping(val_loss_epoch, epoch, best_loss)
                 logger.info(f"stop: {stop}")
-		if stop:
-	            counter += 1
-		if counter >= patient:
-		    logger.warning(f"Early stopping at epoch {epoch + 1}.")
-		    break
+                if stop:
+                    counter += 1
+                if counter >= patient:
+                    logger.warning(f"Early stopping at epoch {epoch + 1}.")
+                    break
         logger.info("Training completed!")
         return train_loss, val_loss
 
