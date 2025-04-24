@@ -63,7 +63,7 @@ logger.info(
 )
 
 ##################################################################################################
-print("prova generazione particelle con generate_target")
+logger.info("prova generazione particelle con generate_target")
 # Lunghezza massima della sequenza target da generare
 max_len = 1217  # Lunghezza delle particelle finali
 
@@ -73,8 +73,8 @@ output = transformer.generate_target(
     input_mask=attention_test_23,  # Maschera per l'input
     max_len=max_len  # Lunghezza massima da generare
 )
-
-print(f"Output shape generate_target: {output.shape}")  # Controlla la forma dell'output
+logger.info("fine generazione particelle con generate_target")
+logger.info(f"Output shape generate_target: {output.shape}")  # Controlla la forma dell'output
 
 
 ##################################################################################################
