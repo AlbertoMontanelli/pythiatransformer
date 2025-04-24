@@ -8,13 +8,15 @@ from loguru import logger
 import uproot
 
 from pythia8 import Pythia
- 
+
 
 def setup_pythia() -> Pythia:
     """Configure and return a Pythia instance.
     """
     try:
         pythia = Pythia()
+        pythia.readString("Random:setSeed = on")
+        pythia.readString("Random:seed = 10")
         pythia.readString("HardQCD:all = on")
         pythia.readString("PhaseSpace:pTHatMin = 100.")
         pythia.init()
@@ -149,6 +151,6 @@ def generate_events(output_file: str, n_events: int):
 if __name__ == "__main__":
     import time
     start = time.time()
-    generate_events("events.root", n_events=100)
+    generate_events("events.root", n_events=10000)
     end = time.time()
     print(f"total time: {end-start} s")
