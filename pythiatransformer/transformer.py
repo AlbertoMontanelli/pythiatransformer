@@ -368,9 +368,9 @@ class ParticleTransformer(nn.Module):
             val_loss_epoch = self.val_one_epoch(epoch, loss_func, val)
             train_loss.append(train_loss_epoch)
             val_loss.append(val_loss_epoch)
-            stop, best_loss = self.early_stopping(val_loss_epoch, epoch, best_loss)
-            logger.info(f"stop: {stop}")
             if epoch >= 10:
+                stop, best_loss = self.early_stopping(val_loss_epoch, epoch, best_loss)
+                logger.info(f"stop: {stop}")
 		if stop:
 	            counter += 1
 		if counter >= patient:
