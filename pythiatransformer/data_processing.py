@@ -188,7 +188,14 @@ dict_ids = {pdg_id.item(): index for index, pdg_id in enumerate(id_all)}
 
 one_hot_23 = one_hot_encoding(padded_tensor_23, dict_ids, len(id_all))
 one_hot_final = one_hot_encoding(padded_tensor_final, dict_ids, len(id_all))
-print(one_hot_final[0])
+
+print(f"one hot final shape: {one_hot_final.shape}")
+
+padded_tensor_final = torch.cat((one_hot_final, padded_tensor_final[:, :, 1:]), dim=-1)
+padded_tensor_23 = torch.cat((one_hot_23, padded_tensor_23[:, :, 1:]), dim=-1)
+print(f"padded tensor final shape: {padded_tensor_final.shape}")
+
+print(padded_tensor_final[0, -1, :])
 
 training_set_23, validation_set_23, test_set_23 = (
     train_val_test_split(padded_tensor_23)
