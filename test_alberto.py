@@ -17,6 +17,7 @@ events = ak.Array([
     {"feature1": [1.0, 2.0, 5.0], "feature2": [0.4, 0.5, 0.6], "feature 3": [-88, -77, -66], "feature 4": [41, 69, 26]},  # Evento 3         
 ])
 
+
 def tensor_convertion(events, selected_features):
     # Calcolare il numero massimo di particelle
     max_particles = ak.max(ak.num(events[selected_features[0]]))
