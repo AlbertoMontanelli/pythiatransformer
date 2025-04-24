@@ -402,20 +402,20 @@ class ParticleTransformer(nn.Module):
     def generate_target(self, input, input_mask, max_len):
         """
         Inferenza autoregressiva: genera il target passo dopo passo dato l'input.
-        
+
         Args:
             input (torch.Tensor): Tensor di input (particelle di status 23).
             input_mask (torch.Tensor): Maschera per l'input.
             max_len (int): Lunghezza massima della sequenza target da generare.
-        
+
         Returns:
             torch.Tensor: Sequenza generata (particelle finali).
         """
         # Proietta l'input nello spazio nascosto
         input = self.input_projection(input)
         
-        # Placeholder per il target iniziale (inizialmente vuoto o con zeri)
-        target = torch.zeros((input.size(0), 1, self.dim_features), device=input.device)
+        # Placeholder iniziale per il target nello spazio nascosto
+        target = torch.zeros((input.size(0), 1, self.num_units), device=input.device)
         
         # Lista per raccogliere i token generati
         outputs = []
@@ -430,13 +430,13 @@ class ParticleTransformer(nn.Module):
             )
             
             # Estrai il prossimo token generato (l'ultimo della sequenza output)
-            next_token = self.output_projection(output[:, -1:, :])
+            next_token = self.output_projection(output[:, -1:, :])  # Proietta nello spazio originale
             
             # Aggiungi il token generato alla lista degli output
             outputs.append(next_token)
             
-            # Aggiorna il target con il token generato
-            target = torch.cat([target, next_token], dim=1)
+            # Aggiorna il target concatenando il nuovo token generato
+            target = torch.cat([target, self.input_projection(next_token)], dim=1)
 
         # Concatena tutti i token generati
         return torch.cat(outputs, dim=1)
