@@ -50,7 +50,7 @@ transformer = ParticleTransformer(
     num_decoder_layers = 2,
     num_units = 64,
     dropout = 0.1,
-    batch_size = 10,
+    batch_size = 100,
     activation = nn.ReLU()
 )
 
@@ -62,9 +62,22 @@ logger.info(
     f"Learning rate: {learning_rate}, loss function: {loss_func}."
 )
 
-output = transformer.forward(test_set_23, test_set_final, attention_test_23, attention_test_final)
-print(output.shape)
-print(test_set_final.shape)
+##################################################################################################
+
+# Lunghezza massima della sequenza target da generare
+max_len = 1217  # Lunghezza delle particelle finali
+
+# Esegui inferenza autoregressiva
+output = transformer.generate_target(
+    input=test_set_23,  # Input delle particelle di status 23
+    input_mask=attention_test_23,  # Maschera per l'input
+    max_len=max_len  # Lunghezza massima da generare
+)
+
+print(f"Output shape: {output.shape}")  # Controlla la forma dell'output
+
+
+##################################################################################################
 
 train_loss, val_loss = transformer.train_val(
     num_epochs = epochs,
