@@ -63,20 +63,16 @@ logger.info(
 )
 
 ##################################################################################################
-logger.info("prova generazione particelle con generate_target")
-# Lunghezza massima della sequenza target da generare
-max_len = 1217  # Lunghezza delle particelle finali
+logger.info("prova generazione particelle con forward")
+output_tensor=[]
+forward_dataset = transformer.data_processing(training_set_23, training_set_final, shuffle=False)
+forward_mask = transformer.data_processing(attention_train_23, attention_train_final, shuffle=False)
+for (inputs, targets), (inputs_mask, targets_mask) in zip(forward_dataset, forward_mask):
+    outputs = transformer.forward(inputs, targets, inputs_mask, targets_mask)
+    output_tensor.append(outputs)
 
-# Esegui inferenza autoregressiva
-output = transformer.generate_target(
-    input=test_set_23,  # Input delle particelle di status 23
-    input_mask=attention_test_23,  # Maschera per l'input
-    max_len=max_len  # Lunghezza massima da generare
-)
 logger.info("fine generazione particelle con generate_target")
-logger.info(f"Output shape generate_target: {output.shape}")  # Controlla la forma dell'output
-
-
+logger.info(f"Output shape generate_target: {output_tensor.shape}")
 ##################################################################################################
 
 train_loss, val_loss = transformer.train_val(

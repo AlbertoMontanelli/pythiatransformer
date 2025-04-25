@@ -193,6 +193,9 @@ padded_tensor_23 = torch.cat((one_hot_23, padded_tensor_23[:, :, 1:]), dim=-1)
 print(f"padded tensor final shape: {padded_tensor_final.shape}")
 print(f"padded tensor 23 shape: {padded_tensor_23.shape}")
 
+for event in range(0, 50, 1):
+    print(f"greatest pT: {padded_tensor_final[event, -1, 3]}")
+    
 training_set_23, validation_set_23, test_set_23 = (
     train_val_test_split(padded_tensor_23)
 )
