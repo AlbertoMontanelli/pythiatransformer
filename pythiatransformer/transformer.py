@@ -257,9 +257,7 @@ class ParticleTransformer(nn.Module):
             src_key_padding_mask = input_mask,
             tgt_key_padding_mask = target_mask
         )
-        # print(f"output shape: {output.shape}")
         output = self.output_projection(output)
-        # print(f"output shape: {output.shape}")
         return output
 
     def train_one_epoch(self, epoch, loss_func, optim):
@@ -283,8 +281,6 @@ class ParticleTransformer(nn.Module):
             optim.zero_grad()
             outputs = self.forward(inputs, targets, inputs_mask, targets_mask)
             loss = loss_func(outputs, targets)
-            # print(f"output shape: {outputs.shape}")
-            # print(f"target shape: {targets.shape}")
             if not torch.isfinite(loss):
                 raise ValueError(
                     f"Loss is not finite at epoch {epoch + 1}"
@@ -292,7 +288,7 @@ class ParticleTransformer(nn.Module):
             loss.backward()
             optim.step()
             loss_epoch += loss.item()
-        logger.debug(f"Loss at epoch {epoch + 1}: {loss_epoch}")
+        logger.debug(f"Loss at epoch {epoch + 1}: {loss_epoch:.4f}")
         return loss_epoch
 
     def val_one_epoch(self, epoch, loss_func, val):
@@ -327,9 +323,9 @@ class ParticleTransformer(nn.Module):
                     )
                 loss_epoch += loss.item()
         if val:
-            logger.debug(f"Validation loss at epoch {epoch + 1}: {loss_epoch}")
+            logger.debug(f"Validation loss at epoch {epoch + 1}: {loss_epoch:.4f}")
         else:
-            logger.debug(f"Test loss at epoch {epoch + 1}: {loss_epoch}")
+            logger.debug(f"Test loss at epoch {epoch + 1}: {loss_epoch:.4f}")
         return loss_epoch
 
     def train_val(self, num_epochs, loss_func, optim, val = True, patient = 25):
@@ -362,24 +358,50 @@ class ParticleTransformer(nn.Module):
         val_loss = []
         counter = 0
         best_loss = 0
+
+        # # early stopping initialization
+        # trainer_ignite = Engine(lambda e, b: None)
+        # val_loss_global = []
+
+        # def score_function(engine):
+        #     return -val_loss_global[-1]
+        
+        # early_stopping = EarlyStopping(
+        #     patient = 10,
+        #     score_function = score_function,
+        #     trainer = trainer_ignite
+        # )
+        # trainer_ignite.add_event_handler(
+        #     Events.EPOCH_COMPLEATED,
+        #     early_stopping
+        # )
+
+
         logger.info("Training started!")
         for epoch in range(num_epochs):
             train_loss_epoch = self.train_one_epoch(epoch, loss_func, optim)
             val_loss_epoch = self.val_one_epoch(epoch, loss_func, val)
             train_loss.append(train_loss_epoch)
             val_loss.append(val_loss_epoch)
+            # val_loss_global.append(val_loss_epoch)
+            # # checking early stopping
+            # trainer_ignite.fire_event(Events.EPOCH_COMPLEATED)
+            # if trainer_ignite.should_terminate:
+            #     logger.warning("Early stopping triggered.")
+            #     break
+            # smoothness check
             if epoch >= 10:
-                stop, best_loss = self.early_stopping(val_loss_epoch, epoch, best_loss)
+                stop, best_loss = self.smoothness(val_loss_epoch, epoch, best_loss)
                 logger.info(f"stop: {stop}")
                 if stop:
                     counter += 1
                 if counter >= patient:
-                    logger.warning(f"Early stopping at epoch {epoch + 1}.")
+                    logger.warning(f"Stop at epoch {epoch + 1}.")
                     break
         logger.info("Training completed!")
         return train_loss, val_loss
 
-    def early_stopping(self, val_loss, current_epoch, best_loss):
+    def smoothness(self, val_loss, current_epoch, best_loss):
         """
         Args:
             val_loss (float):
