@@ -97,7 +97,6 @@ def one_hot_encoding(tensor, dict_ids, num_classes):
     # value (index) corresponding to pdg_id in the dictionary.
     for pdg_id, index in dict_ids.items():
         indices[tensor_ids == pdg_id] = index
-    print("for finito!")
     # Create one-hot-encoding for the ids.
     one_hot = torch.nn.functional.one_hot(
         indices, num_classes=num_classes
@@ -189,13 +188,10 @@ dict_ids = {pdg_id.item(): index for index, pdg_id in enumerate(id_all)}
 one_hot_23 = one_hot_encoding(padded_tensor_23, dict_ids, len(id_all))
 one_hot_final = one_hot_encoding(padded_tensor_final, dict_ids, len(id_all))
 
-print(f"one hot final shape: {one_hot_final.shape}")
-
 padded_tensor_final = torch.cat((one_hot_final, padded_tensor_final[:, :, 1:]), dim=-1)
 padded_tensor_23 = torch.cat((one_hot_23, padded_tensor_23[:, :, 1:]), dim=-1)
 print(f"padded tensor final shape: {padded_tensor_final.shape}")
-
-print(padded_tensor_final[0, -1, :])
+print(f"padded tensor 23 shape: {padded_tensor_23.shape}")
 
 training_set_23, validation_set_23, test_set_23 = (
     train_val_test_split(padded_tensor_23)
