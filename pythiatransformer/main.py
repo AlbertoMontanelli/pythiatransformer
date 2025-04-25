@@ -4,6 +4,8 @@ import matplotlib.pyplot as plt
 import torch
 import torch.nn as nn
 import torch.optim as optimizer
+import h5py
+import numpy as np
 
 from loguru import logger
 
@@ -16,10 +18,16 @@ from data_processing import attention_val_23, attention_val_final
 from data_processing import attention_test_23, attention_test_final
 
 print(f"len train: {training_set_23.shape[0]}, len val: {validation_set_23.shape[0]}, len test: {test_set_23.shape[0]}")
-print(torch.mean(training_set_23), torch.std(training_set_23))
 
-def plot_losses(train_loss, val_loss):
+def plot_losses(train_loss, val_loss, filename="learning_curve.pdf", dpi=1200):
     """
+    Plot training and validation losses and save the plot to a file.
+
+    Parameters:
+    - train_loss (list): List of training loss values.
+    - val_loss (list): List of validation loss values.
+    - filename (str): File name to save the plot. Defaults to 'learning_curve.png'.
+    - dpi (int): Dots per inch for the saved figure. Defaults to 300.
     """
     plt.figure()
     plt.plot(train_loss, label='Training Loss')
@@ -29,7 +37,8 @@ def plot_losses(train_loss, val_loss):
     plt.title('Learning curve')
     plt.legend()
     plt.grid(True)
-    plt.show()
+    plt.savefig(filename, dpi=dpi, bbox_inches='tight')
+    plt.close()
 
 transformer = ParticleTransformer(
     input_train = training_set_23,
@@ -59,12 +68,16 @@ loss_func = nn.MSELoss()
 learning_rate = 1e-2
 logger.info(
     f"Batch size: {transformer.batch_size}, Epochs: {epochs}, "
-    f"Learning rate: {learning_rate}, loss function: {loss_func}."
 )
 
-##################################################################################################
-import h5py
-import numpy as np
+
+train_loss, val_loss = transformer.train_val(
+    num_epochs = epochs,
+    loss_func = loss_func,
+    optim = optimizer.Adam(transformer.parameters(), lr=learning_rate)
+)
+
+plot_losses(train_loss, val_loss)
 
 # File unico HDF5
 output_file = "output_tensor.h5"
@@ -72,8 +85,8 @@ output_file = "output_tensor.h5"
 # Crea il file HDF5
 with h5py.File(output_file, "w") as h5f:
     logger.info("Prova generazione particelle con forward")
-    forward_dataset = transformer.data_processing(validation_set_23, validation_set_final, shuffle=False)
-    forward_mask = transformer.data_processing(attention_val_23, attention_val_final, shuffle=False)
+    forward_dataset = transformer.data_processing(training_set_23, training_set_final, shuffle=False)
+    forward_mask = transformer.data_processing(attention_train_23, attention_train_final, shuffle=False)
 
     for batch_idx, ((inputs, targets), (inputs_mask, targets_mask)) in enumerate(zip(forward_dataset, forward_mask)):
         outputs = transformer.forward(inputs, targets, inputs_mask, targets_mask)
@@ -84,16 +97,8 @@ with h5py.File(output_file, "w") as h5f:
         logger.info(f"Batch {batch_idx+1} salvato in HDF5.")
 
 logger.info(f"Tutti i batch salvati in un unico file HDF5: {output_file}")
-##################################################################################################
-"""
-train_loss, val_loss = transformer.train_val(
-    num_epochs = epochs,
-    loss_func = loss_func,
-    optim = optimizer.Adam(transformer.parameters(), lr=learning_rate)
-)
 
-plot_losses(train_loss, val_loss)
-"""
+
 # girare fastjet sull'output
 # cluster sequence
 # one hot encoding ID
