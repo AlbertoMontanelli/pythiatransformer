@@ -65,11 +65,11 @@ logger.info(
 ##################################################################################################
 logger.info("prova generazione particelle con forward")
 output_tensor=[]
-forward_dataset = transformer.data_processing(training_set_23, training_set_final, shuffle=False)
-forward_mask = transformer.data_processing(attention_train_23, attention_train_final, shuffle=False)
+forward_dataset = transformer.data_processing(validation_set_23, validation_set_final, shuffle=False)
+forward_mask = transformer.data_processing(attention_val_23, attention_val_final, shuffle=False)
 for (inputs, targets), (inputs_mask, targets_mask) in zip(forward_dataset, forward_mask):
     outputs = transformer.forward(inputs, targets, inputs_mask, targets_mask)
-    output_tensor.append(outputs)
+    #output_tensor.append(outputs)
 
 logger.info("fine generazione particelle con generate_target")
 logger.info(f"Output shape generate_target: {output_tensor.shape}")
