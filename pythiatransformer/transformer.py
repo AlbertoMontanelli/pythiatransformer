@@ -1,8 +1,6 @@
 """
 Transformer class.
 """
-# from ignite.engine import Engine, Events
-# from ignite.handlers import EarlyStopping
 from loguru import logger
 import torch
 import torch.nn as nn
@@ -328,7 +326,7 @@ class ParticleTransformer(nn.Module):
             logger.debug(f"Test loss at epoch {epoch + 1}: {loss_epoch:.4f}")
         return loss_epoch
 
-    def train_val(self, num_epochs, loss_func, optim, val = True, patient = 25):
+    def train_val(self, num_epochs, loss_func, optim, val = True, patient_smooth = 20, patient_early = 10):
         """This function trains and validates the model for the given
         number of epochs.
         Args:
@@ -346,38 +344,32 @@ class ParticleTransformer(nn.Module):
             raise TypeError(
                 f"The number of epoch must be int, got {type(num_epochs)}"
             )
-        if not isinstance(patient, int):
+        if not isinstance(patient_smooth, int):
             raise TypeError(
-                f"The patien must be int, got {type(patient)}"
+                f"The patien must be int, got {type(patient_smooth)}"
             )
-        if not (patient < num_epochs):
+        if not (patient_smooth < num_epochs):
             raise ValueError(
                 f"Patient must be smaller than the number of epochs."
             )
+        
+        if not isinstance(patient_early, int):
+            raise TypeError(
+                f"The patien must be int, got {type(patient_early)}"
+            )
+        if not (patient_early < num_epochs):
+            raise ValueError(
+                f"Patient must be smaller than the number of epochs."
+            )
+        
         train_loss = []
         val_loss = []
-        counter = 0
+
+        # smoothness initialization
+        counter_smooth = 0
         best_loss = 0
-
-        # # early stopping initialization
-        # def update_fn(engine, batch):
-        #     return val_loss_global[-1]
-        # trainer_ignite = Engine(update_fn)
-        # val_loss_global = []
-
-        # def score_function(engine):
-        #     return -engine.state.output
-        
-        # early_stopping = EarlyStopping(
-        #     patient = 10,
-        #     score_function = score_function,
-        #     trainer = trainer_ignite
-        # )
-        # trainer_ignite.add_event_handler(
-        #     Events.EPOCH_COMPLETED,
-        #     early_stopping
-        # )
-
+        # early_stop initialization
+        counter_earlystop = 0
 
         logger.info("Training started!")
         for epoch in range(num_epochs):
@@ -386,38 +378,49 @@ class ParticleTransformer(nn.Module):
             train_loss.append(train_loss_epoch)
             val_loss.append(val_loss_epoch)
 
-            # val_loss_global.append(val_loss_epoch)
-            # # checking early stopping
-            # trainer_ignite.state.output = val_loss_epoch
-            # trainer_ignite.fire_event(Events.EPOCH_COMPLETED)
-            # if trainer_ignite.should_terminate:
-            #     logger.warning("Early stopping triggered.")
-            #     break
-
-            # smoothness check
-            if epoch >= 10:
-                stop, best_loss = self.smoothness(val_loss_epoch, epoch, best_loss)
-                logger.info(f"stop: {stop}")
-                if stop:
-                    counter += 1
-                if counter >= patient:
+            if epoch >= int(num_epochs/10):
+                # smoothness check
+                stop_smooth, best_loss = self.smoothness(
+                    val_loss_epoch,
+                    num_epochs,
+                    epoch,
+                    best_loss
+                )
+                logger.info(f"stop smooth: {stop_smooth}")
+                if stop_smooth:
+                    counter_smooth += 1
+                if counter_smooth >= patient_smooth:
                     logger.warning(f"Stop at epoch {epoch + 1}.")
                     break
+                # early_stopping check
+                stop_early = self.early_stopping(val_loss, epoch)
+                if stop_early:
+                    counter_earlystop += 1
+                else:
+                    counter_earlystop = 0
+                logger.info(f"stop early: {stop_early}")
+                if counter_earlystop >= patient_early:
+                    logger.warning(
+                        f"Overfitting at epoch {epoch + 1 - patient_early}."
+                    )
+                    break
+
         logger.info("Training completed!")
         return train_loss, val_loss
 
-    def smoothness(self, val_loss, current_epoch, best_loss):
+    def smoothness(self, val_loss, num_epochs, current_epoch, best_loss):
         """
         Args:
             val_loss (float):
+            num_spochs (int):
             current_epoch (int):
-            best_loss (float)
+            best_loss (float):
         Returns:
             stop (bool):
             best_loss (float)
         """
         stop = False
-        if current_epoch == 10:
+        if current_epoch == int(num_epochs/10):
             best_loss = val_loss
         else:
             if val_loss <= best_loss:
@@ -425,6 +428,20 @@ class ParticleTransformer(nn.Module):
             else:
                 stop = True
         return stop, best_loss
+
+    def early_stopping(self, val_losses, current_epoch):
+        """
+        Args:
+            val_losses (list):
+            current_epoch (int): 
+        Returns:
+            stop (bool):
+        """
+        if val_losses[current_epoch-1] <= val_losses[current_epoch]:
+            stop = True
+        else:
+            stop = False
+        return stop
     
     def generate_target(self, input, input_mask, max_len):
         """
