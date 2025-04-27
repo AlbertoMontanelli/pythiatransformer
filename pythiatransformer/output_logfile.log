@@ -1,0 +1,183 @@
+nohup: ignoring input
+2025-04-26 10:26:09.988 | INFO     | transformer:build_projection_layer:178 - Projection layers input/output created.
+2025-04-26 10:26:10.002 | INFO     | transformer:initialize_transformer:195 - Transformer initialized with number of hidden units: 64, number of heads: 8, number of encoder layers: 2, number of decoder layers: 2, number of feedforward units: 256, dropout probability: 0.1, activation function: ReLU().
+2025-04-26 10:26:10.002 | INFO     | transformer:__init__:147 - Data preprocessing...
+2025-04-26 10:26:10.003 | INFO     | transformer:__init__:165 - Data preprocessed.
+2025-04-26 10:26:10.003 | INFO     | __main__:<module>:69 - Batch size: 100, Epochs: 100, 
+2025-04-26 10:26:11.000 | INFO     | transformer:train_val:374 - Training started!
+2025-04-26 10:41:10.056 | DEBUG    | transformer:train_one_epoch:289 - Loss at epoch 1: 6.4848
+/home/local/ADUNIPI/a.montanelli/miniconda3/envs/myrootenv/lib/python3.9/site-packages/torch/nn/modules/transformer.py:508: UserWarning: The PyTorch API of nested tensors is in prototype stage and will change in the near future. We recommend specifying layout=torch.jagged when constructing a nested tensor, as this layout receives active development, has better operator coverage, and works with torch.compile. (Triggered internally at /pytorch/aten/src/ATen/NestedTensorImpl.cpp:178.)
+  output = torch._nested_tensor_from_mask(
+2025-04-26 10:42:31.566 | DEBUG    | transformer:val_one_epoch:324 - Validation loss at epoch 1: 1.5512
+2025-04-26 10:57:27.262 | DEBUG    | transformer:train_one_epoch:289 - Loss at epoch 2: 4.7738
+2025-04-26 10:58:49.207 | DEBUG    | transformer:val_one_epoch:324 - Validation loss at epoch 2: 1.5507
+2025-04-26 11:13:47.604 | DEBUG    | transformer:train_one_epoch:289 - Loss at epoch 3: 4.6773
+2025-04-26 11:15:08.934 | DEBUG    | transformer:val_one_epoch:324 - Validation loss at epoch 3: 1.5501
+2025-04-26 11:30:07.275 | DEBUG    | transformer:train_one_epoch:289 - Loss at epoch 4: 4.6716
+2025-04-26 11:31:28.874 | DEBUG    | transformer:val_one_epoch:324 - Validation loss at epoch 4: 1.5501
+2025-04-26 11:46:26.719 | DEBUG    | transformer:train_one_epoch:289 - Loss at epoch 5: 4.6702
+2025-04-26 11:47:48.412 | DEBUG    | transformer:val_one_epoch:324 - Validation loss at epoch 5: 1.5500
+2025-04-26 12:02:46.868 | DEBUG    | transformer:train_one_epoch:289 - Loss at epoch 6: 4.6700
+2025-04-26 12:04:09.365 | DEBUG    | transformer:val_one_epoch:324 - Validation loss at epoch 6: 1.5497
+2025-04-26 12:19:06.861 | DEBUG    | transformer:train_one_epoch:289 - Loss at epoch 7: 4.6692
+2025-04-26 12:20:29.315 | DEBUG    | transformer:val_one_epoch:324 - Validation loss at epoch 7: 1.5504
+2025-04-26 12:35:25.562 | DEBUG    | transformer:train_one_epoch:289 - Loss at epoch 8: 4.6688
+2025-04-26 12:36:47.208 | DEBUG    | transformer:val_one_epoch:324 - Validation loss at epoch 8: 1.5499
+2025-04-26 12:51:43.299 | DEBUG    | transformer:train_one_epoch:289 - Loss at epoch 9: 4.6676
+2025-04-26 12:53:05.940 | DEBUG    | transformer:val_one_epoch:324 - Validation loss at epoch 9: 1.5508
+2025-04-26 13:08:02.112 | DEBUG    | transformer:train_one_epoch:289 - Loss at epoch 10: 4.6669
+2025-04-26 13:09:24.581 | DEBUG    | transformer:val_one_epoch:324 - Validation loss at epoch 10: 1.5501
+2025-04-26 13:24:22.204 | DEBUG    | transformer:train_one_epoch:289 - Loss at epoch 11: 4.6663
+2025-04-26 13:25:43.972 | DEBUG    | transformer:val_one_epoch:324 - Validation loss at epoch 11: 1.5496
+2025-04-26 13:25:43.973 | INFO     | transformer:train_val:389 - stop smooth: False
+2025-04-26 13:25:43.973 | INFO     | transformer:train_val:401 - stop early: False
+2025-04-26 13:41:03.082 | DEBUG    | transformer:train_one_epoch:289 - Loss at epoch 12: 4.7138
+2025-04-26 13:42:26.185 | DEBUG    | transformer:val_one_epoch:324 - Validation loss at epoch 12: 1.5505
+2025-04-26 13:42:26.185 | INFO     | transformer:train_val:389 - stop smooth: True
+2025-04-26 13:42:26.186 | INFO     | transformer:train_val:401 - stop early: True
+2025-04-26 13:58:27.677 | DEBUG    | transformer:train_one_epoch:289 - Loss at epoch 13: 4.6671
+2025-04-26 13:59:50.910 | DEBUG    | transformer:val_one_epoch:324 - Validation loss at epoch 13: 1.5499
+2025-04-26 13:59:50.911 | INFO     | transformer:train_val:389 - stop smooth: True
+2025-04-26 13:59:50.911 | INFO     | transformer:train_val:401 - stop early: False
+2025-04-26 14:16:02.562 | DEBUG    | transformer:train_one_epoch:289 - Loss at epoch 14: 4.6467
+2025-04-26 14:17:27.273 | DEBUG    | transformer:val_one_epoch:324 - Validation loss at epoch 14: 1.5181
+2025-04-26 14:17:27.273 | INFO     | transformer:train_val:389 - stop smooth: False
+2025-04-26 14:17:27.273 | INFO     | transformer:train_val:401 - stop early: False
+2025-04-26 14:33:11.567 | DEBUG    | transformer:train_one_epoch:289 - Loss at epoch 15: 4.6852
+2025-04-26 14:34:35.511 | DEBUG    | transformer:val_one_epoch:324 - Validation loss at epoch 15: 1.5503
+2025-04-26 14:34:35.512 | INFO     | transformer:train_val:389 - stop smooth: True
+2025-04-26 14:34:35.512 | INFO     | transformer:train_val:401 - stop early: True
+2025-04-26 14:50:19.828 | DEBUG    | transformer:train_one_epoch:289 - Loss at epoch 16: 4.6659
+2025-04-26 14:51:43.962 | DEBUG    | transformer:val_one_epoch:324 - Validation loss at epoch 16: 1.5496
+2025-04-26 14:51:43.962 | INFO     | transformer:train_val:389 - stop smooth: True
+2025-04-26 14:51:43.962 | INFO     | transformer:train_val:401 - stop early: False
+2025-04-26 15:07:25.914 | DEBUG    | transformer:train_one_epoch:289 - Loss at epoch 17: 4.6653
+2025-04-26 15:08:50.652 | DEBUG    | transformer:val_one_epoch:324 - Validation loss at epoch 17: 1.5495
+2025-04-26 15:08:50.653 | INFO     | transformer:train_val:389 - stop smooth: True
+2025-04-26 15:08:50.653 | INFO     | transformer:train_val:401 - stop early: False
+2025-04-26 15:24:35.942 | DEBUG    | transformer:train_one_epoch:289 - Loss at epoch 18: 4.6652
+2025-04-26 15:25:59.355 | DEBUG    | transformer:val_one_epoch:324 - Validation loss at epoch 18: 1.5498
+2025-04-26 15:25:59.356 | INFO     | transformer:train_val:389 - stop smooth: True
+2025-04-26 15:25:59.356 | INFO     | transformer:train_val:401 - stop early: True
+2025-04-26 15:41:41.746 | DEBUG    | transformer:train_one_epoch:289 - Loss at epoch 19: 4.6655
+2025-04-26 15:43:05.599 | DEBUG    | transformer:val_one_epoch:324 - Validation loss at epoch 19: 1.5494
+2025-04-26 15:43:05.600 | INFO     | transformer:train_val:389 - stop smooth: True
+2025-04-26 15:43:05.600 | INFO     | transformer:train_val:401 - stop early: False
+2025-04-26 15:58:46.370 | DEBUG    | transformer:train_one_epoch:289 - Loss at epoch 20: 4.6652
+2025-04-26 16:00:10.494 | DEBUG    | transformer:val_one_epoch:324 - Validation loss at epoch 20: 1.5498
+2025-04-26 16:00:10.494 | INFO     | transformer:train_val:389 - stop smooth: True
+2025-04-26 16:00:10.494 | INFO     | transformer:train_val:401 - stop early: True
+2025-04-26 16:15:56.490 | DEBUG    | transformer:train_one_epoch:289 - Loss at epoch 21: 4.6650
+2025-04-26 16:17:21.217 | DEBUG    | transformer:val_one_epoch:324 - Validation loss at epoch 21: 1.5495
+2025-04-26 16:17:21.217 | INFO     | transformer:train_val:389 - stop smooth: True
+2025-04-26 16:17:21.218 | INFO     | transformer:train_val:401 - stop early: False
+2025-04-26 16:33:06.056 | DEBUG    | transformer:train_one_epoch:289 - Loss at epoch 22: 4.6651
+2025-04-26 16:34:30.580 | DEBUG    | transformer:val_one_epoch:324 - Validation loss at epoch 22: 1.5499
+2025-04-26 16:34:30.581 | INFO     | transformer:train_val:389 - stop smooth: True
+2025-04-26 16:34:30.581 | INFO     | transformer:train_val:401 - stop early: True
+2025-04-26 16:50:15.387 | DEBUG    | transformer:train_one_epoch:289 - Loss at epoch 23: 4.6649
+2025-04-26 16:51:39.596 | DEBUG    | transformer:val_one_epoch:324 - Validation loss at epoch 23: 1.5509
+2025-04-26 16:51:39.596 | INFO     | transformer:train_val:389 - stop smooth: True
+2025-04-26 16:51:39.596 | INFO     | transformer:train_val:401 - stop early: True
+2025-04-26 17:07:27.191 | DEBUG    | transformer:train_one_epoch:289 - Loss at epoch 24: 4.6652
+2025-04-26 17:08:52.439 | DEBUG    | transformer:val_one_epoch:324 - Validation loss at epoch 24: 1.5496
+2025-04-26 17:08:52.439 | INFO     | transformer:train_val:389 - stop smooth: True
+2025-04-26 17:08:52.439 | INFO     | transformer:train_val:401 - stop early: False
+2025-04-26 17:24:37.485 | DEBUG    | transformer:train_one_epoch:289 - Loss at epoch 25: 4.6649
+2025-04-26 17:26:02.086 | DEBUG    | transformer:val_one_epoch:324 - Validation loss at epoch 25: 1.5494
+2025-04-26 17:26:02.086 | INFO     | transformer:train_val:389 - stop smooth: True
+2025-04-26 17:26:02.086 | INFO     | transformer:train_val:401 - stop early: False
+2025-04-26 17:41:43.751 | DEBUG    | transformer:train_one_epoch:289 - Loss at epoch 26: 4.6649
+2025-04-26 17:43:08.370 | DEBUG    | transformer:val_one_epoch:324 - Validation loss at epoch 26: 1.5496
+2025-04-26 17:43:08.370 | INFO     | transformer:train_val:389 - stop smooth: True
+2025-04-26 17:43:08.370 | INFO     | transformer:train_val:401 - stop early: True
+2025-04-26 17:58:52.209 | DEBUG    | transformer:train_one_epoch:289 - Loss at epoch 27: 4.6649
+2025-04-26 18:00:16.880 | DEBUG    | transformer:val_one_epoch:324 - Validation loss at epoch 27: 1.5494
+2025-04-26 18:00:16.880 | INFO     | transformer:train_val:389 - stop smooth: True
+2025-04-26 18:00:16.880 | INFO     | transformer:train_val:401 - stop early: False
+2025-04-26 18:16:01.465 | DEBUG    | transformer:train_one_epoch:289 - Loss at epoch 28: 4.6655
+2025-04-26 18:17:26.092 | DEBUG    | transformer:val_one_epoch:324 - Validation loss at epoch 28: 1.5496
+2025-04-26 18:17:26.093 | INFO     | transformer:train_val:389 - stop smooth: True
+2025-04-26 18:17:26.093 | INFO     | transformer:train_val:401 - stop early: True
+2025-04-26 18:33:14.790 | DEBUG    | transformer:train_one_epoch:289 - Loss at epoch 29: 4.6646
+2025-04-26 18:34:40.176 | DEBUG    | transformer:val_one_epoch:324 - Validation loss at epoch 29: 1.5494
+2025-04-26 18:34:40.176 | INFO     | transformer:train_val:389 - stop smooth: True
+2025-04-26 18:34:40.176 | INFO     | transformer:train_val:401 - stop early: False
+2025-04-26 18:50:25.329 | DEBUG    | transformer:train_one_epoch:289 - Loss at epoch 30: 4.6647
+2025-04-26 18:51:50.061 | DEBUG    | transformer:val_one_epoch:324 - Validation loss at epoch 30: 1.5495
+2025-04-26 18:51:50.061 | INFO     | transformer:train_val:389 - stop smooth: True
+2025-04-26 18:51:50.061 | INFO     | transformer:train_val:401 - stop early: True
+2025-04-26 19:07:36.616 | DEBUG    | transformer:train_one_epoch:289 - Loss at epoch 31: 4.6649
+2025-04-26 19:09:00.832 | DEBUG    | transformer:val_one_epoch:324 - Validation loss at epoch 31: 1.5494
+2025-04-26 19:09:00.832 | INFO     | transformer:train_val:389 - stop smooth: True
+2025-04-26 19:09:00.832 | INFO     | transformer:train_val:401 - stop early: False
+2025-04-26 19:24:49.302 | DEBUG    | transformer:train_one_epoch:289 - Loss at epoch 32: 4.6647
+2025-04-26 19:26:13.922 | DEBUG    | transformer:val_one_epoch:324 - Validation loss at epoch 32: 1.5496
+2025-04-26 19:26:13.923 | INFO     | transformer:train_val:389 - stop smooth: True
+2025-04-26 19:26:13.923 | WARNING  | transformer:train_val:393 - Stop at epoch 32.
+2025-04-26 19:26:13.923 | INFO     | transformer:train_val:408 - Training completed!
+2025-04-26 19:26:14.209 | INFO     | __main__:<module>:87 - Prova generazione particelle con forward
+2025-04-26 19:26:14.930 | INFO     | __main__:<module>:97 - Batch 1 salvato in HDF5.
+2025-04-26 19:26:15.680 | INFO     | __main__:<module>:97 - Batch 2 salvato in HDF5.
+2025-04-26 19:26:16.403 | INFO     | __main__:<module>:97 - Batch 3 salvato in HDF5.
+2025-04-26 19:26:17.162 | INFO     | __main__:<module>:97 - Batch 4 salvato in HDF5.
+2025-04-26 19:26:17.918 | INFO     | __main__:<module>:97 - Batch 5 salvato in HDF5.
+2025-04-26 19:26:18.657 | INFO     | __main__:<module>:97 - Batch 6 salvato in HDF5.
+2025-04-26 19:26:19.420 | INFO     | __main__:<module>:97 - Batch 7 salvato in HDF5.
+2025-04-26 19:26:20.157 | INFO     | __main__:<module>:97 - Batch 8 salvato in HDF5.
+2025-04-26 19:26:20.903 | INFO     | __main__:<module>:97 - Batch 9 salvato in HDF5.
+2025-04-26 19:26:21.641 | INFO     | __main__:<module>:97 - Batch 10 salvato in HDF5.
+2025-04-26 19:26:22.378 | INFO     | __main__:<module>:97 - Batch 11 salvato in HDF5.
+2025-04-26 19:26:23.122 | INFO     | __main__:<module>:97 - Batch 12 salvato in HDF5.
+2025-04-26 19:26:23.889 | INFO     | __main__:<module>:97 - Batch 13 salvato in HDF5.
+2025-04-26 19:26:24.652 | INFO     | __main__:<module>:97 - Batch 14 salvato in HDF5.
+2025-04-26 19:26:25.376 | INFO     | __main__:<module>:97 - Batch 15 salvato in HDF5.
+2025-04-26 19:26:26.141 | INFO     | __main__:<module>:97 - Batch 16 salvato in HDF5.
+2025-04-26 19:26:26.903 | INFO     | __main__:<module>:97 - Batch 17 salvato in HDF5.
+2025-04-26 19:26:27.681 | INFO     | __main__:<module>:97 - Batch 18 salvato in HDF5.
+2025-04-26 19:26:28.440 | INFO     | __main__:<module>:97 - Batch 19 salvato in HDF5.
+2025-04-26 19:26:29.168 | INFO     | __main__:<module>:97 - Batch 20 salvato in HDF5.
+2025-04-26 19:26:29.911 | INFO     | __main__:<module>:97 - Batch 21 salvato in HDF5.
+2025-04-26 19:26:30.674 | INFO     | __main__:<module>:97 - Batch 22 salvato in HDF5.
+2025-04-26 19:26:31.413 | INFO     | __main__:<module>:97 - Batch 23 salvato in HDF5.
+2025-04-26 19:26:32.143 | INFO     | __main__:<module>:97 - Batch 24 salvato in HDF5.
+2025-04-26 19:26:32.874 | INFO     | __main__:<module>:97 - Batch 25 salvato in HDF5.
+2025-04-26 19:26:33.628 | INFO     | __main__:<module>:97 - Batch 26 salvato in HDF5.
+2025-04-26 19:26:34.368 | INFO     | __main__:<module>:97 - Batch 27 salvato in HDF5.
+2025-04-26 19:26:35.098 | INFO     | __main__:<module>:97 - Batch 28 salvato in HDF5.
+2025-04-26 19:26:35.829 | INFO     | __main__:<module>:97 - Batch 29 salvato in HDF5.
+2025-04-26 19:26:36.568 | INFO     | __main__:<module>:97 - Batch 30 salvato in HDF5.
+2025-04-26 19:26:37.333 | INFO     | __main__:<module>:97 - Batch 31 salvato in HDF5.
+2025-04-26 19:26:38.070 | INFO     | __main__:<module>:97 - Batch 32 salvato in HDF5.
+2025-04-26 19:26:38.797 | INFO     | __main__:<module>:97 - Batch 33 salvato in HDF5.
+2025-04-26 19:26:39.530 | INFO     | __main__:<module>:97 - Batch 34 salvato in HDF5.
+2025-04-26 19:26:40.247 | INFO     | __main__:<module>:97 - Batch 35 salvato in HDF5.
+2025-04-26 19:26:40.977 | INFO     | __main__:<module>:97 - Batch 36 salvato in HDF5.
+2025-04-26 19:26:41.754 | INFO     | __main__:<module>:97 - Batch 37 salvato in HDF5.
+2025-04-26 19:26:42.487 | INFO     | __main__:<module>:97 - Batch 38 salvato in HDF5.
+2025-04-26 19:26:43.221 | INFO     | __main__:<module>:97 - Batch 39 salvato in HDF5.
+2025-04-26 19:26:43.948 | INFO     | __main__:<module>:97 - Batch 40 salvato in HDF5.
+2025-04-26 19:26:44.675 | INFO     | __main__:<module>:97 - Batch 41 salvato in HDF5.
+2025-04-26 19:26:45.432 | INFO     | __main__:<module>:97 - Batch 42 salvato in HDF5.
+2025-04-26 19:26:46.188 | INFO     | __main__:<module>:97 - Batch 43 salvato in HDF5.
+2025-04-26 19:26:46.941 | INFO     | __main__:<module>:97 - Batch 44 salvato in HDF5.
+2025-04-26 19:26:47.703 | INFO     | __main__:<module>:97 - Batch 45 salvato in HDF5.
+2025-04-26 19:26:48.445 | INFO     | __main__:<module>:97 - Batch 46 salvato in HDF5.
+2025-04-26 19:26:49.169 | INFO     | __main__:<module>:97 - Batch 47 salvato in HDF5.
+2025-04-26 19:26:49.907 | INFO     | __main__:<module>:97 - Batch 48 salvato in HDF5.
+2025-04-26 19:26:50.668 | INFO     | __main__:<module>:97 - Batch 49 salvato in HDF5.
+2025-04-26 19:26:51.398 | INFO     | __main__:<module>:97 - Batch 50 salvato in HDF5.
+2025-04-26 19:26:52.135 | INFO     | __main__:<module>:97 - Batch 51 salvato in HDF5.
+2025-04-26 19:26:52.877 | INFO     | __main__:<module>:97 - Batch 52 salvato in HDF5.
+2025-04-26 19:26:53.641 | INFO     | __main__:<module>:97 - Batch 53 salvato in HDF5.
+2025-04-26 19:26:54.379 | INFO     | __main__:<module>:97 - Batch 54 salvato in HDF5.
+2025-04-26 19:26:55.112 | INFO     | __main__:<module>:97 - Batch 55 salvato in HDF5.
+2025-04-26 19:26:55.841 | INFO     | __main__:<module>:97 - Batch 56 salvato in HDF5.
+2025-04-26 19:26:56.573 | INFO     | __main__:<module>:97 - Batch 57 salvato in HDF5.
+2025-04-26 19:26:57.318 | INFO     | __main__:<module>:97 - Batch 58 salvato in HDF5.
+2025-04-26 19:26:58.070 | INFO     | __main__:<module>:97 - Batch 59 salvato in HDF5.
+2025-04-26 19:26:58.808 | INFO     | __main__:<module>:97 - Batch 60 salvato in HDF5.
+2025-04-26 19:26:58.815 | INFO     | __main__:<module>:99 - Tutti i batch salvati in un unico file HDF5: output_tensor.h5
+padded tensor final shape: torch.Size([10000, 1217, 35])
+padded tensor 23 shape: torch.Size([10000, 2, 35])
+len train: 6000, len val: 2000, len test: 2000
