@@ -61,16 +61,24 @@ def awkward_to_padded_tensor(data, features):
 
     # Compute attention mask (1 for padding, 0 for actual particles).
     attention_mask = ak.num(data[features[0]], axis=1)
-    attention_mask = torch.tensor([[1] * (padded_array.shape[1] - num) + [0] * num
+    attention_mask = torch.tensor([[0] * num + [1] * (padded_array.shape[1] - num)
                                     for num in attention_mask], dtype=torch.bool)
     
     # Sorting the padded tensor with ascending order with respect to pT
     # (and consequently the attention mask)
-    indices_data = torch.argsort(padded_tensor[:, :, -1], dim=1)
+    indices_data = torch.argsort(padded_tensor[:, :, -1], dim=1, descending=True) #shape: batch_size x nr_particelle
+    # e salva numeri corrispondenti all'ordine della feature pT lungo la dim del nr di particelle
+    # ex. ( [3, 4, 2, 1], batch 1 da 4 particelle
+    #       [1, 4, 2, 3]) batch 2 da 4 particelle
     padded_tensor_sorted = torch.gather(
         padded_tensor, 
         dim=1, 
         index=indices_data.unsqueeze(-1).expand(-1, -1, padded_tensor.size(-1))
+        # unsqueeze: aumenta di 1 la dim->shape: batch_size x nr particelle x 1
+        # expand: espande la dimensione aggiunta fino al nr di features (duplicando i valori) 
+        # lasciando le altre invariate.
+        # index è un tensore della stessa forma di padded_tensor, gather dice di prendere
+        # gli elementi di padded_tensor nell'ordine specificato dai valori degli elementi di index
     )
 
     return padded_tensor_sorted, attention_mask
@@ -191,7 +199,11 @@ one_hot_final = one_hot_encoding(padded_tensor_final, dict_ids, len(id_all))
 padded_tensor_final = torch.cat((one_hot_final, padded_tensor_final[:, :, 1:]), dim=-1)
 padded_tensor_23 = torch.cat((one_hot_23, padded_tensor_23[:, :, 1:]), dim=-1)
 print(f"padded tensor final shape: {padded_tensor_final.shape}")
+print(f"attention mask final shape: {attention_mask_final.shape}")
 print(f"padded tensor 23 shape: {padded_tensor_23.shape}")
+
+print(f"event tensor final {padded_tensor_final[0, :, -1]}")
+print(f"event attention mask final {attention_mask_final[0, :]}")
 
 training_set_23, validation_set_23, test_set_23 = (
     train_val_test_split(padded_tensor_23)
