@@ -19,7 +19,7 @@ from data_processing import attention_test_23, attention_test_final
 
 print(f"len train: {training_set_23.shape[0]}, len val: {validation_set_23.shape[0]}, len test: {test_set_23.shape[0]}")
 
-def plot_losses(train_loss, val_loss, filename="learning_curve.pdf", dpi=1200):
+def plot_losses(train_loss, val_loss, filename="learning_curve_descending_pT.pdf", dpi=1200):
     """
     Plot training and validation losses and save the plot to a file.
 
@@ -80,7 +80,7 @@ train_loss, val_loss = transformer.train_val(
 plot_losses(train_loss, val_loss)
 
 # File unico HDF5
-output_file = "output_tensor.h5"
+output_file = "output_tensor_descending_pT.h5"
 
 # Crea il file HDF5
 with h5py.File(output_file, "w") as h5f:
