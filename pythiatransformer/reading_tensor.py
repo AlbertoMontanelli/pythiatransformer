@@ -5,7 +5,7 @@ from loguru import logger
 from data_processing import training_set_final
 
 # Carica il file HDF5
-output_file = "output_tensor.h5"
+output_file = "output_tensor_descending_pT.h5"
 
 with h5py.File(output_file, "r") as h5f:
     # Leggi tutti i dataset
