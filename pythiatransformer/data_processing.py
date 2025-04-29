@@ -82,7 +82,14 @@ def awkward_to_padded_tensor(data, features):
         # gli elementi di padded_tensor nell'ordine specificato dai valori degli elementi di index
     )
 
-    return padded_tensor_sorted, attention_mask
+    # Append EOS token.
+    eos = torch.zeros((1, 1, padded_tensor.shape[-1]))
+    eos_expanded = eos.repeat(padded_tensor.shape[0], 1, 1)
+    padded_tensor_eos = torch.cat([padded_tensor_sorted, eos_expanded], dim=1)
+    eos_mask = torch.zeros((attention_mask.shape[0], 1), dtype=torch.bool)
+    attention_mask_eos = torch.cat([attention_mask, eos_mask], dim=1)
+
+    return padded_tensor_eos, attention_mask_eos
 
 def batching(input, target, shuffle = True, batch_size = 100):
     """This function prepares the data for training by splitting it
@@ -258,5 +265,3 @@ loader_val = batching(validation_set_23, validation_set_final)
 loader_attention_val = batching(attention_val_23, attention_val_final)
 loader_test = batching(test_set_23, test_set_final)
 loader_attention_test = batching(attention_test_23, attention_test_final)
-
-print(loader_train)
