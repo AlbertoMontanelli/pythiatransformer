@@ -27,7 +27,7 @@ def standardize_features(data, features):
         data[feature] = (data[feature] - mean) / std
     return data
 
-def awkward_to_padded_tensor(data, features, isTarget, eos_value=99):
+def awkward_to_padded_tensor(data, features, isTarget, eos_value=-999):
     """Convert Awkward Array to padded Torch tensor.
 
         Args:
@@ -256,14 +256,48 @@ id_all = np.unique(np.concatenate([id_23, id_final]))
 
 # One-hot dictionary
 dict_ids = {pdg_id.item(): index for index, pdg_id in enumerate(id_all)}
-padding_index = len(id_all)  # Ultima posizione per il padding
-eos_index = len(id_all) + 1  # Posizione successiva per EOS
-dict_ids[0] = padding_index  # Mappa il padding (0)
-dict_ids[99] = eos_index     # Mappa EOS (99)
-print(f"dizionario pdg:\n {dict_ids}")
+padding_index = len(id_all)      # Ultima posizione per il padding
+eos_index = len(id_all) + 1      # Posizione successiva per EOS
 
-one_hot_23 = one_hot_encoding(padded_tensor_23, dict_ids, len(id_all) + 2)
-one_hot_final = one_hot_encoding(padded_tensor_final, dict_ids, len(id_all) + 2)
+dict_ids[0] = padding_index      # Padding
+dict_ids[-999] = eos_index         # EOS (usa -999 per esempio)
+
+num_classes = len(id_all) + 2    # Aggiungi padding ed EOS
+print(f"Dizionario aggiornato:\n{dict_ids}")
+
+import torch.nn.functional as F
+
+def one_hot_encoding_with_eos_and_padding(tensor, dict_ids, num_classes):
+    """
+    One-hot encoding con gestione speciale per EOS e Padding.
+
+    Args:
+        tensor (torch.Tensor): Tensor con ID da convertire.
+        dict_ids (dict): Dizionario di mapping (ID -> indice).
+        num_classes (int): Numero totale di classi.
+        
+    Returns:
+        one_hot (torch.Tensor): Tensor one-hot encoded.
+    """
+    # 1. Mappa il tensor secondo il dizionario
+    mapped_tensor = tensor.clone()  # Clona per sicurezza
+    for value, index in dict_ids.items():
+        mapped_tensor[tensor == value] = index
+
+    # 2. One-hot encoding
+    one_hot = F.one_hot(mapped_tensor, num_classes=num_classes).float()
+
+    # 3. Gestione speciale per il padding (tutti 0)
+    padding_index = dict_ids.get(0)  # Indice del padding
+    if padding_index is not None:
+        padding_mask = tensor == 0  # Trova i token di padding
+        one_hot[padding_mask] = 0   # Imposta tutto a 0 per il padding
+
+    return one_hot
+
+# One-hot encoding per padded_tensor_23 e padded_tensor_final
+one_hot_23 = one_hot_encoding_with_eos_and_padding(padded_tensor_23, dict_ids, num_classes)
+one_hot_final = one_hot_encoding_with_eos_and_padding(padded_tensor_final, dict_ids, num_classes)
 
 padded_tensor_final = torch.cat((one_hot_final, padded_tensor_final[:, :, 1:]), dim=-1)
 padded_tensor_23 = torch.cat((one_hot_23, padded_tensor_23[:, :, 1:]), dim=-1)
@@ -277,6 +311,12 @@ print(f"event tensor 23 {padded_tensor_23[0, :, -1]}")
 print(f"event attention mask 23 {attention_mask_23[0, :]}")
 print(f"event tensor final {padded_tensor_final[0, :, -1]}")
 print(f"event attention mask final {attention_mask_final[0, :]}")
+
+torch.set_printoptions(threshold=torch.inf)
+for i in range(padded_tensor_final.shape[1]):
+        print(f"event tensor final {padded_tensor_final[0, i, :35]}")
+        print(f"event attention mask final {attention_mask_final[0, i]}")
+        print("\n")
 
 # Splitting the data.
 training_set_23, validation_set_23, test_set_23 = (
