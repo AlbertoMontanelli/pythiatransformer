@@ -265,39 +265,9 @@ dict_ids[-999] = eos_index         # EOS (usa -999 per esempio)
 num_classes = len(id_all) + 2    # Aggiungi padding ed EOS
 print(f"Dizionario aggiornato:\n{dict_ids}")
 
-import torch.nn.functional as F
-
-def one_hot_encoding_with_eos_and_padding(tensor, dict_ids, num_classes):
-    """
-    One-hot encoding con gestione speciale per EOS e Padding.
-
-    Args:
-        tensor (torch.Tensor): Tensor con ID da convertire.
-        dict_ids (dict): Dizionario di mapping (ID -> indice).
-        num_classes (int): Numero totale di classi.
-        
-    Returns:
-        one_hot (torch.Tensor): Tensor one-hot encoded.
-    """
-    # 1. Mappa il tensor secondo il dizionario
-    mapped_tensor = tensor.clone()  # Clona per sicurezza
-    for value, index in dict_ids.items():
-        mapped_tensor[tensor == value] = index
-
-    # 2. One-hot encoding
-    one_hot = F.one_hot(mapped_tensor, num_classes=num_classes).float()
-
-    # 3. Gestione speciale per il padding (tutti 0)
-    padding_index = dict_ids.get(0)  # Indice del padding
-    if padding_index is not None:
-        padding_mask = tensor == 0  # Trova i token di padding
-        one_hot[padding_mask] = 0   # Imposta tutto a 0 per il padding
-
-    return one_hot
-
 # One-hot encoding per padded_tensor_23 e padded_tensor_final
-one_hot_23 = one_hot_encoding_with_eos_and_padding(padded_tensor_23, dict_ids, num_classes)
-one_hot_final = one_hot_encoding_with_eos_and_padding(padded_tensor_final, dict_ids, num_classes)
+one_hot_23 = one_hot_encoding(padded_tensor_23, dict_ids, num_classes)
+one_hot_final = one_hot_encoding(padded_tensor_final, dict_ids, num_classes)
 
 padded_tensor_final = torch.cat((one_hot_final, padded_tensor_final[:, :, 1:]), dim=-1)
 padded_tensor_23 = torch.cat((one_hot_23, padded_tensor_23[:, :, 1:]), dim=-1)
