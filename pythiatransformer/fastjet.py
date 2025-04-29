@@ -26,3 +26,6 @@ for i_event in range(N_EVENTS):
             pseudojet = fj.PseudoJet(p.px(), p.py(), p.pz(), p.e())
             pseudojet.set_user_index(i)
             pseudojets.append(pseudojet)
+
+# Cluster stable particles with FastJet
+clustered_sequence = fj.ClusterSequence(pseudojets, jet_def)
