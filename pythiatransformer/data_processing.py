@@ -27,12 +27,13 @@ def standardize_features(data, features):
         data[feature] = (data[feature] - mean) / std
     return data
 
-def awkward_to_padded_tensor(data, features):
+def awkward_to_padded_tensor(data, features, isTarget, eos_value=99):
     """Convert Awkward Array to padded Torch tensor.
 
         Args:
             data (ak.Array): Input Awkward Array.
             feature_cols (list): List of feature columns to stack.
+            eos_value (float): Value for the EOS token (default: 0).
 
         Returns:
             padded_tensor (torch.Tensor): Padded tensor of  shape:
@@ -42,7 +43,9 @@ def awkward_to_padded_tensor(data, features):
                                            1 for padding).
     """
     # Find max number of particles for all the events.
-    max_particles = ak.max(ak.num(data[features[0]]))
+    event_particles = ak.num(data[features[0]], axis=1)  # Number of real particles per event
+    max_particles = ak.max(event_particles)
+    print(f"max number of particles: {max_particles}")
     # Pad each feature to ensure an equal number of particles
     # per event. Collect each feature in a new dictionary.
     padded_events = {
@@ -59,14 +62,8 @@ def awkward_to_padded_tensor(data, features):
     ]
     padded_array = np.stack(padded_arrays, axis=-1)
     padded_tensor = torch.tensor(padded_array, dtype=torch.float32)
-
-    # Compute attention mask (1 for padding, 0 for actual particles).
-    attention_mask = ak.num(data[features[0]], axis=1)
-    attention_mask = torch.tensor([[0] * num + [1] * (padded_array.shape[1] - num)
-                                    for num in attention_mask], dtype=torch.bool)
     
     # Sorting the padded tensor with ascending order with respect to pT
-    # (and consequently the attention mask)
     indices_data = torch.argsort(padded_tensor[:, :, -1], dim=1, descending=True) #shape: batch_size x nr_particelle
     # e salva numeri corrispondenti all'ordine della feature pT lungo la dim del nr di particelle
     # ex. ( [3, 4, 2, 1], batch 1 da 4 particelle
@@ -81,15 +78,35 @@ def awkward_to_padded_tensor(data, features):
         # index è un tensore della stessa forma di padded_tensor, gather dice di prendere
         # gli elementi di padded_tensor nell'ordine specificato dai valori degli elementi di index
     )
+    if isTarget:
+        # Initialize EOS tensor and attention mask (1 for padding, 0 for actual particles).
+        batch_size, max_len, num_features = padded_tensor_sorted.shape
+        new_max_len = max_len + 1
+        padded_tensor = torch.zeros((batch_size, new_max_len, num_features))
+        attention_mask = torch.ones((batch_size, new_max_len), dtype=torch.bool)
 
-    # Append EOS token.
-    eos = torch.zeros((1, 1, padded_tensor.shape[-1]))
-    eos_expanded = eos.repeat(padded_tensor.shape[0], 1, 1)
-    padded_tensor_eos = torch.cat([padded_tensor_sorted, eos_expanded], dim=1)
-    eos_mask = torch.zeros((attention_mask.shape[0], 1), dtype=torch.bool)
-    attention_mask_eos = torch.cat([attention_mask, eos_mask], dim=1)
+        # Insert EOS token after last real particle in each event
+        for i, true_particles in enumerate(event_particles):
+            true_particles = true_particles.item()  # Length of real particles for event `i`
+            
+            # Copy real particles
+            padded_tensor[i, :true_particles, :] = padded_tensor_sorted[i, :true_particles, :]
+            attention_mask[i, :true_particles] = 0  # Valid tokens
 
-    return padded_tensor_eos, attention_mask_eos
+            # Insert EOS token
+            padded_tensor[i, true_particles, :] = eos_value  # EOS token (default: all zeros)
+            attention_mask[i, true_particles] = 0  # Mark EOS as a valid token
+
+            # Remaining positions stay as padding (default values)
+    else:
+        padded_tensor = padded_tensor_sorted.clone()
+        attention_mask = torch.tensor(
+        [[0] * num + [1] * (padded_array.shape[1] - num) for num in event_particles],
+        dtype=torch.bool
+        )
+
+
+    return padded_tensor, attention_mask
 
 def batching(input, target, shuffle = True, batch_size = 100):
     """This function prepares the data for training by splitting it
@@ -218,34 +235,49 @@ data_final["pT_final"] = np.sqrt(
 # Padding.
 padded_tensor_23, attention_mask_23 = awkward_to_padded_tensor(
     data_23,
-    features=["id_23", "px_23", "py_23", "pz_23", "pT_23"]
+    features=["id_23", "px_23", "py_23", "pz_23", "pT_23"],
+    isTarget=False
 )
 padded_tensor_final, attention_mask_final = awkward_to_padded_tensor(
     data_final,
-    features=["id_final", "px_final", "py_final", "pz_final", "pT_final"]
+    features=["id_final", "px_final", "py_final", "pz_final", "pT_final"],
+    isTarget=True
 )
+
+print(f"padded tensor final shape: {padded_tensor_final.shape}")
+print(f"attention mask final shape: {attention_mask_final.shape}")
+print(f"padded tensor 23 shape: {padded_tensor_23.shape}")
+print(f"attention mask 23 shape: {attention_mask_23.shape}")
 
 # Finding unique ids for one_hot_encoding() function.
 id_23 = np.unique(ak.flatten(data_23["id_23"]))
 id_final = np.unique(ak.flatten(data_final["id_final"]))
 id_all = np.unique(np.concatenate([id_23, id_final]))
-dict_ids = {pdg_id.item(): index for index, pdg_id in enumerate(id_all)}
-dict_ids = dict_ids | {0: 31}
-print(dict_ids)
 
-one_hot_23 = one_hot_encoding(padded_tensor_23, dict_ids, len(id_all) + 1)
-one_hot_final = one_hot_encoding(padded_tensor_final, dict_ids, len(id_all) + 1)
+# One-hot dictionary
+dict_ids = {pdg_id.item(): index for index, pdg_id in enumerate(id_all)}
+padding_index = len(id_all)  # Ultima posizione per il padding
+eos_index = len(id_all) + 1  # Posizione successiva per EOS
+dict_ids[0] = padding_index  # Mappa il padding (0)
+dict_ids[99] = eos_index     # Mappa EOS (99)
+print(f"dizionario pdg:\n {dict_ids}")
+
+one_hot_23 = one_hot_encoding(padded_tensor_23, dict_ids, len(id_all) + 2)
+one_hot_final = one_hot_encoding(padded_tensor_final, dict_ids, len(id_all) + 2)
 
 padded_tensor_final = torch.cat((one_hot_final, padded_tensor_final[:, :, 1:]), dim=-1)
 padded_tensor_23 = torch.cat((one_hot_23, padded_tensor_23[:, :, 1:]), dim=-1)
-'''
-print(f"padded tensor final shape: {padded_tensor_final.shape}")
-print(f"attention mask final shape: {attention_mask_final.shape}")
-print(f"padded tensor 23 shape: {padded_tensor_23.shape}")
 
+print(f"padded tensor final shape after 1he: {padded_tensor_final.shape}")
+print(f"attention mask final shape after 1he: {attention_mask_final.shape}")
+print(f"padded tensor 23 shape after 1he: {padded_tensor_23.shape}")
+print(f"attention mask 23 shape after 1he: {attention_mask_23.shape}")
+
+print(f"event tensor 23 {padded_tensor_23[0, :, -1]}")
+print(f"event attention mask 23 {attention_mask_23[0, :]}")
 print(f"event tensor final {padded_tensor_final[0, :, -1]}")
 print(f"event attention mask final {attention_mask_final[0, :]}")
-'''
+
 # Splitting the data.
 training_set_23, validation_set_23, test_set_23 = (
     train_val_test_split(padded_tensor_23)
