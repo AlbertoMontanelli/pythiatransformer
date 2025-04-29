@@ -282,11 +282,10 @@ print(f"event attention mask 23 {attention_mask_23[0, :]}")
 print(f"event tensor final {padded_tensor_final[0, :, -1]}")
 print(f"event attention mask final {attention_mask_final[0, :]}")
 
-torch.set_printoptions(threshold=torch.inf)
-for i in range(padded_tensor_final.shape[1]):
-        print(f"event tensor final {padded_tensor_final[0, i, :35]}")
-        print(f"event attention mask final {attention_mask_final[0, i]}")
-        print("\n")
+#for i in range(padded_tensor_final.shape[1]):
+#        print(f"event tensor final {padded_tensor_final[0, i, :]}")
+#        print(f"event attention mask final {attention_mask_final[0, i]}")
+#        print("\n")
 
 # Splitting the data.
 training_set_23, validation_set_23, test_set_23 = (
