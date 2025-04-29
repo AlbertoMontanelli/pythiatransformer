@@ -7,6 +7,7 @@ between training, validation and test sets.
 import awkward as ak
 import numpy as np
 import torch
+from torch.utils.data import TensorDataset, DataLoader
 import uproot
 
 
@@ -81,7 +82,42 @@ def awkward_to_padded_tensor(data, features):
         # gli elementi di padded_tensor nell'ordine specificato dai valori degli elementi di index
     )
 
-    return padded_tensor_sorted, attention_mask
+    # Append EOS token.
+    eos = torch.zeros((1, 1, padded_tensor.shape[-1]))
+    eos_expanded = eos.repeat(padded_tensor.shape[0], 1, 1)
+    padded_tensor_eos = torch.cat([padded_tensor_sorted, eos_expanded], dim=1)
+    eos_mask = torch.zeros((attention_mask.shape[0], 1), dtype=torch.bool)
+    attention_mask_eos = torch.cat([attention_mask, eos_mask], dim=1)
+
+    return padded_tensor_eos, attention_mask_eos
+
+def batching(input, target, shuffle = True, batch_size = 100):
+    """This function prepares the data for training by splitting it
+    into batches and shuffling the training data.
+
+    Args:
+        input (torch.Tensor): data.
+        target (torch.Tensor): target.
+        shuffle (bool): if True, shuffling along the rows.
+        batch_size (int): size of the batches.
+    Returns:
+        loader (Iterator): An iterator for the data, with batching
+                           and shuffling enabled.
+
+    """
+    seed = 1
+    generator = torch.Generator() # creation of a new generator
+    generator.manual_seed(seed)
+    set = TensorDataset(input, target)
+
+    loader = DataLoader(
+        set,
+        batch_size = batch_size,
+        shuffle = shuffle,
+        generator = generator if shuffle else None
+    )
+
+    return loader
 
 def one_hot_encoding(tensor, dict_ids, num_classes):
     """One-hot-encoding of the ids.
@@ -156,10 +192,11 @@ def train_val_test_split(
 
     return training_set, validation_set, test_set
 
+
+
 with uproot.open("events.root") as file:
     data_23 = file["tree_23"].arrays(library="ak")
     data_final = file["tree_final"].arrays(library="ak")
-
 
 # Standardization.
 data_23 = standardize_features(
@@ -178,6 +215,7 @@ data_final["pT_final"] = np.sqrt(
     data_final["px_final"]**2 + data_final["py_final"]**2
 )
 
+# Padding.
 padded_tensor_23, attention_mask_23 = awkward_to_padded_tensor(
     data_23,
     features=["id_23", "px_23", "py_23", "pz_23", "pT_23"]
@@ -192,19 +230,23 @@ id_23 = np.unique(ak.flatten(data_23["id_23"]))
 id_final = np.unique(ak.flatten(data_final["id_final"]))
 id_all = np.unique(np.concatenate([id_23, id_final]))
 dict_ids = {pdg_id.item(): index for index, pdg_id in enumerate(id_all)}
+dict_ids = dict_ids | {0: 31}
+print(dict_ids)
 
-one_hot_23 = one_hot_encoding(padded_tensor_23, dict_ids, len(id_all))
-one_hot_final = one_hot_encoding(padded_tensor_final, dict_ids, len(id_all))
+one_hot_23 = one_hot_encoding(padded_tensor_23, dict_ids, len(id_all) + 1)
+one_hot_final = one_hot_encoding(padded_tensor_final, dict_ids, len(id_all) + 1)
 
 padded_tensor_final = torch.cat((one_hot_final, padded_tensor_final[:, :, 1:]), dim=-1)
 padded_tensor_23 = torch.cat((one_hot_23, padded_tensor_23[:, :, 1:]), dim=-1)
+'''
 print(f"padded tensor final shape: {padded_tensor_final.shape}")
 print(f"attention mask final shape: {attention_mask_final.shape}")
 print(f"padded tensor 23 shape: {padded_tensor_23.shape}")
 
 print(f"event tensor final {padded_tensor_final[0, :, -1]}")
 print(f"event attention mask final {attention_mask_final[0, :]}")
-
+'''
+# Splitting the data.
 training_set_23, validation_set_23, test_set_23 = (
     train_val_test_split(padded_tensor_23)
 )
@@ -217,3 +259,11 @@ training_set_final, validation_set_final, test_set_final = (
 attention_train_final, attention_val_final, attention_test_final = (
     train_val_test_split(attention_mask_final)
 )
+
+# Building the data loaders.
+loader_train = batching(training_set_23, training_set_final)
+loader_attention_train = batching(attention_train_23, attention_train_final)
+loader_val = batching(validation_set_23, validation_set_final)
+loader_attention_val = batching(attention_val_23, attention_val_final)
+loader_test = batching(test_set_23, test_set_final)
+loader_attention_test = batching(attention_test_23, attention_test_final)
