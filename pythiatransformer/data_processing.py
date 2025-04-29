@@ -230,6 +230,8 @@ id_23 = np.unique(ak.flatten(data_23["id_23"]))
 id_final = np.unique(ak.flatten(data_final["id_final"]))
 id_all = np.unique(np.concatenate([id_23, id_final]))
 dict_ids = {pdg_id.item(): index for index, pdg_id in enumerate(id_all)}
+dict_ids = dict_ids | {0: 31}
+print(dict_ids)
 
 one_hot_23 = one_hot_encoding(padded_tensor_23, dict_ids, len(id_all))
 one_hot_final = one_hot_encoding(padded_tensor_final, dict_ids, len(id_all))
