@@ -211,7 +211,7 @@ class ParticleTransformer(nn.Module):
         non_pad_mask = ~padding_mask # inverto la matrice di padding
         num_particles = non_pad_mask.sum(dim=1) # tensore di lunghezza batch_size, con valori il numero di particelle vere
         max_len_tensor = num_particles.max()
-        print(f"max_len = {max_len_tensor}")
+        #print(f"max_len = {max_len_tensor}")
         max_len = max_len_tensor.item()
         input = input[:, :max_len, :]
         padding_mask = padding_mask[:, :max_len]

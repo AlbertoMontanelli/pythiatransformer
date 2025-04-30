@@ -53,7 +53,7 @@ transformer = ParticleTransformer(
 )
 
 loss_func = nn.MSELoss()
-learning_rate = 1e-2
+learning_rate = 5e-4
 
 train_loss, val_loss = transformer.train_val(
     num_epochs = epochs,
