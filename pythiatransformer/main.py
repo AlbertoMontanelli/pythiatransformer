@@ -13,6 +13,8 @@ from data_processing import loader_train, loader_attention_train
 from data_processing import loader_val, loader_attention_val
 from data_processing import loader_test, loader_attention_test
 
+device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+
 epochs = 100
 
 def plot_losses(train_loss, val_loss, filename="learning_curve_descending_pT.pdf", dpi=1200):
@@ -51,6 +53,7 @@ transformer = ParticleTransformer(
     dropout = 0.1,
     activation = nn.ReLU()
 )
+transformer.to(device)
 
 loss_func = nn.MSELoss()
 learning_rate = 5e-4
@@ -71,7 +74,12 @@ with h5py.File(output_file, "w") as h5f:
     logger.info("Prova generazione particelle con forward")
 
     for batch_idx, ((inputs, targets), (inputs_mask, targets_mask)) in enumerate(zip(loader_train, loader_attention_train)):
-        targets, target_padding_mask, attention_mask = transformer.de_padding(targets, targets_mask)
+	targets, target_padding_mask, attention_mask = transformer.de_padding(targets, targets_mask)
+	inputs = inputs.to(device)
+	targets = targets.to(device)
+	inputs_mask = inputs_mask.to(device)
+	target_padding_mask = target_padding_mask.to(device)
+	attention_mask = attention_mask.to(device)
         outputs = transformer.forward(inputs, targets, inputs_mask, target_padding_mask, attention_mask)
         outputs_np = outputs.detach().numpy()  # Converti il tensore PyTorch in array NumPy
 

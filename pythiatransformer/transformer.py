@@ -273,6 +273,10 @@ class ParticleTransformer(nn.Module):
         self.train()
         loss_epoch = 0
         for (input, target), (input_padding_mask, target_padding_mask) in zip(self.train_data, self.train_data_pad_mask):
+            input = input.to(next(self.parameters()).device)
+            target = target.to(next(self.parameters()).device)
+            input_padding_mask = input_padding_mask.to(next(self.parameters()).device)
+            target_padding_mask = target_padding_mask.to(next(self.parameters()).device)
             target, target_padding_mask, attention_mask = self.de_padding(target, target_padding_mask)
             optim.zero_grad()
             output = self.forward(
@@ -318,6 +322,10 @@ class ParticleTransformer(nn.Module):
         loss_epoch = 0
         with torch.no_grad(): # Compute only the loss value
             for (input, target), (input_padding_mask, target_padding_mask) in zip(data_loader, mask_loader):
+                input = input.to(next(self.parameters()).device)
+                target = target.to(next(self.parameters()).device)
+                input_padding_mask = input_padding_mask.to(next(self.parameters()).device)
+                target_padding_mask = target_padding_mask.to(next(self.parameters()).device)
                 target, target_padding_mask, attention_mask = self.de_padding(target, target_padding_mask)
                 output = self.forward(input, target, input_padding_mask, target_padding_mask, attention_mask)
                 loss = loss_func(output, target)
