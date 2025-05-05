@@ -2,7 +2,7 @@ import h5py
 import torch
 from loguru import logger
 
-from data_processing import training_set_final
+from data_processing import loader_train
 
 # Carica il file HDF5
 output_file = "output_tensor_descending_pT.h5"
@@ -22,12 +22,10 @@ with h5py.File(output_file, "r") as h5f:
         print(f"Batch {i}, particella 1: {batch_tensor[0, 0, :]}")
         print(f"Batch {i}, ultima particella: {batch_tensor[0, -1, :]}")
 
-
-
-# for event in range (0, 50, 1):
-# 	print(f"particella 1 vera: {training_set_final[event, 0, :]}")
-# 	print(f"particella 1 ricostruita: {final_tensor[event, 0, :]}")
-# 	print(f"ultima particella vera: {training_set_final[event, -1, :]}")
-# 	print(f"ultima particella ricostruita: {final_tensor[event, -1, :]}")
-
-
+for i, (batch_23, batch_final) in enumerate(loader_train):
+    print(f"Batch {i}:")
+    print("Batch Final - prima particella:", batch_final[0, 0, :])
+    print("Batch Final - ultima particella:", batch_final[0, -1, :])
+    
+    print("-" * 50)
+    
