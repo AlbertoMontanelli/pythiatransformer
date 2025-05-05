@@ -401,7 +401,7 @@ class ParticleTransformer(nn.Module):
             train_loss.append(train_loss_epoch)
             val_loss.append(val_loss_epoch)
 
-            if epoch >= int(num_epochs/10):
+            if epoch >= int(num_epochs/100):
                 # smoothness check
                 stop_smooth, best_loss = self.smoothness(
                     val_loss_epoch,
@@ -446,7 +446,7 @@ class ParticleTransformer(nn.Module):
             best_loss (float)
         """
         stop = False
-        if current_epoch == int(num_epochs/10):
+        if current_epoch == int(num_epochs/100):
             best_loss = val_loss
         else:
             if val_loss <= best_loss:

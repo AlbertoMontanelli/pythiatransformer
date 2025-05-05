@@ -21,7 +21,7 @@ from data_processing import loader_test, loader_attention_test
 
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
-epochs = 100
+epochs = 1000
 
 def plot_losses(train_loss, val_loss, filename="learning_curve_descending_pT.pdf", dpi=1200):
     """
@@ -87,7 +87,7 @@ with h5py.File(output_file, "w") as h5f:
         target_padding_mask = target_padding_mask.to(device)
         attention_mask = attention_mask.to(device)
         outputs = transformer.forward(inputs, targets, inputs_mask, target_padding_mask, attention_mask)
-        outputs_np = outputs.detach().numpy()  # Converti il tensore PyTorch in array NumPy
+        outputs_np = outputs.detach().cpu().numpy()  # Porta il tensore su CPU prima della conversione
 
         # Crea un dataset per ogni batch
         h5f.create_dataset(f"batch_{batch_idx}", data=outputs_np, compression="gzip")
