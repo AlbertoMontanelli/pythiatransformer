@@ -270,8 +270,14 @@ class ParticleTransformer(nn.Module):
         Returns:
             loss_epoch (float):
         """
+        print(f"Memoria prima dell'allenamento dell'epoca {epoch+1}")
+        print(torch.cuda.memory_summary())
         self.train()
         loss_epoch = 0
+        print("GPU utilizzata:")
+        print(torch.cuda.current_device())
+        print(torch.cuda.get_device_name(torch.cuda.current_device()))
+
         for (input, target), (input_padding_mask, target_padding_mask) in zip(self.train_data, self.train_data_pad_mask):
             input = input.to(next(self.parameters()).device)
             target = target.to(next(self.parameters()).device)
@@ -297,6 +303,8 @@ class ParticleTransformer(nn.Module):
             optim.step()
             loss_epoch += loss.item()
         logger.debug(f"Loss at epoch {epoch + 1}: {loss_epoch:.4f}")
+        print(f"Memoria dopo l'allenamento dell'epoca {epoch+1}")
+        print(torch.cuda.memory_summary())
         return loss_epoch
 
     def val_one_epoch(self, epoch, loss_func, val):
