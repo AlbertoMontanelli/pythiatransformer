@@ -278,6 +278,7 @@ class ParticleTransformer(nn.Module):
             input_padding_mask = input_padding_mask.to(next(self.parameters()).device)
             target_padding_mask = target_padding_mask.to(next(self.parameters()).device)
             target, target_padding_mask, attention_mask = self.de_padding(target, target_padding_mask)
+            attention_mask = attention_mask.to(next(self.parameters()).device)
             optim.zero_grad()
             output = self.forward(
                 input,
@@ -327,6 +328,7 @@ class ParticleTransformer(nn.Module):
                 input_padding_mask = input_padding_mask.to(next(self.parameters()).device)
                 target_padding_mask = target_padding_mask.to(next(self.parameters()).device)
                 target, target_padding_mask, attention_mask = self.de_padding(target, target_padding_mask)
+                attention_mask = attention_mask.to(next(self.parameters()).device)
                 output = self.forward(input, target, input_padding_mask, target_padding_mask, attention_mask)
                 loss = loss_func(output, target)
                 if not torch.isfinite(loss):
