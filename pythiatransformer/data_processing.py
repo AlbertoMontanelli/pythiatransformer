@@ -131,6 +131,8 @@ def batching(input, target, shuffle = True, batch_size = 100):
         set,
         batch_size = batch_size,
         shuffle = shuffle,
+        num_workers=2,  # Riduci il numero di worker
+        pin_memory=True
         generator = generator if shuffle else None
     )
 

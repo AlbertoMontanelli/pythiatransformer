@@ -1,6 +1,8 @@
 """
 """
 import matplotlib.pyplot as plt
+import torch
+import os
 import torch.nn as nn
 import torch.optim as optimizer
 import h5py
@@ -8,10 +10,14 @@ import numpy as np
 
 from loguru import logger
 
+os.environ["PYTORCH_CUDA_ALLOC_CONF"] = "expandable_segments:True"
+
 from transformer import ParticleTransformer
 from data_processing import loader_train, loader_attention_train
 from data_processing import loader_val, loader_attention_val
 from data_processing import loader_test, loader_attention_test
+
+
 
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 

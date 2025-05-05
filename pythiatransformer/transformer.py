@@ -341,6 +341,13 @@ class ParticleTransformer(nn.Module):
         else:
             logger.debug(f"Test loss at epoch {epoch + 1}: {loss_epoch:.4f}")
         return loss_epoch
+    
+    def log_memory_usage(self):
+        allocated = torch.cuda.memory_allocated() / (1024 ** 3)  # GB
+        reserved = torch.cuda.memory_reserved() / (1024 ** 3)  # GB
+        logger.debug(f"Memory allocated: {allocated:.2f} GB")
+        logger.debug(f"Memory reserved: {reserved:.2f} GB")
+
 
     def train_val(self, num_epochs, loss_func, optim, val = True, patient_smooth = 20, patient_early = 10):
         """This function trains and validates the model for the given
@@ -420,6 +427,9 @@ class ParticleTransformer(nn.Module):
                         f"Overfitting at epoch {epoch + 1 - patient_early}."
                     )
                     break
+
+            torch.cuda.empty_cache()
+            self.log_memory_usage()
 
         logger.info("Training completed!")
         return train_loss, val_loss
