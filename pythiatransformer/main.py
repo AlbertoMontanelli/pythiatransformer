@@ -74,12 +74,12 @@ with h5py.File(output_file, "w") as h5f:
     logger.info("Prova generazione particelle con forward")
 
     for batch_idx, ((inputs, targets), (inputs_mask, targets_mask)) in enumerate(zip(loader_train, loader_attention_train)):
-	targets, target_padding_mask, attention_mask = transformer.de_padding(targets, targets_mask)
-	inputs = inputs.to(device)
-	targets = targets.to(device)
-	inputs_mask = inputs_mask.to(device)
-	target_padding_mask = target_padding_mask.to(device)
-	attention_mask = attention_mask.to(device)
+        targets, target_padding_mask, attention_mask = transformer.de_padding(targets, targets_mask)
+        inputs = inputs.to(device)
+        targets = targets.to(device)
+        inputs_mask = inputs_mask.to(device)
+        target_padding_mask = target_padding_mask.to(device)
+        attention_mask = attention_mask.to(device)
         outputs = transformer.forward(inputs, targets, inputs_mask, target_padding_mask, attention_mask)
         outputs_np = outputs.detach().numpy()  # Converti il tensore PyTorch in array NumPy
 
