@@ -2,10 +2,25 @@
 Transformer class.
 """
 from loguru import logger
+import gc
 import torch
 import torch.nn as nn
 # from torch.nn import Transformer
 # from torch.utils.data import TensorDataset, DataLoader
+
+def log_gpu_memory(epoch=None):
+    """
+    Stampa un riepilogo chiaro della memoria GPU.
+    """
+    alloc_MB = torch.cuda.memory_allocated() / 1024**2
+    reserved_MB = torch.cuda.memory_reserved() / 1024**2
+    stats = torch.cuda.memory_stats()
+    total_alloc_MB = stats["allocation.all.allocated"] / 1024**2
+
+    prefix = f"[Epoca {epoch + 1}] " if epoch is not None else ""
+    print(f"{prefix}Memoria allocata:   {alloc_MB:.2f} MB")
+    print(f"{prefix}Memoria riservata:   {reserved_MB:.2f} MB")
+    print(f"{prefix}Totale allocata (storico): {total_alloc_MB:.2f} MB")
 
 class ParticleTransformer(nn.Module):
     """Transformer taking in input particles having status 23
@@ -270,21 +285,18 @@ class ParticleTransformer(nn.Module):
         Returns:
             loss_epoch (float):
         """
-        print(f"Memoria prima dell'allenamento dell'epoca {epoch+1}")
-        print(torch.cuda.memory_summary())
+
         self.train()
         loss_epoch = 0
-        print("GPU utilizzata:")
-        print(torch.cuda.current_device())
-        print(torch.cuda.get_device_name(torch.cuda.current_device()))
 
         for (input, target), (input_padding_mask, target_padding_mask) in zip(self.train_data, self.train_data_pad_mask):
-            input = input.to(next(self.parameters()).device)
-            target = target.to(next(self.parameters()).device)
-            input_padding_mask = input_padding_mask.to(next(self.parameters()).device)
-            target_padding_mask = target_padding_mask.to(next(self.parameters()).device)
+            device = next(self.parameters()).device
+            input = input.to(device)
+            target = target.to(device)
+            input_padding_mask = input_padding_mask.to(device)
+            target_padding_mask = target_padding_mask.to(device)
             target, target_padding_mask, attention_mask = self.de_padding(target, target_padding_mask)
-            attention_mask = attention_mask.to(next(self.parameters()).device)
+            attention_mask = attention_mask.to(device)
             optim.zero_grad()
             output = self.forward(
                 input,
@@ -302,9 +314,14 @@ class ParticleTransformer(nn.Module):
             loss.backward()
             optim.step()
             loss_epoch += loss.item()
+
+            del input, target, input_padding_mask, target_padding_mask, output, loss, attention_mask
+            torch.cuda.empty_cache()
+
+        gc.collect() # forcing garbage collector
+        torch.cuda.empty_cache()
+
         logger.debug(f"Loss at epoch {epoch + 1}: {loss_epoch:.4f}")
-        print(f"Memoria dopo l'allenamento dell'epoca {epoch+1}")
-        print(torch.cuda.memory_summary())
         return loss_epoch
 
     def val_one_epoch(self, epoch, loss_func, val):
@@ -331,12 +348,16 @@ class ParticleTransformer(nn.Module):
         loss_epoch = 0
         with torch.no_grad(): # Compute only the loss value
             for (input, target), (input_padding_mask, target_padding_mask) in zip(data_loader, mask_loader):
-                input = input.to(next(self.parameters()).device)
-                target = target.to(next(self.parameters()).device)
-                input_padding_mask = input_padding_mask.to(next(self.parameters()).device)
-                target_padding_mask = target_padding_mask.to(next(self.parameters()).device)
+                
+                device = next(self.parameters()).device
+                input = input.to(device)
+                target = target.to(device)
+                input_padding_mask = input_padding_mask.to(device)
+                target_padding_mask = target_padding_mask.to(device)
+
                 target, target_padding_mask, attention_mask = self.de_padding(target, target_padding_mask)
-                attention_mask = attention_mask.to(next(self.parameters()).device)
+                attention_mask = attention_mask.to(device)
+
                 output = self.forward(input, target, input_padding_mask, target_padding_mask, attention_mask)
                 loss = loss_func(output, target)
                 if not torch.isfinite(loss):
@@ -344,18 +365,18 @@ class ParticleTransformer(nn.Module):
                         f"Loss is not finite at epoch {epoch + 1}"
                     )
                 loss_epoch += loss.item()
+
+                del input, target, input_padding_mask, target_padding_mask, output, loss, attention_mask
+                torch.cuda.empty_cache()
+        
+        gc.collect()
+        torch.cuda.empty_cache()
+        
         if val:
             logger.debug(f"Validation loss at epoch {epoch + 1}: {loss_epoch:.4f}")
         else:
             logger.debug(f"Test loss at epoch {epoch + 1}: {loss_epoch:.4f}")
         return loss_epoch
-    
-    def log_memory_usage(self):
-        allocated = torch.cuda.memory_allocated() / (1024 ** 3)  # GB
-        reserved = torch.cuda.memory_reserved() / (1024 ** 3)  # GB
-        logger.debug(f"Memory allocated: {allocated:.2f} GB")
-        logger.debug(f"Memory reserved: {reserved:.2f} GB")
-
 
     def train_val(self, num_epochs, loss_func, optim, val = True, patient_smooth = 20, patient_early = 10):
         """This function trains and validates the model for the given
@@ -406,8 +427,8 @@ class ParticleTransformer(nn.Module):
         for epoch in range(num_epochs):
             train_loss_epoch = self.train_one_epoch(epoch, loss_func, optim)
             val_loss_epoch = self.val_one_epoch(epoch, loss_func, val)
-            train_loss.append(train_loss_epoch)
-            val_loss.append(val_loss_epoch)
+            train_loss.append(float(train_loss_epoch))
+            val_loss.append(float(val_loss_epoch))
 
             if epoch >= int(num_epochs/100):
                 # smoothness check
@@ -437,7 +458,7 @@ class ParticleTransformer(nn.Module):
                     break
 
             torch.cuda.empty_cache()
-            self.log_memory_usage()
+            log_gpu_memory(epoch)
 
         logger.info("Training completed!")
         return train_loss, val_loss
@@ -477,44 +498,44 @@ class ParticleTransformer(nn.Module):
             stop = False
         return stop
     
-    def generate_target(self, input, input_mask, max_len):
-        """
-        Inferenza autoregressiva: genera il target passo dopo passo dato l'input.
+    # def generate_target(self, input, input_mask, max_len):
+    #     """
+    #     Inferenza autoregressiva: genera il target passo dopo passo dato l'input.
 
-        Args:
-            input (torch.Tensor): Tensor di input (particelle di status 23).
-            input_mask (torch.Tensor): Maschera per l'input.
-            max_len (int): Lunghezza massima della sequenza target da generare.
+    #     Args:
+    #         input (torch.Tensor): Tensor di input (particelle di status 23).
+    #         input_mask (torch.Tensor): Maschera per l'input.
+    #         max_len (int): Lunghezza massima della sequenza target da generare.
 
-        Returns:
-            torch.Tensor: Sequenza generata (particelle finali).
-        """
-        # Proietta l'input nello spazio nascosto
-        input = self.input_projection(input)
+    #     Returns:
+    #         torch.Tensor: Sequenza generata (particelle finali).
+    #     """
+    #     # Proietta l'input nello spazio nascosto
+    #     input = self.input_projection(input)
         
-        # Placeholder iniziale per il target nello spazio nascosto
-        target = torch.zeros((input.size(0), 1, self.num_units), device=input.device)
+    #     # Placeholder iniziale per il target nello spazio nascosto
+    #     target = torch.zeros((input.size(0), 1, self.num_units), device=input.device)
         
-        # Lista per raccogliere i token generati
-        outputs = []
+    #     # Lista per raccogliere i token generati
+    #     outputs = []
 
-        # Loop autoregressivo per generare i token
-        for _ in range(max_len):
-            # Passa input e target corrente al transformer
-            output = self.transformer(
-                src=input,
-                tgt=target,
-                src_key_padding_mask=input_mask
-            )
+    #     # Loop autoregressivo per generare i token
+    #     for _ in range(max_len):
+    #         # Passa input e target corrente al transformer
+    #         output = self.transformer(
+    #             src=input,
+    #             tgt=target,
+    #             src_key_padding_mask=input_mask
+    #         )
             
-            # Estrai il prossimo token generato (l'ultimo della sequenza output)
-            next_token = self.output_projection(output[:, -1:, :])  # Proietta nello spazio originale
+    #         # Estrai il prossimo token generato (l'ultimo della sequenza output)
+    #         next_token = self.output_projection(output[:, -1:, :])  # Proietta nello spazio originale
             
-            # Aggiungi il token generato alla lista degli output
-            outputs.append(next_token)
+    #         # Aggiungi il token generato alla lista degli output
+    #         outputs.append(next_token)
             
-            # Aggiorna il target concatenando il nuovo token generato
-            target = torch.cat([target, self.input_projection(next_token)], dim=1)
+    #         # Aggiorna il target concatenando il nuovo token generato
+    #         target = torch.cat([target, self.input_projection(next_token)], dim=1)
 
-        # Concatena tutti i token generati
-        return torch.cat(outputs, dim=1)
+    #     # Concatena tutti i token generati
+    #     return torch.cat(outputs, dim=1)

@@ -131,8 +131,9 @@ def batching(input, target, shuffle = True, batch_size = 100):
         set,
         batch_size = batch_size,
         shuffle = shuffle,
-        num_workers=2,  # Riduci il numero di worker
-        pin_memory=True,
+        num_workers=2,  # Riduci il numero di worker in parallelo per diminuire il consumo di RAM
+        pin_memory=True, # prealloca i batch nella memoria bloccata del CPU: il trasferimento 
+                         # sulla GPU sarà più veloce
         generator = generator if shuffle else None
     )
 
