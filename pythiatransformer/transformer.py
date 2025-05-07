@@ -378,7 +378,7 @@ class ParticleTransformer(nn.Module):
             logger.debug(f"Test loss at epoch {epoch + 1}: {loss_epoch:.4f}")
         return loss_epoch
 
-    def train_val(self, num_epochs, loss_func, optim, val = True, patient_smooth = 20, patient_early = 10):
+    def train_val(self, num_epochs, loss_func, optim, val = True, patient_smooth = 500, patient_early = 10):
         """This function trains and validates the model for the given
         number of epochs.
         Args:
