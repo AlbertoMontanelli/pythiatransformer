@@ -17,7 +17,7 @@ from data_processing import (
 
 os.environ["PYTORCH_CUDA_ALLOC_CONF"] = "expandable_segments:True"
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-epochs = 5
+epochs = 1000
 
 
 def plot_losses(
