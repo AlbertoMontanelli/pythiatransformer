@@ -1,0 +1,993 @@
+nohup: ignoring input
+2025-05-06 21:27:40.742 | INFO     | transformer:build_projection_layer:161 - Projection layers input/output created.
+2025-05-06 21:27:40.751 | INFO     | transformer:initialize_transformer:178 - Transformer initialized with number of hidden units: 64, number of heads: 8, number of encoder layers: 2, number of decoder layers: 2, number of feedforward units: 256, dropout probability: 0.1, activation function: ReLU().
+2025-05-06 21:27:42.021 | INFO     | transformer:train_val:426 - Training started!
+max number of particles: 2
+max number of particles: 1217
+padded tensor final shape: torch.Size([10000, 1218, 5])
+attention mask final shape: torch.Size([10000, 1218])
+padded tensor 23 shape: torch.Size([10000, 2, 5])
+attention mask 23 shape: torch.Size([10000, 2])
+Dizionario aggiornato:
+{-2212: 0, -2112: 1, -321: 2, -211: 3, -16: 4, -14: 5, -13: 6, -12: 7, -11: 8, -5: 9, -4: 10, -3: 11, -2: 12, -1: 13, 1: 14, 2: 15, 3: 16, 4: 17, 5: 18, 11: 19, 12: 20, 13: 21, 14: 22, 16: 23, 21: 24, 22: 25, 130: 26, 211: 27, 321: 28, 2112: 29, 2212: 30}
+padded tensor final shape after 1he: torch.Size([10000, 1218, 35])
+attention mask final shape after 1he: torch.Size([10000, 1218])
+padded tensor 23 shape after 1he: torch.Size([10000, 2, 35])
+attention mask 23 shape after 1he: torch.Size([10000, 2])
+event tensor 23 tensor([1.1073, 1.1073])
+event attention mask 23 tensor([False, False])
+event tensor final tensor([14.7128, 11.6593,  7.7954,  ...,  0.0000,  0.0000,  0.0000])
+event attention mask final tensor([False, False, False,  ...,  True,  True,  True])
+/home/local/ADUNIPI/a.montanelli/miniconda3/envs/myrootenv/lib/python3.9/site-packages/torch/nn/functional.py:5962: UserWarning: Support for mismatched key_padding_mask and attn_mask is deprecated. Use same type for both instead.
+  warnings.warn(
+2025-05-06 21:28:42.206 | DEBUG    | transformer:train_one_epoch:324 - Loss at epoch 1: 7115.1458
+/home/local/ADUNIPI/a.montanelli/miniconda3/envs/myrootenv/lib/python3.9/site-packages/torch/nn/modules/transformer.py:508: UserWarning: The PyTorch API of nested tensors is in prototype stage and will change in the near future. We recommend specifying layout=torch.jagged when constructing a nested tensor, as this layout receives active development, has better operator coverage, and works with torch.compile. (Triggered internally at /pytorch/aten/src/ATen/NestedTensorImpl.cpp:178.)
+  output = torch._nested_tensor_from_mask(
+2025-05-06 21:28:51.417 | DEBUG    | transformer:val_one_epoch:376 - Validation loss at epoch 1: 2350.6347
+[Epoca 1] Memoria allocata:   19.93 MB
+[Epoca 1] Memoria riservata:   90.00 MB
+[Epoca 1] Totale allocata (storico): 0.03 MB
+2025-05-06 21:29:52.508 | DEBUG    | transformer:train_one_epoch:324 - Loss at epoch 2: 7100.9259
+2025-05-06 21:30:01.733 | DEBUG    | transformer:val_one_epoch:376 - Validation loss at epoch 2: 2308.8001
+[Epoca 2] Memoria allocata:   19.93 MB
+[Epoca 2] Memoria riservata:   88.00 MB
+[Epoca 2] Totale allocata (storico): 0.07 MB
+2025-05-06 21:31:02.835 | DEBUG    | transformer:train_one_epoch:324 - Loss at epoch 3: 7061.5499
+2025-05-06 21:31:12.286 | DEBUG    | transformer:val_one_epoch:376 - Validation loss at epoch 3: 2309.6254
+[Epoca 3] Memoria allocata:   19.93 MB
+[Epoca 3] Memoria riservata:   90.00 MB
+[Epoca 3] Totale allocata (storico): 0.10 MB
+2025-05-06 21:32:14.086 | DEBUG    | transformer:train_one_epoch:324 - Loss at epoch 4: 6949.9686
+2025-05-06 21:32:23.118 | DEBUG    | transformer:val_one_epoch:376 - Validation loss at epoch 4: 2330.1535
+[Epoca 4] Memoria allocata:   19.93 MB
+[Epoca 4] Memoria riservata:   88.00 MB
+[Epoca 4] Totale allocata (storico): 0.13 MB
+2025-05-06 21:33:24.450 | DEBUG    | transformer:train_one_epoch:324 - Loss at epoch 5: 6904.5256
+2025-05-06 21:33:33.787 | DEBUG    | transformer:val_one_epoch:376 - Validation loss at epoch 5: 2279.8851
+[Epoca 5] Memoria allocata:   19.93 MB
+[Epoca 5] Memoria riservata:   88.00 MB
+[Epoca 5] Totale allocata (storico): 0.17 MB
+2025-05-06 21:34:34.702 | DEBUG    | transformer:train_one_epoch:324 - Loss at epoch 6: 6894.7267
+2025-05-06 21:34:44.033 | DEBUG    | transformer:val_one_epoch:376 - Validation loss at epoch 6: 2247.7211
+[Epoca 6] Memoria allocata:   19.93 MB
+[Epoca 6] Memoria riservata:   90.00 MB
+[Epoca 6] Totale allocata (storico): 0.20 MB
+2025-05-06 21:35:45.744 | DEBUG    | transformer:train_one_epoch:324 - Loss at epoch 7: 6762.0918
+2025-05-06 21:35:55.150 | DEBUG    | transformer:val_one_epoch:376 - Validation loss at epoch 7: 2231.5531
+[Epoca 7] Memoria allocata:   19.93 MB
+[Epoca 7] Memoria riservata:   88.00 MB
+[Epoca 7] Totale allocata (storico): 0.24 MB
+2025-05-06 21:36:55.735 | DEBUG    | transformer:train_one_epoch:324 - Loss at epoch 8: 6756.1430
+2025-05-06 21:37:04.870 | DEBUG    | transformer:val_one_epoch:376 - Validation loss at epoch 8: 2225.1631
+[Epoca 8] Memoria allocata:   19.93 MB
+[Epoca 8] Memoria riservata:   90.00 MB
+[Epoca 8] Totale allocata (storico): 0.27 MB
+2025-05-06 21:38:06.530 | DEBUG    | transformer:train_one_epoch:324 - Loss at epoch 9: 6613.8831
+2025-05-06 21:38:15.984 | DEBUG    | transformer:val_one_epoch:376 - Validation loss at epoch 9: 2192.7866
+[Epoca 9] Memoria allocata:   19.93 MB
+[Epoca 9] Memoria riservata:   88.00 MB
+[Epoca 9] Totale allocata (storico): 0.30 MB
+2025-05-06 21:39:17.126 | DEBUG    | transformer:train_one_epoch:324 - Loss at epoch 10: 6522.5121
+2025-05-06 21:39:26.451 | DEBUG    | transformer:val_one_epoch:376 - Validation loss at epoch 10: 2139.3638
+[Epoca 10] Memoria allocata:   19.93 MB
+[Epoca 10] Memoria riservata:   90.00 MB
+[Epoca 10] Totale allocata (storico): 0.34 MB
+2025-05-06 21:40:27.743 | DEBUG    | transformer:train_one_epoch:324 - Loss at epoch 11: 6447.0948
+2025-05-06 21:40:37.050 | DEBUG    | transformer:val_one_epoch:376 - Validation loss at epoch 11: 2153.1810
+2025-05-06 21:40:37.050 | INFO     | transformer:train_val:441 - stop smooth: False
+2025-05-06 21:40:37.050 | INFO     | transformer:train_val:453 - stop early: True
+[Epoca 11] Memoria allocata:   19.93 MB
+[Epoca 11] Memoria riservata:   90.00 MB
+[Epoca 11] Totale allocata (storico): 0.37 MB
+2025-05-06 21:41:38.553 | DEBUG    | transformer:train_one_epoch:324 - Loss at epoch 12: 6332.1974
+2025-05-06 21:41:47.857 | DEBUG    | transformer:val_one_epoch:376 - Validation loss at epoch 12: 2092.6797
+2025-05-06 21:41:47.857 | INFO     | transformer:train_val:441 - stop smooth: False
+2025-05-06 21:41:47.857 | INFO     | transformer:train_val:453 - stop early: False
+[Epoca 12] Memoria allocata:   19.93 MB
+[Epoca 12] Memoria riservata:   88.00 MB
+[Epoca 12] Totale allocata (storico): 0.40 MB
+2025-05-06 21:42:48.556 | DEBUG    | transformer:train_one_epoch:324 - Loss at epoch 13: 6287.3523
+2025-05-06 21:42:57.915 | DEBUG    | transformer:val_one_epoch:376 - Validation loss at epoch 13: 2048.0206
+2025-05-06 21:42:57.915 | INFO     | transformer:train_val:441 - stop smooth: False
+2025-05-06 21:42:57.915 | INFO     | transformer:train_val:453 - stop early: False
+[Epoca 13] Memoria allocata:   19.93 MB
+[Epoca 13] Memoria riservata:   90.00 MB
+[Epoca 13] Totale allocata (storico): 0.44 MB
+2025-05-06 21:43:59.529 | DEBUG    | transformer:train_one_epoch:324 - Loss at epoch 14: 6132.3792
+2025-05-06 21:44:08.898 | DEBUG    | transformer:val_one_epoch:376 - Validation loss at epoch 14: 2011.2090
+2025-05-06 21:44:08.898 | INFO     | transformer:train_val:441 - stop smooth: False
+2025-05-06 21:44:08.898 | INFO     | transformer:train_val:453 - stop early: False
+[Epoca 14] Memoria allocata:   19.93 MB
+[Epoca 14] Memoria riservata:   88.00 MB
+[Epoca 14] Totale allocata (storico): 0.47 MB
+2025-05-06 21:45:10.574 | DEBUG    | transformer:train_one_epoch:324 - Loss at epoch 15: 6016.2127
+2025-05-06 21:45:19.854 | DEBUG    | transformer:val_one_epoch:376 - Validation loss at epoch 15: 1985.9777
+2025-05-06 21:45:19.855 | INFO     | transformer:train_val:441 - stop smooth: False
+2025-05-06 21:45:19.855 | INFO     | transformer:train_val:453 - stop early: False
+[Epoca 15] Memoria allocata:   19.93 MB
+[Epoca 15] Memoria riservata:   90.00 MB
+[Epoca 15] Totale allocata (storico): 0.51 MB
+2025-05-06 21:46:21.139 | DEBUG    | transformer:train_one_epoch:324 - Loss at epoch 16: 5926.9723
+2025-05-06 21:46:30.366 | DEBUG    | transformer:val_one_epoch:376 - Validation loss at epoch 16: 1933.3251
+2025-05-06 21:46:30.367 | INFO     | transformer:train_val:441 - stop smooth: False
+2025-05-06 21:46:30.367 | INFO     | transformer:train_val:453 - stop early: False
+[Epoca 16] Memoria allocata:   19.93 MB
+[Epoca 16] Memoria riservata:   88.00 MB
+[Epoca 16] Totale allocata (storico): 0.54 MB
+2025-05-06 21:47:31.755 | DEBUG    | transformer:train_one_epoch:324 - Loss at epoch 17: 5767.1293
+2025-05-06 21:47:40.923 | DEBUG    | transformer:val_one_epoch:376 - Validation loss at epoch 17: 1926.7020
+2025-05-06 21:47:40.924 | INFO     | transformer:train_val:441 - stop smooth: False
+2025-05-06 21:47:40.924 | INFO     | transformer:train_val:453 - stop early: False
+[Epoca 17] Memoria allocata:   19.93 MB
+[Epoca 17] Memoria riservata:   88.00 MB
+[Epoca 17] Totale allocata (storico): 0.57 MB
+2025-05-06 21:48:40.935 | DEBUG    | transformer:train_one_epoch:324 - Loss at epoch 18: 5720.7480
+2025-05-06 21:48:50.227 | DEBUG    | transformer:val_one_epoch:376 - Validation loss at epoch 18: 1866.1060
+2025-05-06 21:48:50.227 | INFO     | transformer:train_val:441 - stop smooth: False
+2025-05-06 21:48:50.227 | INFO     | transformer:train_val:453 - stop early: False
+[Epoca 18] Memoria allocata:   19.93 MB
+[Epoca 18] Memoria riservata:   88.00 MB
+[Epoca 18] Totale allocata (storico): 0.61 MB
+2025-05-06 21:49:50.997 | DEBUG    | transformer:train_one_epoch:324 - Loss at epoch 19: 5559.3884
+2025-05-06 21:50:00.514 | DEBUG    | transformer:val_one_epoch:376 - Validation loss at epoch 19: 1794.4539
+2025-05-06 21:50:00.514 | INFO     | transformer:train_val:441 - stop smooth: False
+2025-05-06 21:50:00.514 | INFO     | transformer:train_val:453 - stop early: False
+[Epoca 19] Memoria allocata:   19.93 MB
+[Epoca 19] Memoria riservata:   90.00 MB
+[Epoca 19] Totale allocata (storico): 0.64 MB
+2025-05-06 21:51:02.439 | DEBUG    | transformer:train_one_epoch:324 - Loss at epoch 20: 5388.6208
+2025-05-06 21:51:12.020 | DEBUG    | transformer:val_one_epoch:376 - Validation loss at epoch 20: 1763.8193
+2025-05-06 21:51:12.020 | INFO     | transformer:train_val:441 - stop smooth: False
+2025-05-06 21:51:12.020 | INFO     | transformer:train_val:453 - stop early: False
+[Epoca 20] Memoria allocata:   19.93 MB
+[Epoca 20] Memoria riservata:   90.00 MB
+[Epoca 20] Totale allocata (storico): 0.67 MB
+2025-05-06 21:52:13.102 | DEBUG    | transformer:train_one_epoch:324 - Loss at epoch 21: 5277.6013
+2025-05-06 21:52:22.358 | DEBUG    | transformer:val_one_epoch:376 - Validation loss at epoch 21: 1729.4006
+2025-05-06 21:52:22.358 | INFO     | transformer:train_val:441 - stop smooth: False
+2025-05-06 21:52:22.358 | INFO     | transformer:train_val:453 - stop early: False
+[Epoca 21] Memoria allocata:   19.93 MB
+[Epoca 21] Memoria riservata:   88.00 MB
+[Epoca 21] Totale allocata (storico): 0.71 MB
+2025-05-06 21:53:24.187 | DEBUG    | transformer:train_one_epoch:324 - Loss at epoch 22: 5147.3578
+2025-05-06 21:53:33.378 | DEBUG    | transformer:val_one_epoch:376 - Validation loss at epoch 22: 1682.9602
+2025-05-06 21:53:33.378 | INFO     | transformer:train_val:441 - stop smooth: False
+2025-05-06 21:53:33.378 | INFO     | transformer:train_val:453 - stop early: False
+[Epoca 22] Memoria allocata:   19.93 MB
+[Epoca 22] Memoria riservata:   88.00 MB
+[Epoca 22] Totale allocata (storico): 0.74 MB
+2025-05-06 21:54:35.541 | DEBUG    | transformer:train_one_epoch:324 - Loss at epoch 23: 4993.6931
+2025-05-06 21:54:44.834 | DEBUG    | transformer:val_one_epoch:376 - Validation loss at epoch 23: 1635.6249
+2025-05-06 21:54:44.834 | INFO     | transformer:train_val:441 - stop smooth: False
+2025-05-06 21:54:44.834 | INFO     | transformer:train_val:453 - stop early: False
+[Epoca 23] Memoria allocata:   19.93 MB
+[Epoca 23] Memoria riservata:   90.00 MB
+[Epoca 23] Totale allocata (storico): 0.77 MB
+2025-05-06 21:55:44.297 | DEBUG    | transformer:train_one_epoch:324 - Loss at epoch 24: 4932.7041
+2025-05-06 21:55:53.415 | DEBUG    | transformer:val_one_epoch:376 - Validation loss at epoch 24: 1608.7453
+2025-05-06 21:55:53.416 | INFO     | transformer:train_val:441 - stop smooth: False
+2025-05-06 21:55:53.416 | INFO     | transformer:train_val:453 - stop early: False
+[Epoca 24] Memoria allocata:   19.93 MB
+[Epoca 24] Memoria riservata:   90.00 MB
+[Epoca 24] Totale allocata (storico): 0.81 MB
+2025-05-06 21:56:54.483 | DEBUG    | transformer:train_one_epoch:324 - Loss at epoch 25: 4745.1932
+2025-05-06 21:57:03.427 | DEBUG    | transformer:val_one_epoch:376 - Validation loss at epoch 25: 1557.1359
+2025-05-06 21:57:03.427 | INFO     | transformer:train_val:441 - stop smooth: False
+2025-05-06 21:57:03.427 | INFO     | transformer:train_val:453 - stop early: False
+[Epoca 25] Memoria allocata:   19.93 MB
+[Epoca 25] Memoria riservata:   88.00 MB
+[Epoca 25] Totale allocata (storico): 0.84 MB
+2025-05-06 21:58:04.994 | DEBUG    | transformer:train_one_epoch:324 - Loss at epoch 26: 4602.9262
+2025-05-06 21:58:14.174 | DEBUG    | transformer:val_one_epoch:376 - Validation loss at epoch 26: 1485.4297
+2025-05-06 21:58:14.175 | INFO     | transformer:train_val:441 - stop smooth: False
+2025-05-06 21:58:14.175 | INFO     | transformer:train_val:453 - stop early: False
+[Epoca 26] Memoria allocata:   19.93 MB
+[Epoca 26] Memoria riservata:   90.00 MB
+[Epoca 26] Totale allocata (storico): 0.88 MB
+2025-05-06 21:59:15.572 | DEBUG    | transformer:train_one_epoch:324 - Loss at epoch 27: 4453.3190
+2025-05-06 21:59:25.079 | DEBUG    | transformer:val_one_epoch:376 - Validation loss at epoch 27: 1449.8434
+2025-05-06 21:59:25.079 | INFO     | transformer:train_val:441 - stop smooth: False
+2025-05-06 21:59:25.079 | INFO     | transformer:train_val:453 - stop early: False
+[Epoca 27] Memoria allocata:   19.93 MB
+[Epoca 27] Memoria riservata:   88.00 MB
+[Epoca 27] Totale allocata (storico): 0.91 MB
+2025-05-06 22:00:24.825 | DEBUG    | transformer:train_one_epoch:324 - Loss at epoch 28: 4378.1087
+2025-05-06 22:00:33.984 | DEBUG    | transformer:val_one_epoch:376 - Validation loss at epoch 28: 1409.4218
+2025-05-06 22:00:33.984 | INFO     | transformer:train_val:441 - stop smooth: False
+2025-05-06 22:00:33.984 | INFO     | transformer:train_val:453 - stop early: False
+[Epoca 28] Memoria allocata:   19.93 MB
+[Epoca 28] Memoria riservata:   88.00 MB
+[Epoca 28] Totale allocata (storico): 0.94 MB
+2025-05-06 22:01:36.015 | DEBUG    | transformer:train_one_epoch:324 - Loss at epoch 29: 4165.7965
+2025-05-06 22:01:45.424 | DEBUG    | transformer:val_one_epoch:376 - Validation loss at epoch 29: 1351.8434
+2025-05-06 22:01:45.424 | INFO     | transformer:train_val:441 - stop smooth: False
+2025-05-06 22:01:45.424 | INFO     | transformer:train_val:453 - stop early: False
+[Epoca 29] Memoria allocata:   19.93 MB
+[Epoca 29] Memoria riservata:   90.00 MB
+[Epoca 29] Totale allocata (storico): 0.98 MB
+2025-05-06 22:02:45.908 | DEBUG    | transformer:train_one_epoch:324 - Loss at epoch 30: 4074.2306
+2025-05-06 22:02:55.183 | DEBUG    | transformer:val_one_epoch:376 - Validation loss at epoch 30: 1306.2193
+2025-05-06 22:02:55.183 | INFO     | transformer:train_val:441 - stop smooth: False
+2025-05-06 22:02:55.183 | INFO     | transformer:train_val:453 - stop early: False
+[Epoca 30] Memoria allocata:   19.93 MB
+[Epoca 30] Memoria riservata:   90.00 MB
+[Epoca 30] Totale allocata (storico): 1.01 MB
+2025-05-06 22:03:56.453 | DEBUG    | transformer:train_one_epoch:324 - Loss at epoch 31: 3874.9840
+2025-05-06 22:04:05.701 | DEBUG    | transformer:val_one_epoch:376 - Validation loss at epoch 31: 1272.9683
+2025-05-06 22:04:05.701 | INFO     | transformer:train_val:441 - stop smooth: False
+2025-05-06 22:04:05.701 | INFO     | transformer:train_val:453 - stop early: False
+[Epoca 31] Memoria allocata:   19.93 MB
+[Epoca 31] Memoria riservata:   88.00 MB
+[Epoca 31] Totale allocata (storico): 1.04 MB
+2025-05-06 22:05:06.587 | DEBUG    | transformer:train_one_epoch:324 - Loss at epoch 32: 3761.0475
+2025-05-06 22:05:15.584 | DEBUG    | transformer:val_one_epoch:376 - Validation loss at epoch 32: 1236.2199
+2025-05-06 22:05:15.584 | INFO     | transformer:train_val:441 - stop smooth: False
+2025-05-06 22:05:15.584 | INFO     | transformer:train_val:453 - stop early: False
+[Epoca 32] Memoria allocata:   19.93 MB
+[Epoca 32] Memoria riservata:   90.00 MB
+[Epoca 32] Totale allocata (storico): 1.08 MB
+2025-05-06 22:06:16.110 | DEBUG    | transformer:train_one_epoch:324 - Loss at epoch 33: 3621.4061
+2025-05-06 22:06:25.213 | DEBUG    | transformer:val_one_epoch:376 - Validation loss at epoch 33: 1187.3790
+2025-05-06 22:06:25.213 | INFO     | transformer:train_val:441 - stop smooth: False
+2025-05-06 22:06:25.213 | INFO     | transformer:train_val:453 - stop early: False
+[Epoca 33] Memoria allocata:   19.93 MB
+[Epoca 33] Memoria riservata:   88.00 MB
+[Epoca 33] Totale allocata (storico): 1.11 MB
+2025-05-06 22:07:26.931 | DEBUG    | transformer:train_one_epoch:324 - Loss at epoch 34: 3466.3849
+2025-05-06 22:07:36.078 | DEBUG    | transformer:val_one_epoch:376 - Validation loss at epoch 34: 1130.8073
+2025-05-06 22:07:36.078 | INFO     | transformer:train_val:441 - stop smooth: False
+2025-05-06 22:07:36.078 | INFO     | transformer:train_val:453 - stop early: False
+[Epoca 34] Memoria allocata:   19.93 MB
+[Epoca 34] Memoria riservata:   88.00 MB
+[Epoca 34] Totale allocata (storico): 1.14 MB
+2025-05-06 22:08:36.409 | DEBUG    | transformer:train_one_epoch:324 - Loss at epoch 35: 3362.9346
+2025-05-06 22:08:45.580 | DEBUG    | transformer:val_one_epoch:376 - Validation loss at epoch 35: 1087.1069
+2025-05-06 22:08:45.580 | INFO     | transformer:train_val:441 - stop smooth: False
+2025-05-06 22:08:45.580 | INFO     | transformer:train_val:453 - stop early: False
+[Epoca 35] Memoria allocata:   19.93 MB
+[Epoca 35] Memoria riservata:   88.00 MB
+[Epoca 35] Totale allocata (storico): 1.18 MB
+2025-05-06 22:09:46.194 | DEBUG    | transformer:train_one_epoch:324 - Loss at epoch 36: 3222.7657
+2025-05-06 22:09:55.709 | DEBUG    | transformer:val_one_epoch:376 - Validation loss at epoch 36: 1036.8886
+2025-05-06 22:09:55.709 | INFO     | transformer:train_val:441 - stop smooth: False
+2025-05-06 22:09:55.709 | INFO     | transformer:train_val:453 - stop early: False
+[Epoca 36] Memoria allocata:   19.93 MB
+[Epoca 36] Memoria riservata:   90.00 MB
+[Epoca 36] Totale allocata (storico): 1.21 MB
+2025-05-06 22:10:57.738 | DEBUG    | transformer:train_one_epoch:324 - Loss at epoch 37: 3043.2706
+2025-05-06 22:11:07.010 | DEBUG    | transformer:val_one_epoch:376 - Validation loss at epoch 37: 991.2269
+2025-05-06 22:11:07.011 | INFO     | transformer:train_val:441 - stop smooth: False
+2025-05-06 22:11:07.011 | INFO     | transformer:train_val:453 - stop early: False
+[Epoca 37] Memoria allocata:   19.93 MB
+[Epoca 37] Memoria riservata:   90.00 MB
+[Epoca 37] Totale allocata (storico): 1.25 MB
+2025-05-06 22:12:07.870 | DEBUG    | transformer:train_one_epoch:324 - Loss at epoch 38: 2936.3723
+2025-05-06 22:12:17.099 | DEBUG    | transformer:val_one_epoch:376 - Validation loss at epoch 38: 946.9480
+2025-05-06 22:12:17.099 | INFO     | transformer:train_val:441 - stop smooth: False
+2025-05-06 22:12:17.099 | INFO     | transformer:train_val:453 - stop early: False
+[Epoca 38] Memoria allocata:   19.93 MB
+[Epoca 38] Memoria riservata:   88.00 MB
+[Epoca 38] Totale allocata (storico): 1.28 MB
+2025-05-06 22:13:18.201 | DEBUG    | transformer:train_one_epoch:324 - Loss at epoch 39: 2814.0066
+2025-05-06 22:13:27.370 | DEBUG    | transformer:val_one_epoch:376 - Validation loss at epoch 39: 905.1784
+2025-05-06 22:13:27.370 | INFO     | transformer:train_val:441 - stop smooth: False
+2025-05-06 22:13:27.370 | INFO     | transformer:train_val:453 - stop early: False
+[Epoca 39] Memoria allocata:   19.93 MB
+[Epoca 39] Memoria riservata:   90.00 MB
+[Epoca 39] Totale allocata (storico): 1.31 MB
+2025-05-06 22:14:27.895 | DEBUG    | transformer:train_one_epoch:324 - Loss at epoch 40: 2687.2316
+2025-05-06 22:14:37.194 | DEBUG    | transformer:val_one_epoch:376 - Validation loss at epoch 40: 876.0931
+2025-05-06 22:14:37.195 | INFO     | transformer:train_val:441 - stop smooth: False
+2025-05-06 22:14:37.195 | INFO     | transformer:train_val:453 - stop early: False
+[Epoca 40] Memoria allocata:   19.93 MB
+[Epoca 40] Memoria riservata:   90.00 MB
+[Epoca 40] Totale allocata (storico): 1.35 MB
+2025-05-06 22:15:38.036 | DEBUG    | transformer:train_one_epoch:324 - Loss at epoch 41: 2552.6219
+2025-05-06 22:15:46.967 | DEBUG    | transformer:val_one_epoch:376 - Validation loss at epoch 41: 821.8903
+2025-05-06 22:15:46.967 | INFO     | transformer:train_val:441 - stop smooth: False
+2025-05-06 22:15:46.967 | INFO     | transformer:train_val:453 - stop early: False
+[Epoca 41] Memoria allocata:   19.93 MB
+[Epoca 41] Memoria riservata:   90.00 MB
+[Epoca 41] Totale allocata (storico): 1.38 MB
+2025-05-06 22:16:47.987 | DEBUG    | transformer:train_one_epoch:324 - Loss at epoch 42: 2426.8605
+2025-05-06 22:16:57.273 | DEBUG    | transformer:val_one_epoch:376 - Validation loss at epoch 42: 783.1356
+2025-05-06 22:16:57.274 | INFO     | transformer:train_val:441 - stop smooth: False
+2025-05-06 22:16:57.274 | INFO     | transformer:train_val:453 - stop early: False
+[Epoca 42] Memoria allocata:   19.93 MB
+[Epoca 42] Memoria riservata:   88.00 MB
+[Epoca 42] Totale allocata (storico): 1.41 MB
+2025-05-06 22:17:57.768 | DEBUG    | transformer:train_one_epoch:324 - Loss at epoch 43: 2312.5970
+2025-05-06 22:18:07.188 | DEBUG    | transformer:val_one_epoch:376 - Validation loss at epoch 43: 728.5480
+2025-05-06 22:18:07.189 | INFO     | transformer:train_val:441 - stop smooth: False
+2025-05-06 22:18:07.189 | INFO     | transformer:train_val:453 - stop early: False
+[Epoca 43] Memoria allocata:   19.93 MB
+[Epoca 43] Memoria riservata:   90.00 MB
+[Epoca 43] Totale allocata (storico): 1.45 MB
+2025-05-06 22:19:07.722 | DEBUG    | transformer:train_one_epoch:324 - Loss at epoch 44: 2189.5648
+2025-05-06 22:19:17.164 | DEBUG    | transformer:val_one_epoch:376 - Validation loss at epoch 44: 699.6844
+2025-05-06 22:19:17.164 | INFO     | transformer:train_val:441 - stop smooth: False
+2025-05-06 22:19:17.164 | INFO     | transformer:train_val:453 - stop early: False
+[Epoca 44] Memoria allocata:   19.93 MB
+[Epoca 44] Memoria riservata:   90.00 MB
+[Epoca 44] Totale allocata (storico): 1.48 MB
+2025-05-06 22:20:18.456 | DEBUG    | transformer:train_one_epoch:324 - Loss at epoch 45: 2059.4357
+2025-05-06 22:20:27.884 | DEBUG    | transformer:val_one_epoch:376 - Validation loss at epoch 45: 659.5442
+2025-05-06 22:20:27.884 | INFO     | transformer:train_val:441 - stop smooth: False
+2025-05-06 22:20:27.884 | INFO     | transformer:train_val:453 - stop early: False
+[Epoca 45] Memoria allocata:   19.93 MB
+[Epoca 45] Memoria riservata:   88.00 MB
+[Epoca 45] Totale allocata (storico): 1.52 MB
+2025-05-06 22:21:27.688 | DEBUG    | transformer:train_one_epoch:324 - Loss at epoch 46: 1958.5611
+2025-05-06 22:21:36.939 | DEBUG    | transformer:val_one_epoch:376 - Validation loss at epoch 46: 630.9757
+2025-05-06 22:21:36.940 | INFO     | transformer:train_val:441 - stop smooth: False
+2025-05-06 22:21:36.940 | INFO     | transformer:train_val:453 - stop early: False
+[Epoca 46] Memoria allocata:   19.93 MB
+[Epoca 46] Memoria riservata:   88.00 MB
+[Epoca 46] Totale allocata (storico): 1.55 MB
+2025-05-06 22:22:38.444 | DEBUG    | transformer:train_one_epoch:324 - Loss at epoch 47: 1833.3636
+2025-05-06 22:22:47.709 | DEBUG    | transformer:val_one_epoch:376 - Validation loss at epoch 47: 589.7621
+2025-05-06 22:22:47.710 | INFO     | transformer:train_val:441 - stop smooth: False
+2025-05-06 22:22:47.710 | INFO     | transformer:train_val:453 - stop early: False
+[Epoca 47] Memoria allocata:   19.93 MB
+[Epoca 47] Memoria riservata:   90.00 MB
+[Epoca 47] Totale allocata (storico): 1.58 MB
+2025-05-06 22:23:47.097 | DEBUG    | transformer:train_one_epoch:324 - Loss at epoch 48: 1740.8718
+2025-05-06 22:23:56.331 | DEBUG    | transformer:val_one_epoch:376 - Validation loss at epoch 48: 555.3111
+2025-05-06 22:23:56.331 | INFO     | transformer:train_val:441 - stop smooth: False
+2025-05-06 22:23:56.331 | INFO     | transformer:train_val:453 - stop early: False
+[Epoca 48] Memoria allocata:   19.93 MB
+[Epoca 48] Memoria riservata:   88.00 MB
+[Epoca 48] Totale allocata (storico): 1.62 MB
+2025-05-06 22:24:58.958 | DEBUG    | transformer:train_one_epoch:324 - Loss at epoch 49: 1600.7649
+2025-05-06 22:25:08.240 | DEBUG    | transformer:val_one_epoch:376 - Validation loss at epoch 49: 516.3399
+2025-05-06 22:25:08.240 | INFO     | transformer:train_val:441 - stop smooth: False
+2025-05-06 22:25:08.240 | INFO     | transformer:train_val:453 - stop early: False
+[Epoca 49] Memoria allocata:   19.93 MB
+[Epoca 49] Memoria riservata:   88.00 MB
+[Epoca 49] Totale allocata (storico): 1.65 MB
+2025-05-06 22:26:07.766 | DEBUG    | transformer:train_one_epoch:324 - Loss at epoch 50: 1542.0190
+2025-05-06 22:26:17.106 | DEBUG    | transformer:val_one_epoch:376 - Validation loss at epoch 50: 486.0515
+2025-05-06 22:26:17.106 | INFO     | transformer:train_val:441 - stop smooth: False
+2025-05-06 22:26:17.107 | INFO     | transformer:train_val:453 - stop early: False
+[Epoca 50] Memoria allocata:   19.93 MB
+[Epoca 50] Memoria riservata:   88.00 MB
+[Epoca 50] Totale allocata (storico): 1.68 MB
+2025-05-06 22:27:18.341 | DEBUG    | transformer:train_one_epoch:324 - Loss at epoch 51: 1429.5883
+2025-05-06 22:27:27.447 | DEBUG    | transformer:val_one_epoch:376 - Validation loss at epoch 51: 461.9670
+2025-05-06 22:27:27.448 | INFO     | transformer:train_val:441 - stop smooth: False
+2025-05-06 22:27:27.448 | INFO     | transformer:train_val:453 - stop early: False
+[Epoca 51] Memoria allocata:   19.93 MB
+[Epoca 51] Memoria riservata:   90.00 MB
+[Epoca 51] Totale allocata (storico): 1.72 MB
+2025-05-06 22:28:27.239 | DEBUG    | transformer:train_one_epoch:324 - Loss at epoch 52: 1335.4885
+2025-05-06 22:28:36.867 | DEBUG    | transformer:val_one_epoch:376 - Validation loss at epoch 52: 419.6277
+2025-05-06 22:28:36.868 | INFO     | transformer:train_val:441 - stop smooth: False
+2025-05-06 22:28:36.868 | INFO     | transformer:train_val:453 - stop early: False
+[Epoca 52] Memoria allocata:   19.93 MB
+[Epoca 52] Memoria riservata:   88.00 MB
+[Epoca 52] Totale allocata (storico): 1.75 MB
+2025-05-06 22:29:38.012 | DEBUG    | transformer:train_one_epoch:324 - Loss at epoch 53: 1238.8043
+2025-05-06 22:29:47.225 | DEBUG    | transformer:val_one_epoch:376 - Validation loss at epoch 53: 397.0053
+2025-05-06 22:29:47.226 | INFO     | transformer:train_val:441 - stop smooth: False
+2025-05-06 22:29:47.226 | INFO     | transformer:train_val:453 - stop early: False
+[Epoca 53] Memoria allocata:   19.93 MB
+[Epoca 53] Memoria riservata:   88.00 MB
+[Epoca 53] Totale allocata (storico): 1.78 MB
+2025-05-06 22:30:48.551 | DEBUG    | transformer:train_one_epoch:324 - Loss at epoch 54: 1145.8287
+2025-05-06 22:30:57.770 | DEBUG    | transformer:val_one_epoch:376 - Validation loss at epoch 54: 366.6011
+2025-05-06 22:30:57.770 | INFO     | transformer:train_val:441 - stop smooth: False
+2025-05-06 22:30:57.771 | INFO     | transformer:train_val:453 - stop early: False
+[Epoca 54] Memoria allocata:   19.93 MB
+[Epoca 54] Memoria riservata:   90.00 MB
+[Epoca 54] Totale allocata (storico): 1.82 MB
+2025-05-06 22:31:57.569 | DEBUG    | transformer:train_one_epoch:324 - Loss at epoch 55: 1078.5109
+2025-05-06 22:32:06.737 | DEBUG    | transformer:val_one_epoch:376 - Validation loss at epoch 55: 343.5271
+2025-05-06 22:32:06.738 | INFO     | transformer:train_val:441 - stop smooth: False
+2025-05-06 22:32:06.738 | INFO     | transformer:train_val:453 - stop early: False
+[Epoca 55] Memoria allocata:   19.93 MB
+[Epoca 55] Memoria riservata:   88.00 MB
+[Epoca 55] Totale allocata (storico): 1.85 MB
+2025-05-06 22:33:07.760 | DEBUG    | transformer:train_one_epoch:324 - Loss at epoch 56: 983.3149
+2025-05-06 22:33:16.938 | DEBUG    | transformer:val_one_epoch:376 - Validation loss at epoch 56: 313.5987
+2025-05-06 22:33:16.938 | INFO     | transformer:train_val:441 - stop smooth: False
+2025-05-06 22:33:16.938 | INFO     | transformer:train_val:453 - stop early: False
+[Epoca 56] Memoria allocata:   19.93 MB
+[Epoca 56] Memoria riservata:   90.00 MB
+[Epoca 56] Totale allocata (storico): 1.89 MB
+2025-05-06 22:34:17.781 | DEBUG    | transformer:train_one_epoch:324 - Loss at epoch 57: 911.7473
+2025-05-06 22:34:26.885 | DEBUG    | transformer:val_one_epoch:376 - Validation loss at epoch 57: 289.6521
+2025-05-06 22:34:26.885 | INFO     | transformer:train_val:441 - stop smooth: False
+2025-05-06 22:34:26.885 | INFO     | transformer:train_val:453 - stop early: False
+[Epoca 57] Memoria allocata:   19.93 MB
+[Epoca 57] Memoria riservata:   90.00 MB
+[Epoca 57] Totale allocata (storico): 1.92 MB
+2025-05-06 22:35:27.963 | DEBUG    | transformer:train_one_epoch:324 - Loss at epoch 58: 841.9033
+2025-05-06 22:35:37.032 | DEBUG    | transformer:val_one_epoch:376 - Validation loss at epoch 58: 264.9536
+2025-05-06 22:35:37.033 | INFO     | transformer:train_val:441 - stop smooth: False
+2025-05-06 22:35:37.033 | INFO     | transformer:train_val:453 - stop early: False
+[Epoca 58] Memoria allocata:   19.93 MB
+[Epoca 58] Memoria riservata:   90.00 MB
+[Epoca 58] Totale allocata (storico): 1.95 MB
+2025-05-06 22:36:37.767 | DEBUG    | transformer:train_one_epoch:324 - Loss at epoch 59: 767.4811
+2025-05-06 22:36:46.800 | DEBUG    | transformer:val_one_epoch:376 - Validation loss at epoch 59: 245.8284
+2025-05-06 22:36:46.801 | INFO     | transformer:train_val:441 - stop smooth: False
+2025-05-06 22:36:46.801 | INFO     | transformer:train_val:453 - stop early: False
+[Epoca 59] Memoria allocata:   19.93 MB
+[Epoca 59] Memoria riservata:   88.00 MB
+[Epoca 59] Totale allocata (storico): 1.99 MB
+2025-05-06 22:37:47.425 | DEBUG    | transformer:train_one_epoch:324 - Loss at epoch 60: 707.9150
+2025-05-06 22:37:56.747 | DEBUG    | transformer:val_one_epoch:376 - Validation loss at epoch 60: 219.9876
+2025-05-06 22:37:56.747 | INFO     | transformer:train_val:441 - stop smooth: False
+2025-05-06 22:37:56.747 | INFO     | transformer:train_val:453 - stop early: False
+[Epoca 60] Memoria allocata:   19.93 MB
+[Epoca 60] Memoria riservata:   88.00 MB
+[Epoca 60] Totale allocata (storico): 2.02 MB
+2025-05-06 22:38:57.140 | DEBUG    | transformer:train_one_epoch:324 - Loss at epoch 61: 694.5052
+2025-05-06 22:39:06.267 | DEBUG    | transformer:val_one_epoch:376 - Validation loss at epoch 61: 205.9208
+2025-05-06 22:39:06.268 | INFO     | transformer:train_val:441 - stop smooth: False
+2025-05-06 22:39:06.268 | INFO     | transformer:train_val:453 - stop early: False
+[Epoca 61] Memoria allocata:   19.93 MB
+[Epoca 61] Memoria riservata:   88.00 MB
+[Epoca 61] Totale allocata (storico): 2.05 MB
+2025-05-06 22:40:06.892 | DEBUG    | transformer:train_one_epoch:324 - Loss at epoch 62: 613.5431
+2025-05-06 22:40:16.202 | DEBUG    | transformer:val_one_epoch:376 - Validation loss at epoch 62: 190.4425
+2025-05-06 22:40:16.202 | INFO     | transformer:train_val:441 - stop smooth: False
+2025-05-06 22:40:16.202 | INFO     | transformer:train_val:453 - stop early: False
+[Epoca 62] Memoria allocata:   19.93 MB
+[Epoca 62] Memoria riservata:   88.00 MB
+[Epoca 62] Totale allocata (storico): 2.09 MB
+2025-05-06 22:41:15.551 | DEBUG    | transformer:train_one_epoch:324 - Loss at epoch 63: 557.3957
+2025-05-06 22:41:24.938 | DEBUG    | transformer:val_one_epoch:376 - Validation loss at epoch 63: 172.7361
+2025-05-06 22:41:24.939 | INFO     | transformer:train_val:441 - stop smooth: False
+2025-05-06 22:41:24.939 | INFO     | transformer:train_val:453 - stop early: False
+[Epoca 63] Memoria allocata:   19.93 MB
+[Epoca 63] Memoria riservata:   90.00 MB
+[Epoca 63] Totale allocata (storico): 2.12 MB
+2025-05-06 22:42:25.656 | DEBUG    | transformer:train_one_epoch:324 - Loss at epoch 64: 507.1094
+2025-05-06 22:42:34.933 | DEBUG    | transformer:val_one_epoch:376 - Validation loss at epoch 64: 158.4894
+2025-05-06 22:42:34.933 | INFO     | transformer:train_val:441 - stop smooth: False
+2025-05-06 22:42:34.933 | INFO     | transformer:train_val:453 - stop early: False
+[Epoca 64] Memoria allocata:   19.93 MB
+[Epoca 64] Memoria riservata:   90.00 MB
+[Epoca 64] Totale allocata (storico): 2.15 MB
+2025-05-06 22:43:35.562 | DEBUG    | transformer:train_one_epoch:324 - Loss at epoch 65: 462.6931
+2025-05-06 22:43:44.593 | DEBUG    | transformer:val_one_epoch:376 - Validation loss at epoch 65: 145.0510
+2025-05-06 22:43:44.594 | INFO     | transformer:train_val:441 - stop smooth: False
+2025-05-06 22:43:44.594 | INFO     | transformer:train_val:453 - stop early: False
+[Epoca 65] Memoria allocata:   19.93 MB
+[Epoca 65] Memoria riservata:   90.00 MB
+[Epoca 65] Totale allocata (storico): 2.19 MB
+2025-05-06 22:44:44.950 | DEBUG    | transformer:train_one_epoch:324 - Loss at epoch 66: 423.6007
+2025-05-06 22:44:54.201 | DEBUG    | transformer:val_one_epoch:376 - Validation loss at epoch 66: 132.5945
+2025-05-06 22:44:54.201 | INFO     | transformer:train_val:441 - stop smooth: False
+2025-05-06 22:44:54.201 | INFO     | transformer:train_val:453 - stop early: False
+[Epoca 66] Memoria allocata:   19.93 MB
+[Epoca 66] Memoria riservata:   90.00 MB
+[Epoca 66] Totale allocata (storico): 2.22 MB
+2025-05-06 22:45:55.896 | DEBUG    | transformer:train_one_epoch:324 - Loss at epoch 67: 382.8192
+2025-05-06 22:46:05.031 | DEBUG    | transformer:val_one_epoch:376 - Validation loss at epoch 67: 121.6918
+2025-05-06 22:46:05.031 | INFO     | transformer:train_val:441 - stop smooth: False
+2025-05-06 22:46:05.031 | INFO     | transformer:train_val:453 - stop early: False
+[Epoca 67] Memoria allocata:   19.93 MB
+[Epoca 67] Memoria riservata:   88.00 MB
+[Epoca 67] Totale allocata (storico): 2.26 MB
+2025-05-06 22:47:05.257 | DEBUG    | transformer:train_one_epoch:324 - Loss at epoch 68: 349.7212
+2025-05-06 22:47:14.432 | DEBUG    | transformer:val_one_epoch:376 - Validation loss at epoch 68: 108.8630
+2025-05-06 22:47:14.432 | INFO     | transformer:train_val:441 - stop smooth: False
+2025-05-06 22:47:14.433 | INFO     | transformer:train_val:453 - stop early: False
+[Epoca 68] Memoria allocata:   19.93 MB
+[Epoca 68] Memoria riservata:   88.00 MB
+[Epoca 68] Totale allocata (storico): 2.29 MB
+2025-05-06 22:48:14.413 | DEBUG    | transformer:train_one_epoch:324 - Loss at epoch 69: 317.3537
+2025-05-06 22:48:23.618 | DEBUG    | transformer:val_one_epoch:376 - Validation loss at epoch 69: 98.3102
+2025-05-06 22:48:23.618 | INFO     | transformer:train_val:441 - stop smooth: False
+2025-05-06 22:48:23.618 | INFO     | transformer:train_val:453 - stop early: False
+[Epoca 69] Memoria allocata:   19.93 MB
+[Epoca 69] Memoria riservata:   90.00 MB
+[Epoca 69] Totale allocata (storico): 2.32 MB
+2025-05-06 22:49:24.456 | DEBUG    | transformer:train_one_epoch:324 - Loss at epoch 70: 282.4349
+2025-05-06 22:49:33.488 | DEBUG    | transformer:val_one_epoch:376 - Validation loss at epoch 70: 88.6937
+2025-05-06 22:49:33.488 | INFO     | transformer:train_val:441 - stop smooth: False
+2025-05-06 22:49:33.488 | INFO     | transformer:train_val:453 - stop early: False
+[Epoca 70] Memoria allocata:   19.93 MB
+[Epoca 70] Memoria riservata:   88.00 MB
+[Epoca 70] Totale allocata (storico): 2.36 MB
+2025-05-06 22:50:34.272 | DEBUG    | transformer:train_one_epoch:324 - Loss at epoch 71: 255.0528
+2025-05-06 22:50:43.613 | DEBUG    | transformer:val_one_epoch:376 - Validation loss at epoch 71: 79.4014
+2025-05-06 22:50:43.613 | INFO     | transformer:train_val:441 - stop smooth: False
+2025-05-06 22:50:43.613 | INFO     | transformer:train_val:453 - stop early: False
+[Epoca 71] Memoria allocata:   19.93 MB
+[Epoca 71] Memoria riservata:   90.00 MB
+[Epoca 71] Totale allocata (storico): 2.39 MB
+2025-05-06 22:51:44.393 | DEBUG    | transformer:train_one_epoch:324 - Loss at epoch 72: 228.0006
+2025-05-06 22:51:53.951 | DEBUG    | transformer:val_one_epoch:376 - Validation loss at epoch 72: 70.4616
+2025-05-06 22:51:53.951 | INFO     | transformer:train_val:441 - stop smooth: False
+2025-05-06 22:51:53.951 | INFO     | transformer:train_val:453 - stop early: False
+[Epoca 72] Memoria allocata:   19.93 MB
+[Epoca 72] Memoria riservata:   88.00 MB
+[Epoca 72] Totale allocata (storico): 2.42 MB
+2025-05-06 22:52:55.748 | DEBUG    | transformer:train_one_epoch:324 - Loss at epoch 73: 202.5265
+2025-05-06 22:53:04.838 | DEBUG    | transformer:val_one_epoch:376 - Validation loss at epoch 73: 63.2702
+2025-05-06 22:53:04.839 | INFO     | transformer:train_val:441 - stop smooth: False
+2025-05-06 22:53:04.839 | INFO     | transformer:train_val:453 - stop early: False
+[Epoca 73] Memoria allocata:   19.93 MB
+[Epoca 73] Memoria riservata:   88.00 MB
+[Epoca 73] Totale allocata (storico): 2.46 MB
+2025-05-06 22:54:05.641 | DEBUG    | transformer:train_one_epoch:324 - Loss at epoch 74: 182.1218
+2025-05-06 22:54:14.811 | DEBUG    | transformer:val_one_epoch:376 - Validation loss at epoch 74: 56.0718
+2025-05-06 22:54:14.812 | INFO     | transformer:train_val:441 - stop smooth: False
+2025-05-06 22:54:14.812 | INFO     | transformer:train_val:453 - stop early: False
+[Epoca 74] Memoria allocata:   19.93 MB
+[Epoca 74] Memoria riservata:   90.00 MB
+[Epoca 74] Totale allocata (storico): 2.49 MB
+2025-05-06 22:55:15.922 | DEBUG    | transformer:train_one_epoch:324 - Loss at epoch 75: 159.6109
+2025-05-06 22:55:24.954 | DEBUG    | transformer:val_one_epoch:376 - Validation loss at epoch 75: 49.2648
+2025-05-06 22:55:24.955 | INFO     | transformer:train_val:441 - stop smooth: False
+2025-05-06 22:55:24.955 | INFO     | transformer:train_val:453 - stop early: False
+[Epoca 75] Memoria allocata:   19.93 MB
+[Epoca 75] Memoria riservata:   88.00 MB
+[Epoca 75] Totale allocata (storico): 2.53 MB
+2025-05-06 22:56:25.633 | DEBUG    | transformer:train_one_epoch:324 - Loss at epoch 76: 141.7933
+2025-05-06 22:56:34.915 | DEBUG    | transformer:val_one_epoch:376 - Validation loss at epoch 76: 43.3292
+2025-05-06 22:56:34.916 | INFO     | transformer:train_val:441 - stop smooth: False
+2025-05-06 22:56:34.916 | INFO     | transformer:train_val:453 - stop early: False
+[Epoca 76] Memoria allocata:   19.93 MB
+[Epoca 76] Memoria riservata:   88.00 MB
+[Epoca 76] Totale allocata (storico): 2.56 MB
+2025-05-06 22:57:34.919 | DEBUG    | transformer:train_one_epoch:324 - Loss at epoch 77: 123.8488
+2025-05-06 22:57:43.858 | DEBUG    | transformer:val_one_epoch:376 - Validation loss at epoch 77: 37.9897
+2025-05-06 22:57:43.858 | INFO     | transformer:train_val:441 - stop smooth: False
+2025-05-06 22:57:43.858 | INFO     | transformer:train_val:453 - stop early: False
+[Epoca 77] Memoria allocata:   19.93 MB
+[Epoca 77] Memoria riservata:   88.00 MB
+[Epoca 77] Totale allocata (storico): 2.59 MB
+2025-05-06 22:58:45.125 | DEBUG    | transformer:train_one_epoch:324 - Loss at epoch 78: 108.1371
+2025-05-06 22:58:54.313 | DEBUG    | transformer:val_one_epoch:376 - Validation loss at epoch 78: 32.8967
+2025-05-06 22:58:54.314 | INFO     | transformer:train_val:441 - stop smooth: False
+2025-05-06 22:58:54.314 | INFO     | transformer:train_val:453 - stop early: False
+[Epoca 78] Memoria allocata:   19.93 MB
+[Epoca 78] Memoria riservata:   90.00 MB
+[Epoca 78] Totale allocata (storico): 2.63 MB
+2025-05-06 22:59:55.648 | DEBUG    | transformer:train_one_epoch:324 - Loss at epoch 79: 93.8977
+2025-05-06 23:00:04.960 | DEBUG    | transformer:val_one_epoch:376 - Validation loss at epoch 79: 28.2543
+2025-05-06 23:00:04.960 | INFO     | transformer:train_val:441 - stop smooth: False
+2025-05-06 23:00:04.960 | INFO     | transformer:train_val:453 - stop early: False
+[Epoca 79] Memoria allocata:   19.93 MB
+[Epoca 79] Memoria riservata:   90.00 MB
+[Epoca 79] Totale allocata (storico): 2.66 MB
+2025-05-06 23:01:05.146 | DEBUG    | transformer:train_one_epoch:324 - Loss at epoch 80: 81.8916
+2025-05-06 23:01:14.616 | DEBUG    | transformer:val_one_epoch:376 - Validation loss at epoch 80: 24.6480
+2025-05-06 23:01:14.616 | INFO     | transformer:train_val:441 - stop smooth: False
+2025-05-06 23:01:14.616 | INFO     | transformer:train_val:453 - stop early: False
+[Epoca 80] Memoria allocata:   19.93 MB
+[Epoca 80] Memoria riservata:   90.00 MB
+[Epoca 80] Totale allocata (storico): 2.69 MB
+2025-05-06 23:02:16.683 | DEBUG    | transformer:train_one_epoch:324 - Loss at epoch 81: 70.0117
+2025-05-06 23:02:25.927 | DEBUG    | transformer:val_one_epoch:376 - Validation loss at epoch 81: 21.0693
+2025-05-06 23:02:25.927 | INFO     | transformer:train_val:441 - stop smooth: False
+2025-05-06 23:02:25.927 | INFO     | transformer:train_val:453 - stop early: False
+[Epoca 81] Memoria allocata:   19.93 MB
+[Epoca 81] Memoria riservata:   90.00 MB
+[Epoca 81] Totale allocata (storico): 2.73 MB
+2025-05-06 23:03:27.175 | DEBUG    | transformer:train_one_epoch:324 - Loss at epoch 82: 60.2335
+2025-05-06 23:03:36.197 | DEBUG    | transformer:val_one_epoch:376 - Validation loss at epoch 82: 18.4626
+2025-05-06 23:03:36.197 | INFO     | transformer:train_val:441 - stop smooth: False
+2025-05-06 23:03:36.197 | INFO     | transformer:train_val:453 - stop early: False
+[Epoca 82] Memoria allocata:   19.93 MB
+[Epoca 82] Memoria riservata:   90.00 MB
+[Epoca 82] Totale allocata (storico): 2.76 MB
+2025-05-06 23:04:37.943 | DEBUG    | transformer:train_one_epoch:324 - Loss at epoch 83: 51.2183
+2025-05-06 23:04:47.225 | DEBUG    | transformer:val_one_epoch:376 - Validation loss at epoch 83: 15.4303
+2025-05-06 23:04:47.225 | INFO     | transformer:train_val:441 - stop smooth: False
+2025-05-06 23:04:47.225 | INFO     | transformer:train_val:453 - stop early: False
+[Epoca 83] Memoria allocata:   19.93 MB
+[Epoca 83] Memoria riservata:   90.00 MB
+[Epoca 83] Totale allocata (storico): 2.79 MB
+2025-05-06 23:05:48.377 | DEBUG    | transformer:train_one_epoch:324 - Loss at epoch 84: 43.8714
+2025-05-06 23:05:57.629 | DEBUG    | transformer:val_one_epoch:376 - Validation loss at epoch 84: 12.9344
+2025-05-06 23:05:57.630 | INFO     | transformer:train_val:441 - stop smooth: False
+2025-05-06 23:05:57.630 | INFO     | transformer:train_val:453 - stop early: False
+[Epoca 84] Memoria allocata:   19.93 MB
+[Epoca 84] Memoria riservata:   88.00 MB
+[Epoca 84] Totale allocata (storico): 2.83 MB
+2025-05-06 23:06:58.414 | DEBUG    | transformer:train_one_epoch:324 - Loss at epoch 85: 37.4852
+2025-05-06 23:07:07.697 | DEBUG    | transformer:val_one_epoch:376 - Validation loss at epoch 85: 10.9519
+2025-05-06 23:07:07.697 | INFO     | transformer:train_val:441 - stop smooth: False
+2025-05-06 23:07:07.697 | INFO     | transformer:train_val:453 - stop early: False
+[Epoca 85] Memoria allocata:   19.93 MB
+[Epoca 85] Memoria riservata:   90.00 MB
+[Epoca 85] Totale allocata (storico): 2.86 MB
+2025-05-06 23:08:09.653 | DEBUG    | transformer:train_one_epoch:324 - Loss at epoch 86: 31.4551
+2025-05-06 23:08:18.851 | DEBUG    | transformer:val_one_epoch:376 - Validation loss at epoch 86: 9.1344
+2025-05-06 23:08:18.851 | INFO     | transformer:train_val:441 - stop smooth: False
+2025-05-06 23:08:18.851 | INFO     | transformer:train_val:453 - stop early: False
+[Epoca 86] Memoria allocata:   19.93 MB
+[Epoca 86] Memoria riservata:   88.00 MB
+[Epoca 86] Totale allocata (storico): 2.90 MB
+2025-05-06 23:09:19.242 | DEBUG    | transformer:train_one_epoch:324 - Loss at epoch 87: 26.5260
+2025-05-06 23:09:28.189 | DEBUG    | transformer:val_one_epoch:376 - Validation loss at epoch 87: 7.8210
+2025-05-06 23:09:28.189 | INFO     | transformer:train_val:441 - stop smooth: False
+2025-05-06 23:09:28.189 | INFO     | transformer:train_val:453 - stop early: False
+[Epoca 87] Memoria allocata:   19.93 MB
+[Epoca 87] Memoria riservata:   90.00 MB
+[Epoca 87] Totale allocata (storico): 2.93 MB
+2025-05-06 23:10:29.147 | DEBUG    | transformer:train_one_epoch:324 - Loss at epoch 88: 22.3520
+2025-05-06 23:10:38.384 | DEBUG    | transformer:val_one_epoch:376 - Validation loss at epoch 88: 6.3320
+2025-05-06 23:10:38.384 | INFO     | transformer:train_val:441 - stop smooth: False
+2025-05-06 23:10:38.384 | INFO     | transformer:train_val:453 - stop early: False
+[Epoca 88] Memoria allocata:   19.93 MB
+[Epoca 88] Memoria riservata:   88.00 MB
+[Epoca 88] Totale allocata (storico): 2.96 MB
+2025-05-06 23:11:39.731 | DEBUG    | transformer:train_one_epoch:324 - Loss at epoch 89: 18.7067
+2025-05-06 23:11:48.893 | DEBUG    | transformer:val_one_epoch:376 - Validation loss at epoch 89: 5.2271
+2025-05-06 23:11:48.893 | INFO     | transformer:train_val:441 - stop smooth: False
+2025-05-06 23:11:48.893 | INFO     | transformer:train_val:453 - stop early: False
+[Epoca 89] Memoria allocata:   19.93 MB
+[Epoca 89] Memoria riservata:   90.00 MB
+[Epoca 89] Totale allocata (storico): 3.00 MB
+2025-05-06 23:12:50.105 | DEBUG    | transformer:train_one_epoch:324 - Loss at epoch 90: 15.5719
+2025-05-06 23:12:59.160 | DEBUG    | transformer:val_one_epoch:376 - Validation loss at epoch 90: 4.3920
+2025-05-06 23:12:59.160 | INFO     | transformer:train_val:441 - stop smooth: False
+2025-05-06 23:12:59.160 | INFO     | transformer:train_val:453 - stop early: False
+[Epoca 90] Memoria allocata:   19.93 MB
+[Epoca 90] Memoria riservata:   90.00 MB
+[Epoca 90] Totale allocata (storico): 3.03 MB
+2025-05-06 23:14:00.552 | DEBUG    | transformer:train_one_epoch:324 - Loss at epoch 91: 12.9654
+2025-05-06 23:14:09.923 | DEBUG    | transformer:val_one_epoch:376 - Validation loss at epoch 91: 3.5203
+2025-05-06 23:14:09.923 | INFO     | transformer:train_val:441 - stop smooth: False
+2025-05-06 23:14:09.923 | INFO     | transformer:train_val:453 - stop early: False
+[Epoca 91] Memoria allocata:   19.93 MB
+[Epoca 91] Memoria riservata:   88.00 MB
+[Epoca 91] Totale allocata (storico): 3.06 MB
+2025-05-06 23:15:11.204 | DEBUG    | transformer:train_one_epoch:324 - Loss at epoch 92: 10.7935
+2025-05-06 23:15:20.332 | DEBUG    | transformer:val_one_epoch:376 - Validation loss at epoch 92: 2.9371
+2025-05-06 23:15:20.332 | INFO     | transformer:train_val:441 - stop smooth: False
+2025-05-06 23:15:20.332 | INFO     | transformer:train_val:453 - stop early: False
+[Epoca 92] Memoria allocata:   19.93 MB
+[Epoca 92] Memoria riservata:   90.00 MB
+[Epoca 92] Totale allocata (storico): 3.10 MB
+2025-05-06 23:16:20.239 | DEBUG    | transformer:train_one_epoch:324 - Loss at epoch 93: 9.0903
+2025-05-06 23:16:29.387 | DEBUG    | transformer:val_one_epoch:376 - Validation loss at epoch 93: 2.3741
+2025-05-06 23:16:29.387 | INFO     | transformer:train_val:441 - stop smooth: False
+2025-05-06 23:16:29.388 | INFO     | transformer:train_val:453 - stop early: False
+[Epoca 93] Memoria allocata:   19.93 MB
+[Epoca 93] Memoria riservata:   88.00 MB
+[Epoca 93] Totale allocata (storico): 3.13 MB
+2025-05-06 23:17:30.299 | DEBUG    | transformer:train_one_epoch:324 - Loss at epoch 94: 7.5637
+2025-05-06 23:17:39.383 | DEBUG    | transformer:val_one_epoch:376 - Validation loss at epoch 94: 1.9557
+2025-05-06 23:17:39.383 | INFO     | transformer:train_val:441 - stop smooth: False
+2025-05-06 23:17:39.383 | INFO     | transformer:train_val:453 - stop early: False
+[Epoca 94] Memoria allocata:   19.93 MB
+[Epoca 94] Memoria riservata:   90.00 MB
+[Epoca 94] Totale allocata (storico): 3.16 MB
+2025-05-06 23:18:41.255 | DEBUG    | transformer:train_one_epoch:324 - Loss at epoch 95: 6.3364
+2025-05-06 23:18:50.597 | DEBUG    | transformer:val_one_epoch:376 - Validation loss at epoch 95: 1.6600
+2025-05-06 23:18:50.597 | INFO     | transformer:train_val:441 - stop smooth: False
+2025-05-06 23:18:50.597 | INFO     | transformer:train_val:453 - stop early: False
+[Epoca 95] Memoria allocata:   19.93 MB
+[Epoca 95] Memoria riservata:   88.00 MB
+[Epoca 95] Totale allocata (storico): 3.20 MB
+2025-05-06 23:19:51.608 | DEBUG    | transformer:train_one_epoch:324 - Loss at epoch 96: 5.3739
+2025-05-06 23:20:00.774 | DEBUG    | transformer:val_one_epoch:376 - Validation loss at epoch 96: 1.3087
+2025-05-06 23:20:00.774 | INFO     | transformer:train_val:441 - stop smooth: False
+2025-05-06 23:20:00.775 | INFO     | transformer:train_val:453 - stop early: False
+[Epoca 96] Memoria allocata:   19.93 MB
+[Epoca 96] Memoria riservata:   90.00 MB
+[Epoca 96] Totale allocata (storico): 3.23 MB
+2025-05-06 23:21:02.323 | DEBUG    | transformer:train_one_epoch:324 - Loss at epoch 97: 4.6150
+2025-05-06 23:21:11.290 | DEBUG    | transformer:val_one_epoch:376 - Validation loss at epoch 97: 1.0915
+2025-05-06 23:21:11.290 | INFO     | transformer:train_val:441 - stop smooth: False
+2025-05-06 23:21:11.290 | INFO     | transformer:train_val:453 - stop early: False
+[Epoca 97] Memoria allocata:   19.93 MB
+[Epoca 97] Memoria riservata:   90.00 MB
+[Epoca 97] Totale allocata (storico): 3.27 MB
+2025-05-06 23:22:13.011 | DEBUG    | transformer:train_one_epoch:324 - Loss at epoch 98: 3.9725
+2025-05-06 23:22:22.150 | DEBUG    | transformer:val_one_epoch:376 - Validation loss at epoch 98: 0.8862
+2025-05-06 23:22:22.150 | INFO     | transformer:train_val:441 - stop smooth: False
+2025-05-06 23:22:22.150 | INFO     | transformer:train_val:453 - stop early: False
+[Epoca 98] Memoria allocata:   19.93 MB
+[Epoca 98] Memoria riservata:   88.00 MB
+[Epoca 98] Totale allocata (storico): 3.30 MB
+2025-05-06 23:23:23.941 | DEBUG    | transformer:train_one_epoch:324 - Loss at epoch 99: 3.4741
+2025-05-06 23:23:32.970 | DEBUG    | transformer:val_one_epoch:376 - Validation loss at epoch 99: 0.7799
+2025-05-06 23:23:32.970 | INFO     | transformer:train_val:441 - stop smooth: False
+2025-05-06 23:23:32.970 | INFO     | transformer:train_val:453 - stop early: False
+[Epoca 99] Memoria allocata:   19.93 MB
+[Epoca 99] Memoria riservata:   90.00 MB
+[Epoca 99] Totale allocata (storico): 3.33 MB
+2025-05-06 23:24:33.525 | DEBUG    | transformer:train_one_epoch:324 - Loss at epoch 100: 3.1156
+2025-05-06 23:24:42.831 | DEBUG    | transformer:val_one_epoch:376 - Validation loss at epoch 100: 0.6417
+2025-05-06 23:24:42.831 | INFO     | transformer:train_val:441 - stop smooth: False
+2025-05-06 23:24:42.831 | INFO     | transformer:train_val:453 - stop early: False
+[Epoca 100] Memoria allocata:   19.93 MB
+[Epoca 100] Memoria riservata:   88.00 MB
+[Epoca 100] Totale allocata (storico): 3.37 MB
+2025-05-06 23:25:43.171 | DEBUG    | transformer:train_one_epoch:324 - Loss at epoch 101: 2.7853
+2025-05-06 23:25:52.391 | DEBUG    | transformer:val_one_epoch:376 - Validation loss at epoch 101: 0.5684
+2025-05-06 23:25:52.391 | INFO     | transformer:train_val:441 - stop smooth: False
+2025-05-06 23:25:52.391 | INFO     | transformer:train_val:453 - stop early: False
+[Epoca 101] Memoria allocata:   19.93 MB
+[Epoca 101] Memoria riservata:   90.00 MB
+[Epoca 101] Totale allocata (storico): 3.40 MB
+2025-05-06 23:26:52.127 | DEBUG    | transformer:train_one_epoch:324 - Loss at epoch 102: 2.5390
+2025-05-06 23:27:01.407 | DEBUG    | transformer:val_one_epoch:376 - Validation loss at epoch 102: 0.4903
+2025-05-06 23:27:01.407 | INFO     | transformer:train_val:441 - stop smooth: False
+2025-05-06 23:27:01.408 | INFO     | transformer:train_val:453 - stop early: False
+[Epoca 102] Memoria allocata:   19.93 MB
+[Epoca 102] Memoria riservata:   88.00 MB
+[Epoca 102] Totale allocata (storico): 3.43 MB
+2025-05-06 23:28:02.553 | DEBUG    | transformer:train_one_epoch:324 - Loss at epoch 103: 2.3147
+2025-05-06 23:28:11.498 | DEBUG    | transformer:val_one_epoch:376 - Validation loss at epoch 103: 0.4399
+2025-05-06 23:28:11.498 | INFO     | transformer:train_val:441 - stop smooth: False
+2025-05-06 23:28:11.498 | INFO     | transformer:train_val:453 - stop early: False
+[Epoca 103] Memoria allocata:   19.93 MB
+[Epoca 103] Memoria riservata:   88.00 MB
+[Epoca 103] Totale allocata (storico): 3.47 MB
+2025-05-06 23:29:11.748 | DEBUG    | transformer:train_one_epoch:324 - Loss at epoch 104: 2.1707
+2025-05-06 23:29:20.854 | DEBUG    | transformer:val_one_epoch:376 - Validation loss at epoch 104: 0.3912
+2025-05-06 23:29:20.854 | INFO     | transformer:train_val:441 - stop smooth: False
+2025-05-06 23:29:20.854 | INFO     | transformer:train_val:453 - stop early: False
+[Epoca 104] Memoria allocata:   19.93 MB
+[Epoca 104] Memoria riservata:   90.00 MB
+[Epoca 104] Totale allocata (storico): 3.50 MB
+2025-05-06 23:30:22.032 | DEBUG    | transformer:train_one_epoch:324 - Loss at epoch 105: 2.0465
+2025-05-06 23:30:31.391 | DEBUG    | transformer:val_one_epoch:376 - Validation loss at epoch 105: 0.3754
+2025-05-06 23:30:31.391 | INFO     | transformer:train_val:441 - stop smooth: False
+2025-05-06 23:30:31.391 | INFO     | transformer:train_val:453 - stop early: False
+[Epoca 105] Memoria allocata:   19.93 MB
+[Epoca 105] Memoria riservata:   90.00 MB
+[Epoca 105] Totale allocata (storico): 3.54 MB
+2025-05-06 23:31:31.604 | DEBUG    | transformer:train_one_epoch:324 - Loss at epoch 106: 1.9529
+2025-05-06 23:31:40.950 | DEBUG    | transformer:val_one_epoch:376 - Validation loss at epoch 106: 0.3623
+2025-05-06 23:31:40.950 | INFO     | transformer:train_val:441 - stop smooth: False
+2025-05-06 23:31:40.951 | INFO     | transformer:train_val:453 - stop early: False
+[Epoca 106] Memoria allocata:   19.93 MB
+[Epoca 106] Memoria riservata:   88.00 MB
+[Epoca 106] Totale allocata (storico): 3.57 MB
+2025-05-06 23:32:42.925 | DEBUG    | transformer:train_one_epoch:324 - Loss at epoch 107: 1.8699
+2025-05-06 23:32:52.215 | DEBUG    | transformer:val_one_epoch:376 - Validation loss at epoch 107: 0.3525
+2025-05-06 23:32:52.215 | INFO     | transformer:train_val:441 - stop smooth: False
+2025-05-06 23:32:52.215 | INFO     | transformer:train_val:453 - stop early: False
+[Epoca 107] Memoria allocata:   19.93 MB
+[Epoca 107] Memoria riservata:   90.00 MB
+[Epoca 107] Totale allocata (storico): 3.60 MB
+2025-05-06 23:33:52.686 | DEBUG    | transformer:train_one_epoch:324 - Loss at epoch 108: 1.8100
+2025-05-06 23:34:01.927 | DEBUG    | transformer:val_one_epoch:376 - Validation loss at epoch 108: 0.3513
+2025-05-06 23:34:01.927 | INFO     | transformer:train_val:441 - stop smooth: False
+2025-05-06 23:34:01.927 | INFO     | transformer:train_val:453 - stop early: False
+[Epoca 108] Memoria allocata:   19.93 MB
+[Epoca 108] Memoria riservata:   88.00 MB
+[Epoca 108] Totale allocata (storico): 3.64 MB
+2025-05-06 23:35:02.594 | DEBUG    | transformer:train_one_epoch:324 - Loss at epoch 109: 1.7528
+2025-05-06 23:35:11.492 | DEBUG    | transformer:val_one_epoch:376 - Validation loss at epoch 109: 0.3117
+2025-05-06 23:35:11.493 | INFO     | transformer:train_val:441 - stop smooth: False
+2025-05-06 23:35:11.493 | INFO     | transformer:train_val:453 - stop early: False
+[Epoca 109] Memoria allocata:   19.93 MB
+[Epoca 109] Memoria riservata:   88.00 MB
+[Epoca 109] Totale allocata (storico): 3.67 MB
+2025-05-06 23:36:12.545 | DEBUG    | transformer:train_one_epoch:324 - Loss at epoch 110: 1.7116
+2025-05-06 23:36:21.475 | DEBUG    | transformer:val_one_epoch:376 - Validation loss at epoch 110: 0.3190
+2025-05-06 23:36:21.475 | INFO     | transformer:train_val:441 - stop smooth: True
+2025-05-06 23:36:21.475 | INFO     | transformer:train_val:453 - stop early: True
+[Epoca 110] Memoria allocata:   19.93 MB
+[Epoca 110] Memoria riservata:   88.00 MB
+[Epoca 110] Totale allocata (storico): 3.70 MB
+2025-05-06 23:37:23.287 | DEBUG    | transformer:train_one_epoch:324 - Loss at epoch 111: 1.6612
+2025-05-06 23:37:32.228 | DEBUG    | transformer:val_one_epoch:376 - Validation loss at epoch 111: 0.3292
+2025-05-06 23:37:32.228 | INFO     | transformer:train_val:441 - stop smooth: True
+2025-05-06 23:37:32.228 | INFO     | transformer:train_val:453 - stop early: True
+[Epoca 111] Memoria allocata:   19.93 MB
+[Epoca 111] Memoria riservata:   90.00 MB
+[Epoca 111] Totale allocata (storico): 3.74 MB
+2025-05-06 23:38:34.127 | DEBUG    | transformer:train_one_epoch:324 - Loss at epoch 112: 1.6200
+2025-05-06 23:38:43.417 | DEBUG    | transformer:val_one_epoch:376 - Validation loss at epoch 112: 0.2962
+2025-05-06 23:38:43.417 | INFO     | transformer:train_val:441 - stop smooth: False
+2025-05-06 23:38:43.418 | INFO     | transformer:train_val:453 - stop early: False
+[Epoca 112] Memoria allocata:   19.93 MB
+[Epoca 112] Memoria riservata:   90.00 MB
+[Epoca 112] Totale allocata (storico): 3.77 MB
+2025-05-06 23:39:43.404 | DEBUG    | transformer:train_one_epoch:324 - Loss at epoch 113: 1.6082
+2025-05-06 23:39:52.672 | DEBUG    | transformer:val_one_epoch:376 - Validation loss at epoch 113: 0.3049
+2025-05-06 23:39:52.672 | INFO     | transformer:train_val:441 - stop smooth: True
+2025-05-06 23:39:52.672 | INFO     | transformer:train_val:453 - stop early: True
+[Epoca 113] Memoria allocata:   19.93 MB
+[Epoca 113] Memoria riservata:   90.00 MB
+[Epoca 113] Totale allocata (storico): 3.80 MB
+2025-05-06 23:40:53.731 | DEBUG    | transformer:train_one_epoch:324 - Loss at epoch 114: 1.5584
+2025-05-06 23:41:02.873 | DEBUG    | transformer:val_one_epoch:376 - Validation loss at epoch 114: 0.2909
+2025-05-06 23:41:02.873 | INFO     | transformer:train_val:441 - stop smooth: False
+2025-05-06 23:41:02.873 | INFO     | transformer:train_val:453 - stop early: False
+[Epoca 114] Memoria allocata:   19.93 MB
+[Epoca 114] Memoria riservata:   90.00 MB
+[Epoca 114] Totale allocata (storico): 3.84 MB
+2025-05-06 23:42:03.134 | DEBUG    | transformer:train_one_epoch:324 - Loss at epoch 115: 1.5555
+2025-05-06 23:42:12.539 | DEBUG    | transformer:val_one_epoch:376 - Validation loss at epoch 115: 0.2752
+2025-05-06 23:42:12.539 | INFO     | transformer:train_val:441 - stop smooth: False
+2025-05-06 23:42:12.539 | INFO     | transformer:train_val:453 - stop early: False
+[Epoca 115] Memoria allocata:   19.93 MB
+[Epoca 115] Memoria riservata:   88.00 MB
+[Epoca 115] Totale allocata (storico): 3.87 MB
+2025-05-06 23:43:12.956 | DEBUG    | transformer:train_one_epoch:324 - Loss at epoch 116: 1.4965
+2025-05-06 23:43:22.372 | DEBUG    | transformer:val_one_epoch:376 - Validation loss at epoch 116: 0.2635
+2025-05-06 23:43:22.372 | INFO     | transformer:train_val:441 - stop smooth: False
+2025-05-06 23:43:22.372 | INFO     | transformer:train_val:453 - stop early: False
+[Epoca 116] Memoria allocata:   19.93 MB
+[Epoca 116] Memoria riservata:   88.00 MB
+[Epoca 116] Totale allocata (storico): 3.91 MB
+2025-05-06 23:44:22.451 | DEBUG    | transformer:train_one_epoch:324 - Loss at epoch 117: 1.4930
+2025-05-06 23:44:31.615 | DEBUG    | transformer:val_one_epoch:376 - Validation loss at epoch 117: 0.2659
+2025-05-06 23:44:31.615 | INFO     | transformer:train_val:441 - stop smooth: True
+2025-05-06 23:44:31.615 | INFO     | transformer:train_val:453 - stop early: True
+[Epoca 117] Memoria allocata:   19.93 MB
+[Epoca 117] Memoria riservata:   88.00 MB
+[Epoca 117] Totale allocata (storico): 3.94 MB
+2025-05-06 23:45:32.234 | DEBUG    | transformer:train_one_epoch:324 - Loss at epoch 118: 1.4359
+2025-05-06 23:45:41.629 | DEBUG    | transformer:val_one_epoch:376 - Validation loss at epoch 118: 0.2557
+2025-05-06 23:45:41.629 | INFO     | transformer:train_val:441 - stop smooth: False
+2025-05-06 23:45:41.629 | INFO     | transformer:train_val:453 - stop early: False
+[Epoca 118] Memoria allocata:   19.93 MB
+[Epoca 118] Memoria riservata:   88.00 MB
+[Epoca 118] Totale allocata (storico): 3.97 MB
+2025-05-06 23:46:42.152 | DEBUG    | transformer:train_one_epoch:324 - Loss at epoch 119: 1.4591
+2025-05-06 23:46:51.432 | DEBUG    | transformer:val_one_epoch:376 - Validation loss at epoch 119: 0.2651
+2025-05-06 23:46:51.432 | INFO     | transformer:train_val:441 - stop smooth: True
+2025-05-06 23:46:51.433 | INFO     | transformer:train_val:453 - stop early: True
+[Epoca 119] Memoria allocata:   19.93 MB
+[Epoca 119] Memoria riservata:   90.00 MB
+[Epoca 119] Totale allocata (storico): 4.01 MB
+2025-05-06 23:47:53.660 | DEBUG    | transformer:train_one_epoch:324 - Loss at epoch 120: 1.3874
+2025-05-06 23:48:02.783 | DEBUG    | transformer:val_one_epoch:376 - Validation loss at epoch 120: 0.2735
+2025-05-06 23:48:02.783 | INFO     | transformer:train_val:441 - stop smooth: True
+2025-05-06 23:48:02.783 | INFO     | transformer:train_val:453 - stop early: True
+[Epoca 120] Memoria allocata:   19.93 MB
+[Epoca 120] Memoria riservata:   90.00 MB
+[Epoca 120] Totale allocata (storico): 4.04 MB
+2025-05-06 23:49:03.141 | DEBUG    | transformer:train_one_epoch:324 - Loss at epoch 121: 1.3938
+2025-05-06 23:49:12.276 | DEBUG    | transformer:val_one_epoch:376 - Validation loss at epoch 121: 0.2470
+2025-05-06 23:49:12.276 | INFO     | transformer:train_val:441 - stop smooth: False
+2025-05-06 23:49:12.276 | INFO     | transformer:train_val:453 - stop early: False
+[Epoca 121] Memoria allocata:   19.93 MB
+[Epoca 121] Memoria riservata:   90.00 MB
+[Epoca 121] Totale allocata (storico): 4.07 MB
+2025-05-06 23:50:12.929 | DEBUG    | transformer:train_one_epoch:324 - Loss at epoch 122: 1.3789
+2025-05-06 23:50:22.132 | DEBUG    | transformer:val_one_epoch:376 - Validation loss at epoch 122: 0.2801
+2025-05-06 23:50:22.132 | INFO     | transformer:train_val:441 - stop smooth: True
+2025-05-06 23:50:22.132 | INFO     | transformer:train_val:453 - stop early: True
+[Epoca 122] Memoria allocata:   19.93 MB
+[Epoca 122] Memoria riservata:   88.00 MB
+[Epoca 122] Totale allocata (storico): 4.11 MB
+2025-05-06 23:51:22.185 | DEBUG    | transformer:train_one_epoch:324 - Loss at epoch 123: 1.3622
+2025-05-06 23:51:31.281 | DEBUG    | transformer:val_one_epoch:376 - Validation loss at epoch 123: 0.2346
+2025-05-06 23:51:31.281 | INFO     | transformer:train_val:441 - stop smooth: False
+2025-05-06 23:51:31.282 | INFO     | transformer:train_val:453 - stop early: False
+[Epoca 123] Memoria allocata:   19.93 MB
+[Epoca 123] Memoria riservata:   88.00 MB
+[Epoca 123] Totale allocata (storico): 4.14 MB
+2025-05-06 23:52:32.905 | DEBUG    | transformer:train_one_epoch:324 - Loss at epoch 124: 1.3020
+2025-05-06 23:52:42.355 | DEBUG    | transformer:val_one_epoch:376 - Validation loss at epoch 124: 0.2428
+2025-05-06 23:52:42.355 | INFO     | transformer:train_val:441 - stop smooth: True
+2025-05-06 23:52:42.355 | INFO     | transformer:train_val:453 - stop early: True
+[Epoca 124] Memoria allocata:   19.93 MB
+[Epoca 124] Memoria riservata:   90.00 MB
+[Epoca 124] Totale allocata (storico): 4.18 MB
+2025-05-06 23:53:42.669 | DEBUG    | transformer:train_one_epoch:324 - Loss at epoch 125: 1.3135
+2025-05-06 23:53:51.843 | DEBUG    | transformer:val_one_epoch:376 - Validation loss at epoch 125: 0.3359
+2025-05-06 23:53:51.843 | INFO     | transformer:train_val:441 - stop smooth: True
+2025-05-06 23:53:51.843 | INFO     | transformer:train_val:453 - stop early: True
+[Epoca 125] Memoria allocata:   19.93 MB
+[Epoca 125] Memoria riservata:   88.00 MB
+[Epoca 125] Totale allocata (storico): 4.21 MB
+2025-05-06 23:54:51.814 | DEBUG    | transformer:train_one_epoch:324 - Loss at epoch 126: 43.0929
+2025-05-06 23:55:01.249 | DEBUG    | transformer:val_one_epoch:376 - Validation loss at epoch 126: 6.6143
+2025-05-06 23:55:01.249 | INFO     | transformer:train_val:441 - stop smooth: True
+2025-05-06 23:55:01.249 | INFO     | transformer:train_val:453 - stop early: True
+[Epoca 126] Memoria allocata:   19.93 MB
+[Epoca 126] Memoria riservata:   90.00 MB
+[Epoca 126] Totale allocata (storico): 4.24 MB
+2025-05-06 23:56:01.715 | DEBUG    | transformer:train_one_epoch:324 - Loss at epoch 127: 6.6207
+2025-05-06 23:56:10.780 | DEBUG    | transformer:val_one_epoch:376 - Validation loss at epoch 127: 2.1926
+2025-05-06 23:56:10.780 | INFO     | transformer:train_val:441 - stop smooth: True
+2025-05-06 23:56:10.780 | INFO     | transformer:train_val:453 - stop early: False
+[Epoca 127] Memoria allocata:   19.93 MB
+[Epoca 127] Memoria riservata:   88.00 MB
+[Epoca 127] Totale allocata (storico): 4.28 MB
+2025-05-06 23:57:12.151 | DEBUG    | transformer:train_one_epoch:324 - Loss at epoch 128: 4.2243
+2025-05-06 23:57:21.551 | DEBUG    | transformer:val_one_epoch:376 - Validation loss at epoch 128: 1.1933
+2025-05-06 23:57:21.551 | INFO     | transformer:train_val:441 - stop smooth: True
+2025-05-06 23:57:21.551 | INFO     | transformer:train_val:453 - stop early: False
+[Epoca 128] Memoria allocata:   19.93 MB
+[Epoca 128] Memoria riservata:   90.00 MB
+[Epoca 128] Totale allocata (storico): 4.31 MB
+2025-05-06 23:58:22.347 | DEBUG    | transformer:train_one_epoch:324 - Loss at epoch 129: 3.2911
+2025-05-06 23:58:31.583 | DEBUG    | transformer:val_one_epoch:376 - Validation loss at epoch 129: 0.8271
+2025-05-06 23:58:31.583 | INFO     | transformer:train_val:441 - stop smooth: True
+2025-05-06 23:58:31.583 | INFO     | transformer:train_val:453 - stop early: False
+[Epoca 129] Memoria allocata:   19.93 MB
+[Epoca 129] Memoria riservata:   90.00 MB
+[Epoca 129] Totale allocata (storico): 4.34 MB
+2025-05-06 23:59:33.035 | DEBUG    | transformer:train_one_epoch:324 - Loss at epoch 130: 2.7592
+2025-05-06 23:59:42.228 | DEBUG    | transformer:val_one_epoch:376 - Validation loss at epoch 130: 0.6079
+2025-05-06 23:59:42.228 | INFO     | transformer:train_val:441 - stop smooth: True
+2025-05-06 23:59:42.228 | INFO     | transformer:train_val:453 - stop early: False
+[Epoca 130] Memoria allocata:   19.93 MB
+[Epoca 130] Memoria riservata:   88.00 MB
+[Epoca 130] Totale allocata (storico): 4.38 MB
+2025-05-07 00:00:43.278 | DEBUG    | transformer:train_one_epoch:324 - Loss at epoch 131: 2.4479
+2025-05-07 00:00:52.547 | DEBUG    | transformer:val_one_epoch:376 - Validation loss at epoch 131: 0.5501
+2025-05-07 00:00:52.548 | INFO     | transformer:train_val:441 - stop smooth: True
+2025-05-07 00:00:52.548 | INFO     | transformer:train_val:453 - stop early: False
+[Epoca 131] Memoria allocata:   19.93 MB
+[Epoca 131] Memoria riservata:   90.00 MB
+[Epoca 131] Totale allocata (storico): 4.41 MB
+2025-05-07 00:01:54.791 | DEBUG    | transformer:train_one_epoch:324 - Loss at epoch 132: 2.2495
+2025-05-07 00:02:03.910 | DEBUG    | transformer:val_one_epoch:376 - Validation loss at epoch 132: 0.4765
+2025-05-07 00:02:03.910 | INFO     | transformer:train_val:441 - stop smooth: True
+2025-05-07 00:02:03.910 | INFO     | transformer:train_val:453 - stop early: False
+[Epoca 132] Memoria allocata:   19.93 MB
+[Epoca 132] Memoria riservata:   88.00 MB
+[Epoca 132] Totale allocata (storico): 4.44 MB
+2025-05-07 00:03:03.917 | DEBUG    | transformer:train_one_epoch:324 - Loss at epoch 133: 2.1168
+2025-05-07 00:03:13.388 | DEBUG    | transformer:val_one_epoch:376 - Validation loss at epoch 133: 0.4380
+2025-05-07 00:03:13.388 | INFO     | transformer:train_val:441 - stop smooth: True
+2025-05-07 00:03:13.388 | INFO     | transformer:train_val:453 - stop early: False
+[Epoca 133] Memoria allocata:   19.93 MB
+[Epoca 133] Memoria riservata:   90.00 MB
+[Epoca 133] Totale allocata (storico): 4.48 MB
+2025-05-07 00:04:13.900 | DEBUG    | transformer:train_one_epoch:324 - Loss at epoch 134: 2.0082
+2025-05-07 00:04:23.114 | DEBUG    | transformer:val_one_epoch:376 - Validation loss at epoch 134: 0.4110
+2025-05-07 00:04:23.115 | INFO     | transformer:train_val:441 - stop smooth: True
+2025-05-07 00:04:23.115 | INFO     | transformer:train_val:453 - stop early: False
+[Epoca 134] Memoria allocata:   19.93 MB
+[Epoca 134] Memoria riservata:   88.00 MB
+[Epoca 134] Totale allocata (storico): 4.51 MB
+2025-05-07 00:05:24.812 | DEBUG    | transformer:train_one_epoch:324 - Loss at epoch 135: 1.9217
+2025-05-07 00:05:34.200 | DEBUG    | transformer:val_one_epoch:376 - Validation loss at epoch 135: 0.3903
+2025-05-07 00:05:34.200 | INFO     | transformer:train_val:441 - stop smooth: True
+2025-05-07 00:05:34.200 | INFO     | transformer:train_val:453 - stop early: False
+[Epoca 135] Memoria allocata:   19.93 MB
+[Epoca 135] Memoria riservata:   90.00 MB
+[Epoca 135] Totale allocata (storico): 4.55 MB
+2025-05-07 00:06:35.542 | DEBUG    | transformer:train_one_epoch:324 - Loss at epoch 136: 1.8547
+2025-05-07 00:06:44.583 | DEBUG    | transformer:val_one_epoch:376 - Validation loss at epoch 136: 0.3820
+2025-05-07 00:06:44.583 | INFO     | transformer:train_val:441 - stop smooth: True
+2025-05-07 00:06:44.583 | WARNING  | transformer:train_val:445 - Stop at epoch 136.
+2025-05-07 00:06:44.583 | INFO     | transformer:train_val:463 - Training completed!
+2025-05-07 00:06:44.871 | INFO     | __main__:<module>:80 - Prova generazione particelle con forward
+/home/local/ADUNIPI/a.montanelli/miniconda3/envs/myrootenv/lib/python3.9/site-packages/torch/nn/functional.py:5962: UserWarning: Support for mismatched key_padding_mask and attn_mask is deprecated. Use same type for both instead.
+  warnings.warn(
+2025-05-07 00:06:45.750 | INFO     | __main__:<module>:94 - Batch 1 salvato in HDF5.
+2025-05-07 00:06:46.320 | INFO     | __main__:<module>:94 - Batch 2 salvato in HDF5.
+Traceback (most recent call last):
+  File "/home/local/ADUNIPI/a.montanelli/pythiatransformer/pythiatransformer/main.py", line 89, in <module>
+    outputs = transformer.forward(inputs, targets, inputs_mask, target_padding_mask, attention_mask)
+  File "/home/local/ADUNIPI/a.montanelli/pythiatransformer/pythiatransformer/transformer.py", line 263, in forward
+    output = self.transformer(
+  File "/home/local/ADUNIPI/a.montanelli/miniconda3/envs/myrootenv/lib/python3.9/site-packages/torch/nn/modules/module.py", line 1739, in _wrapped_call_impl
+    return self._call_impl(*args, **kwargs)
+  File "/home/local/ADUNIPI/a.montanelli/miniconda3/envs/myrootenv/lib/python3.9/site-packages/torch/nn/modules/module.py", line 1750, in _call_impl
+    return forward_call(*args, **kwargs)
+  File "/home/local/ADUNIPI/a.montanelli/miniconda3/envs/myrootenv/lib/python3.9/site-packages/torch/nn/modules/transformer.py", line 279, in forward
+    output = self.decoder(
+  File "/home/local/ADUNIPI/a.montanelli/miniconda3/envs/myrootenv/lib/python3.9/site-packages/torch/nn/modules/module.py", line 1739, in _wrapped_call_impl
+    return self._call_impl(*args, **kwargs)
+  File "/home/local/ADUNIPI/a.montanelli/miniconda3/envs/myrootenv/lib/python3.9/site-packages/torch/nn/modules/module.py", line 1750, in _call_impl
+    return forward_call(*args, **kwargs)
+  File "/home/local/ADUNIPI/a.montanelli/miniconda3/envs/myrootenv/lib/python3.9/site-packages/torch/nn/modules/transformer.py", line 613, in forward
+    output = mod(
+  File "/home/local/ADUNIPI/a.montanelli/miniconda3/envs/myrootenv/lib/python3.9/site-packages/torch/nn/modules/module.py", line 1739, in _wrapped_call_impl
+    return self._call_impl(*args, **kwargs)
+  File "/home/local/ADUNIPI/a.montanelli/miniconda3/envs/myrootenv/lib/python3.9/site-packages/torch/nn/modules/module.py", line 1750, in _call_impl
+    return forward_call(*args, **kwargs)
+  File "/home/local/ADUNIPI/a.montanelli/miniconda3/envs/myrootenv/lib/python3.9/site-packages/torch/nn/modules/transformer.py", line 1108, in forward
+    x + self._sa_block(x, tgt_mask, tgt_key_padding_mask, tgt_is_causal)
+  File "/home/local/ADUNIPI/a.montanelli/miniconda3/envs/myrootenv/lib/python3.9/site-packages/torch/nn/modules/transformer.py", line 1128, in _sa_block
+    x = self.self_attn(
+  File "/home/local/ADUNIPI/a.montanelli/miniconda3/envs/myrootenv/lib/python3.9/site-packages/torch/nn/modules/module.py", line 1739, in _wrapped_call_impl
+    return self._call_impl(*args, **kwargs)
+  File "/home/local/ADUNIPI/a.montanelli/miniconda3/envs/myrootenv/lib/python3.9/site-packages/torch/nn/modules/module.py", line 1750, in _call_impl
+    return forward_call(*args, **kwargs)
+  File "/home/local/ADUNIPI/a.montanelli/miniconda3/envs/myrootenv/lib/python3.9/site-packages/torch/nn/modules/activation.py", line 1373, in forward
+    attn_output, attn_output_weights = F.multi_head_attention_forward(
+  File "/home/local/ADUNIPI/a.montanelli/miniconda3/envs/myrootenv/lib/python3.9/site-packages/torch/nn/functional.py", line 6410, in multi_head_attention_forward
+    attn_output = scaled_dot_product_attention(
+torch.OutOfMemoryError: CUDA out of memory. Tried to allocate 3.11 GiB. GPU 0 has a total capacity of 14.57 GiB of which 2.72 GiB is free. Including non-PyTorch memory, this process has 11.85 GiB memory in use. Of the allocated memory 11.57 GiB is allocated by PyTorch, and 144.61 MiB is reserved by PyTorch but unallocated. If reserved but unallocated memory is large try setting PYTORCH_CUDA_ALLOC_CONF=expandable_segments:True to avoid fragmentation.  See documentation for Memory Management  (https://pytorch.org/docs/stable/notes/cuda.html#environment-variables)
