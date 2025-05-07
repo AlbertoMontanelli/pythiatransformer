@@ -8,3 +8,5 @@ pythiatransformer/output_tensor.h5
 output_tensor.h5
 output_tensor_descending_pT.h5
 pythiatransformer/output_tensor_descending_pT.h5
+transformer_model.pt
+pythiatransformer/transformer_model.pt
