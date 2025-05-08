@@ -5,7 +5,7 @@ from loguru import logger
 from data_processing import loader_train
 
 # Carica il file HDF5
-output_file = "output_tensor_descending_pT.h5"
+output_file = "output_tensor_patience.h5"
 
 with h5py.File(output_file, "r") as h5f:
     num_batches = len(h5f)
@@ -28,4 +28,3 @@ for i, (batch_23, batch_final) in enumerate(loader_train):
     print("Batch Final - ultima particella:", batch_final[0, -1, :])
     
     print("-" * 50)
-    

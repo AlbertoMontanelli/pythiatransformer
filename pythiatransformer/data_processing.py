@@ -39,7 +39,7 @@ def awkward_to_padded_tensor(data, features, isTarget, eos_value=-999):
             padded_tensor (torch.Tensor): Padded tensor of  shape:
                                           (num_events, max_particles,
                                           num_features).
-            attention_mask (torch.Tensor): Attention mask (0 for actual,
+            padding_mask (torch.Tensor): padding mask (0 for actual,
                                            1 for padding).
     """
     # Find max number of particles for all the events.
@@ -79,11 +79,11 @@ def awkward_to_padded_tensor(data, features, isTarget, eos_value=-999):
         # gli elementi di padded_tensor nell'ordine specificato dai valori degli elementi di index
     )
     if isTarget:
-        # Initialize EOS tensor and attention mask (1 for padding, 0 for actual particles).
+        # Initialize EOS tensor and padding mask (1 for padding, 0 for actual particles).
         batch_size, max_len, num_features = padded_tensor_sorted.shape
         new_max_len = max_len + 1
         padded_tensor = torch.zeros((batch_size, new_max_len, num_features))
-        attention_mask = torch.ones((batch_size, new_max_len), dtype=torch.bool)
+        padding_mask = torch.ones((batch_size, new_max_len), dtype=torch.bool)
 
         # Insert EOS token after last real particle in each event
         for i, true_particles in enumerate(event_particles):
@@ -91,22 +91,22 @@ def awkward_to_padded_tensor(data, features, isTarget, eos_value=-999):
             
             # Copy real particles
             padded_tensor[i, :true_particles, :] = padded_tensor_sorted[i, :true_particles, :]
-            attention_mask[i, :true_particles] = 0  # Valid tokens
+            padding_mask[i, :true_particles] = 0  # Valid tokens
 
             # Insert EOS token
             padded_tensor[i, true_particles, :] = eos_value  # EOS token (default: all zeros)
-            attention_mask[i, true_particles] = 0  # Mark EOS as a valid token
+            padding_mask[i, true_particles] = 0  # Mark EOS as a valid token
 
             # Remaining positions stay as padding (default values)
     else:
         padded_tensor = padded_tensor_sorted.clone()
-        attention_mask = torch.tensor(
+        padding_mask = torch.tensor(
         [[0] * num + [1] * (padded_array.shape[1] - num) for num in event_particles],
         dtype=torch.bool
         )
 
 
-    return padded_tensor, attention_mask
+    return padded_tensor, padding_mask
 
 def batching(input, target, shuffle = True, batch_size = 100):
     """This function prepares the data for training by splitting it
@@ -242,21 +242,22 @@ data_final["pT_final"] = np.sqrt(
 )
 
 # Padding.
-padded_tensor_23, attention_mask_23 = awkward_to_padded_tensor(
+padded_tensor_23, padding_mask_23 = awkward_to_padded_tensor(
     data_23,
     features=["id_23", "px_23", "py_23", "pz_23", "pT_23"],
     isTarget=False
 )
-padded_tensor_final, attention_mask_final = awkward_to_padded_tensor(
+padded_tensor_final, padding_mask_final = awkward_to_padded_tensor(
     data_final,
     features=["id_final", "px_final", "py_final", "pz_final", "pT_final"],
-    isTarget=True
+    isTarget=False
 )
 
-print(f"padded tensor final shape: {padded_tensor_final.shape}")
-print(f"attention mask final shape: {attention_mask_final.shape}")
-print(f"padded tensor 23 shape: {padded_tensor_23.shape}")
-print(f"attention mask 23 shape: {attention_mask_23.shape}")
+
+# Dropping pT
+padded_tensor_23 = padded_tensor_23[:, :, :-1]
+padded_tensor_final = padded_tensor_final[:, :, :-1]
+
 
 # Finding unique ids for one_hot_encoding() function.
 id_23 = np.unique(ak.flatten(data_23["id_23"]))
@@ -266,7 +267,6 @@ id_all = np.unique(np.concatenate([id_23, id_final]))
 # One-hot dictionary
 dict_ids = {pdg_id.item(): index for index, pdg_id in enumerate(id_all)}
 padding_index = len(id_all)      # Ultima posizione per il padding
-print(f"Dizionario aggiornato:\n{dict_ids}")
 
 # One-hot encoding per padded_tensor_23 e padded_tensor_final
 one_hot_23 = one_hot_encoding(padded_tensor_23, dict_ids, padding_index)
@@ -276,38 +276,33 @@ padded_tensor_final = torch.cat((one_hot_final, padded_tensor_final[:, :, 1:]), 
 padded_tensor_23 = torch.cat((one_hot_23, padded_tensor_23[:, :, 1:]), dim=-1)
 
 print(f"padded tensor final shape after 1he: {padded_tensor_final.shape}")
-print(f"attention mask final shape after 1he: {attention_mask_final.shape}")
+print(f"padding mask final shape after 1he: {padding_mask_final.shape}")
 print(f"padded tensor 23 shape after 1he: {padded_tensor_23.shape}")
-print(f"attention mask 23 shape after 1he: {attention_mask_23.shape}")
-
-print(f"event tensor 23 {padded_tensor_23[0, :, -1]}")
-print(f"event attention mask 23 {attention_mask_23[0, :]}")
-print(f"event tensor final {padded_tensor_final[0, :, -1]}")
-print(f"event attention mask final {attention_mask_final[0, :]}")
+print(f"padding mask 23 shape after 1he: {padding_mask_23.shape}")
 
 #for i in range(padded_tensor_final.shape[1]):
 #        print(f"event tensor final {padded_tensor_final[0, i, :]}")
-#        print(f"event attention mask final {attention_mask_final[0, i]}")
+#        print(f"event padding mask final {padding_mask_final[0, i]}")
 #        print("\n")
 
 # Splitting the data.
 training_set_23, validation_set_23, test_set_23 = (
     train_val_test_split(padded_tensor_23)
 )
-attention_train_23, attention_val_23, attention_test_23 = (
-    train_val_test_split(attention_mask_23)
+padding_train_23, padding_val_23, padding_test_23 = (
+    train_val_test_split(padding_mask_23)
 )
 training_set_final, validation_set_final, test_set_final = (
     train_val_test_split(padded_tensor_final)
 )
-attention_train_final, attention_val_final, attention_test_final = (
-    train_val_test_split(attention_mask_final)
+padding_train_final, padding_val_final, padding_test_final = (
+    train_val_test_split(padding_mask_final)
 )
 
 # Building the data loaders.
 loader_train = batching(training_set_23, training_set_final)
-loader_attention_train = batching(attention_train_23, attention_train_final)
+loader_padding_train = batching(padding_train_23, padding_train_final)
 loader_val = batching(validation_set_23, validation_set_final)
-loader_attention_val = batching(attention_val_23, attention_val_final)
+loader_padding_val = batching(padding_val_23, padding_val_final)
 loader_test = batching(test_set_23, test_set_final)
-loader_attention_test = batching(attention_test_23, attention_test_final)
+loader_padding_test = batching(padding_test_23, padding_test_final)

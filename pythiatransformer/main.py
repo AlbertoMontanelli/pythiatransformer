@@ -14,6 +14,8 @@ from data_processing import (
     loader_train, loader_val, loader_test,
     loader_attention_train, loader_attention_val, loader_attention_test
 )
+from data_processing import training_set_23[0, 0, :]
+print(f"dim features = {training_set_23.shape[2]}")
 
 os.environ["PYTORCH_CUDA_ALLOC_CONF"] = "expandable_segments:True"
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
@@ -21,7 +23,7 @@ epochs = 1000
 
 
 def plot_losses(
-    train_loss, val_loss, filename="learning_curve_descending_pT.pdf", dpi=1200
+    train_loss, val_loss, filename="learning_curve_patience.pdf", dpi=1200
 ):
     plt.figure()
     plt.plot(train_loss, label='Training Loss')
@@ -45,7 +47,7 @@ def build_model():
         train_data_pad_mask=loader_attention_train,
         val_data_pad_mask=loader_attention_val,
         test_data_pad_mask=loader_attention_test,
-        dim_features=35,
+        dim_features=training_set_23.shape[2],
         num_heads=8,
         num_encoder_layers=2,
         num_decoder_layers=2,
@@ -59,28 +61,26 @@ def train_and_save_model():
     transformer = build_model()
     transformer.to(device)
 
-    loss_func = nn.MSELoss()
     learning_rate = 5e-4
 
     train_loss, val_loss = transformer.train_val(
         num_epochs=epochs,
-        loss_func=loss_func,
         optim=optimizer.Adam(transformer.parameters(), lr=learning_rate)
     )
 
     plot_losses(train_loss, val_loss)
 
-    torch.save(transformer.state_dict(), "transformer_model.pt")
+    torch.save(transformer.state_dict(), "transformer_model_patience.pt")
     logger.info("Modello salvato in transformer_model.pt")
 
 
 def generate_outputs_and_save():
     transformer = build_model()
-    transformer.load_state_dict(torch.load("transformer_model.pt"))
+    transformer.load_state_dict(torch.load("transformer_model_patience.pt"))
     transformer.to(device)
     transformer.eval()
 
-    output_file = "output_tensor_descending_pT.h5"
+    output_file = "output_tensor_patience.h5"
     logger.info("Prova generazione particelle con forward")
 
     with h5py.File(output_file, "w") as h5f:

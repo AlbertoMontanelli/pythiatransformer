@@ -8,6 +8,8 @@ import torch.nn as nn
 # from torch.nn import Transformer
 # from torch.utils.data import TensorDataset, DataLoader
 
+from data_processing import dict_ids
+
 def log_gpu_memory(epoch=None):
     """
     Stampa un riepilogo chiaro della memoria GPU.
@@ -270,7 +272,21 @@ class ParticleTransformer(nn.Module):
         output = self.output_projection(output)
         return output
 
-    def train_one_epoch(self, epoch, loss_func, optim):
+    # === LOSS MISTA ===
+    def mixed_loss(self, output, target, mask):
+        output_id = output[:, :, :len(dict_ids)]
+        target_id = target[:, :, :len(dict_ids)]
+        output_p = output[:, :, len(dict_ids):]
+        target_p = target[:, :, len(dict_ids):]
+
+        ce = nn.CrossEntropyLoss(reduction='none')
+        target_index = torch.argmax(target_id, dim=-1)
+        ce_loss = ce(output_id.transpose(1, 2), target_index)
+        mse_loss = nn.functional.mse_loss(output_p[~mask], target_p[~mask])
+
+        return ce_loss[~mask].mean() + mse_loss
+
+    def train_one_epoch(self, epoch, loss_func=mixed_loss, optim):
         """This function trains the model for one epoch. It iterates
         through the training data, computes the model's output and the
         loss, performs backpropagation and updates the model parameters
@@ -306,7 +322,7 @@ class ParticleTransformer(nn.Module):
                 attention_mask
             )
 
-            loss = loss_func(output, target)
+            loss = loss_func(output, target, target_padding_mask)
             if not torch.isfinite(loss):
                 raise ValueError(
                     f"Loss is not finite at epoch {epoch + 1}"
