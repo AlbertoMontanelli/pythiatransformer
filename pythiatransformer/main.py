@@ -12,10 +12,11 @@ from loguru import logger
 from transformer import ParticleTransformer
 from data_processing import (
     loader_train, loader_val, loader_test,
-    loader_attention_train, loader_attention_val, loader_attention_test
+    loader_padding_train, loader_padding_val, loader_padding_test
 )
-from data_processing import training_set_23[0, 0, :]
-print(f"dim features = {training_set_23.shape[2]}")
+from data_processing import subset
+
+print(f"dim features = {subset.shape[0]}")
 
 os.environ["PYTORCH_CUDA_ALLOC_CONF"] = "expandable_segments:True"
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
@@ -23,7 +24,7 @@ epochs = 1000
 
 
 def plot_losses(
-    train_loss, val_loss, filename="learning_curve_patience.pdf", dpi=1200
+    train_loss, val_loss, filename="learning_curve_true.pdf", dpi=1200
 ):
     plt.figure()
     plt.plot(train_loss, label='Training Loss')
@@ -44,10 +45,10 @@ def build_model():
         train_data=loader_train,
         val_data=loader_val,
         test_data=loader_test,
-        train_data_pad_mask=loader_attention_train,
-        val_data_pad_mask=loader_attention_val,
-        test_data_pad_mask=loader_attention_test,
-        dim_features=training_set_23.shape[2],
+        train_data_pad_mask=loader_padding_train,
+        val_data_pad_mask=loader_padding_val,
+        test_data_pad_mask=loader_padding_test,
+        dim_features=subset.shape[0],
         num_heads=8,
         num_encoder_layers=2,
         num_decoder_layers=2,
@@ -70,17 +71,17 @@ def train_and_save_model():
 
     plot_losses(train_loss, val_loss)
 
-    torch.save(transformer.state_dict(), "transformer_model_patience.pt")
-    logger.info("Modello salvato in transformer_model.pt")
+    torch.save(transformer.state_dict(), "transformer_model_true.pt")
+    logger.info("Modello salvato in transformer_model_true.pt")
 
 
 def generate_outputs_and_save():
     transformer = build_model()
-    transformer.load_state_dict(torch.load("transformer_model_patience.pt"))
+    transformer.load_state_dict(torch.load("transformer_model_true.pt"))
     transformer.to(device)
     transformer.eval()
 
-    output_file = "output_tensor_patience.h5"
+    output_file = "output_tensor_true.h5"
     logger.info("Prova generazione particelle con forward")
 
     with h5py.File(output_file, "w") as h5f:
@@ -88,7 +89,7 @@ def generate_outputs_and_save():
             for batch_idx, (
                 (inputs, targets),
                 (inputs_mask, targets_mask)
-            ) in enumerate(zip(loader_train, loader_attention_train)):
+            ) in enumerate(zip(loader_train, loader_padding_train)):
 
                 targets, target_padding_mask, attention_mask = (
                     transformer.de_padding(targets, targets_mask)

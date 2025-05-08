@@ -306,3 +306,5 @@ loader_val = batching(validation_set_23, validation_set_final)
 loader_padding_val = batching(padding_val_23, padding_val_final)
 loader_test = batching(test_set_23, test_set_final)
 loader_padding_test = batching(padding_test_23, padding_test_final)
+
+subset = training_set_23[0, 0, :]

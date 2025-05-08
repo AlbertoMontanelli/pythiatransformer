@@ -10,6 +10,17 @@ import torch.nn as nn
 
 from data_processing import dict_ids
 
+def log_peak_memory(epoch=None):
+    """
+    Stampa il picco massimo di memoria GPU allocata durante l'epoca corrente
+    e resetta il contatore.
+    """
+    peak_MB = torch.cuda.max_memory_allocated() / 1024**2
+    prefix = f"[Epoca {epoch + 1}] " if epoch is not None else ""
+    print(f"{prefix} Picco memoria allocata: {peak_MB:.2f} MB")
+    torch.cuda.reset_peak_memory_stats()
+
+
 def log_gpu_memory(epoch=None):
     """
     Stampa un riepilogo chiaro della memoria GPU.
@@ -286,7 +297,7 @@ class ParticleTransformer(nn.Module):
 
         return ce_loss[~mask].mean() + mse_loss
 
-    def train_one_epoch(self, epoch, loss_func=mixed_loss, optim):
+    def train_one_epoch(self, epoch, optim):
         """This function trains the model for one epoch. It iterates
         through the training data, computes the model's output and the
         loss, performs backpropagation and updates the model parameters
@@ -294,8 +305,6 @@ class ParticleTransformer(nn.Module):
 
         Args:
             epoch (int): current epoch.
-            loss_func (nn.Module): Loss function used to compute the
-                                   loss.
             optim (torch.optim.optimizer): Optimizer used for updating
                                            model parameters.
         Returns:
@@ -322,7 +331,7 @@ class ParticleTransformer(nn.Module):
                 attention_mask
             )
 
-            loss = loss_func(output, target, target_padding_mask)
+            loss = self.mixed_loss(output, target, target_padding_mask)
             if not torch.isfinite(loss):
                 raise ValueError(
                     f"Loss is not finite at epoch {epoch + 1}"
@@ -331,24 +340,22 @@ class ParticleTransformer(nn.Module):
             optim.step()
             loss_epoch += loss.item()
 
-            del input, target, input_padding_mask, target_padding_mask, output, loss, attention_mask
-            torch.cuda.empty_cache()
+            #del input, target, input_padding_mask, target_padding_mask, output, loss, attention_mask
+            #torch.cuda.empty_cache()
 
-        gc.collect() # forcing garbage collector
-        torch.cuda.empty_cache()
+        #gc.collect() # forcing garbage collector
+        #torch.cuda.empty_cache()
 
         logger.debug(f"Loss at epoch {epoch + 1}: {loss_epoch:.4f}")
         return loss_epoch
 
-    def val_one_epoch(self, epoch, loss_func, val):
+    def val_one_epoch(self, epoch, val):
         """This function validates the model for one epoch. It iterates
         through the validation data, computes the model's output and
         the loss.
 
         Args:
             epoch (int): current epoch.
-            loss_func (nn.Module): Loss function used to compute the
-                                   loss.
             val (bool): Default True. Set to False when using the test
                         set
         Returns:
@@ -375,18 +382,18 @@ class ParticleTransformer(nn.Module):
                 attention_mask = attention_mask.to(device)
 
                 output = self.forward(input, target, input_padding_mask, target_padding_mask, attention_mask)
-                loss = loss_func(output, target)
+                loss = self.mixed_loss(output, target, target_padding_mask)
                 if not torch.isfinite(loss):
                     raise ValueError(
                         f"Loss is not finite at epoch {epoch + 1}"
                     )
                 loss_epoch += loss.item()
 
-                del input, target, input_padding_mask, target_padding_mask, output, loss, attention_mask
-                torch.cuda.empty_cache()
+                #del input, target, input_padding_mask, target_padding_mask, output, loss, attention_mask
+                #torch.cuda.empty_cache()
         
-        gc.collect()
-        torch.cuda.empty_cache()
+        #gc.collect()
+        #torch.cuda.empty_cache()
         
         if val:
             logger.debug(f"Validation loss at epoch {epoch + 1}: {loss_epoch:.4f}")
@@ -394,13 +401,11 @@ class ParticleTransformer(nn.Module):
             logger.debug(f"Test loss at epoch {epoch + 1}: {loss_epoch:.4f}")
         return loss_epoch
 
-    def train_val(self, num_epochs, loss_func, optim, val = True, patient_smooth = 500, patient_early = 10):
+    def train_val(self, num_epochs, optim, val = True, patient_smooth = 50, patient_early = 10):
         """This function trains and validates the model for the given
         number of epochs.
         Args:
             num_epochs (int): Number of total epochs.
-            loss_func (nn.Module): Loss function used to compute the
-                                   loss.
             optim (torch.optim.optimizer): Optimizer used for updating
                                            model parameters.
             patient (int):
@@ -441,10 +446,14 @@ class ParticleTransformer(nn.Module):
 
         logger.info("Training started!")
         for epoch in range(num_epochs):
-            train_loss_epoch = self.train_one_epoch(epoch, loss_func, optim)
-            val_loss_epoch = self.val_one_epoch(epoch, loss_func, val)
-            train_loss.append(float(train_loss_epoch))
-            val_loss.append(float(val_loss_epoch))
+            torch.cuda.reset_peak_memory_stats()
+            train_loss_epoch = self.train_one_epoch(epoch, optim)
+            val_loss_epoch = self.val_one_epoch(epoch, val)
+            #train_loss.append(float(train_loss_epoch))
+            #val_loss.append(float(val_loss_epoch))
+            train_loss.append(train_loss_epoch)
+            val_loss.append(val_loss_epoch)
+
 
             if epoch >= int(num_epochs/100):
                 # smoothness check
@@ -475,6 +484,7 @@ class ParticleTransformer(nn.Module):
 
             torch.cuda.empty_cache()
             log_gpu_memory(epoch)
+            log_peak_memory(epoch)
 
         logger.info("Training completed!")
         return train_loss, val_loss
