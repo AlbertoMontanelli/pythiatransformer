@@ -15,7 +15,7 @@ model = ParticleTransformer(
     train_data_pad_mask=loader_padding_train,
     val_data_pad_mask=None,
     test_data_pad_mask=None,
-    dim_features=subset[0],
+    dim_features=subset.shape[0],
     num_heads=8,
     num_encoder_layers=2,
     num_decoder_layers=2,
@@ -43,7 +43,7 @@ attn_mask = attn_mask.to(device)
 
 # Esegui l'inferenza
 with torch.no_grad():
-    pred = model(inputs, targets, inputs_mask, targets_pad_mask, attn_mask)
+    output = model.forward(inputs, targets, inputs_mask, targets_pad_mask, attn_mask)
 
 # Stampa esempio
 # print("\n--- ESEMPIO EVENTO 0 ---")
@@ -52,7 +52,7 @@ with torch.no_grad():
 # print("\nTarget (final state):")
 # print(targets[0].cpu())
 # print("\nPredizione (output generato):")
-# print(pred[0].cpu())
+# print(output[0].cpu())
 
 # Scegli un evento e una particella a caso da stampare
 evento_idx = 0
@@ -69,4 +69,4 @@ for i in range(10):
     print(targets[evento_idx, i].cpu().numpy())
 
     print("\nPredizione (generata):")
-    print(pred[evento_idx, i].cpu().numpy())
+    print(output[evento_idx, i].cpu().numpy())

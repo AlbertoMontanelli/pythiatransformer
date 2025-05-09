@@ -17,6 +17,7 @@ def setup_pythia() -> Pythia:
         pythia = Pythia()
         pythia.readString("Random:setSeed = on")
         pythia.readString("Random:seed = 10")
+        pythia.readString("Beams:eCM = 13000.")
         pythia.readString("HardQCD:all = on")
         pythia.readString("PhaseSpace:pTHatMin = 100.")
         pythia.init()
