@@ -262,6 +262,13 @@ padded_tensor_final = padded_tensor_final[:, :, :-1]
 # Finding unique ids for one_hot_encoding() function.
 id_23 = np.unique(ak.flatten(data_23["id_23"]))
 id_final = np.unique(ak.flatten(data_final["id_final"]))
+m_final = np.unique(ak.flatten(data_final["m_final"]))
+np.set_printoptions(threshold=np.inf)
+
+print("id_final", np.array(id_final))
+print("m_final", np.array(m_final))
+
+np.set_printoptions(threshold=1000)
 id_all = np.unique(np.concatenate([id_23, id_final]))
 
 # One-hot dictionary
