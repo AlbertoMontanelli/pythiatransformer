@@ -45,27 +45,28 @@ with torch.no_grad():
     pred = model(inputs, targets, inputs_mask, targets_pad_mask, attn_mask)
 
 # Stampa esempio
-print("\n--- ESEMPIO EVENTO 0 ---")
-print("Input (status 23):")
-print(inputs[0].cpu())
-print("\nTarget (final state):")
-print(targets[0].cpu())
-print("\nPredizione (output generato):")
-print(pred[0].cpu())
+# print("\n--- ESEMPIO EVENTO 0 ---")
+# print("Input (status 23):")
+# print(inputs[0].cpu())
+# print("\nTarget (final state):")
+# print(targets[0].cpu())
+# print("\nPredizione (output generato):")
+# print(pred[0].cpu())
 
 
 # Scegli un evento e una particella a caso da stampare
 evento_idx = 0
-particella_idx = 0
+# particella_idx = 0
 
-print("\n--- PARTICELLA SINGOLA ---")
-print(f"Evento: {evento_idx}, Particella: {particella_idx}\n")
+for i in range(10):
+    print("\n--- PARTICELLA SINGOLA ---")
+    print(f"Evento: {evento_idx}, Particella: {i}\n")
 
-print("Input (status 23):")
-print(inputs[evento_idx, particella_idx].cpu().numpy())
+    # print("Input (status 23):")
+    # print(inputs[evento_idx, particella_idx].cpu().numpy())
 
-print("\nTarget (finale vero):")
-print(targets[evento_idx, particella_idx].cpu().numpy())
+    print("\nTarget (finale vero):")
+    print(targets[evento_idx, i].cpu().numpy())
 
-print("\nPredizione (generata):")
-print(pred[evento_idx, particella_idx].cpu().numpy())
+    print("\nPredizione (generata):")
+    print(pred[evento_idx, i].cpu().numpy())
