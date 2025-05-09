@@ -122,6 +122,7 @@ def generate_events(output_file: str, n_events: int):
                     found_final = True
                     counter_final += 1
                     record_particle(particle, features, data_final, "_final")
+                    
             try:
                 if found_final:
                     logger.info(f"Found {counter_23} 23-status particles and"
@@ -150,8 +151,4 @@ def generate_events(output_file: str, n_events: int):
     )
 
 if __name__ == "__main__":
-    import time
-    start = time.time()
     generate_events("events.root", n_events=10000)
-    end = time.time()
-    print(f"total time: {end-start} s")
