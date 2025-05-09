@@ -2,6 +2,7 @@ import torch
 import torch.nn as nn
 from transformer import ParticleTransformer
 from data_processing import loader_train, loader_padding_train
+from data_processing import subset
 
 # Imposta il dispositivo
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
@@ -14,7 +15,7 @@ model = ParticleTransformer(
     train_data_pad_mask=loader_padding_train,
     val_data_pad_mask=None,
     test_data_pad_mask=None,
-    dim_features=34,        # come da main.py
+    dim_features=subset.shape[0],
     num_heads=8,
     num_encoder_layers=2,
     num_decoder_layers=2,
@@ -42,30 +43,30 @@ attn_mask = attn_mask.to(device)
 
 # Esegui l'inferenza
 with torch.no_grad():
-    pred = model(inputs, targets, inputs_mask, targets_pad_mask, attn_mask)
+    output = model.forward(inputs, targets, inputs_mask, targets_pad_mask, attn_mask)
 
 # Stampa esempio
-print("\n--- ESEMPIO EVENTO 0 ---")
-print("Input (status 23):")
-print(inputs[0].cpu())
-print("\nTarget (final state):")
-print(targets[0].cpu())
-print("\nPredizione (output generato):")
-print(pred[0].cpu())
-
+# print("\n--- ESEMPIO EVENTO 0 ---")
+# print("Input (status 23):")
+# print(inputs[0].cpu())
+# print("\nTarget (final state):")
+# print(targets[0].cpu())
+# print("\nPredizione (output generato):")
+# print(output[0].cpu())
 
 # Scegli un evento e una particella a caso da stampare
 evento_idx = 0
-particella_idx = 0
+# particella_idx = 0
 
-print("\n--- PARTICELLA SINGOLA ---")
-print(f"Evento: {evento_idx}, Particella: {particella_idx}\n")
+for i in range(10):
+    # print("\n--- PARTICELLA SINGOLA ---")
+    print(f"Evento: {evento_idx}, Particella: {i}\n")
 
-print("Input (status 23):")
-print(inputs[evento_idx, particella_idx].cpu().numpy())
+    # print("Input (status 23):")
+    # print(inputs[evento_idx, particella_idx].cpu().numpy())
 
-print("\nTarget (finale vero):")
-print(targets[evento_idx, particella_idx].cpu().numpy())
+    print("\nTarget (finale vero):")
+    print(targets[evento_idx, i].cpu().numpy())
 
-print("\nPredizione (generata):")
-print(pred[evento_idx, particella_idx].cpu().numpy())
+    print("\nPredizione (generata):")
+    print(output[evento_idx, i].cpu().numpy())
