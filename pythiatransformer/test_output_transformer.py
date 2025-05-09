@@ -52,7 +52,8 @@ with torch.no_grad():
 # print("\nTarget (final state):")
 # print(targets[0].cpu())
 # print("\nPredizione (output generato):")
-# print(output[0].cpu())
+
+print(output.shape)
 
 # Scegli un evento e una particella a caso da stampare
 evento_idx = 0
@@ -70,3 +71,4 @@ for i in range(10):
 
     print("\nPredizione (generata):")
     print(output[evento_idx, i].cpu().numpy())
+
