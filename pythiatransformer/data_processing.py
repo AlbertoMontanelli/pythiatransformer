@@ -315,3 +315,4 @@ loader_test = batching(test_set_23, test_set_final)
 loader_padding_test = batching(padding_test_23, padding_test_final)
 
 subset = training_set_23[0, 0, :]
+print(dict_ids)
