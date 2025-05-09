@@ -2,6 +2,7 @@ import torch
 import torch.nn as nn
 from transformer import ParticleTransformer
 from data_processing import loader_train, loader_padding_train
+from data_processing import subset
 
 # Imposta il dispositivo
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
@@ -14,7 +15,7 @@ model = ParticleTransformer(
     train_data_pad_mask=loader_padding_train,
     val_data_pad_mask=None,
     test_data_pad_mask=None,
-    dim_features=34,        # come da main.py
+    dim_features=subset[0],
     num_heads=8,
     num_encoder_layers=2,
     num_decoder_layers=2,
@@ -53,13 +54,12 @@ with torch.no_grad():
 # print("\nPredizione (output generato):")
 # print(pred[0].cpu())
 
-
 # Scegli un evento e una particella a caso da stampare
 evento_idx = 0
 # particella_idx = 0
 
 for i in range(10):
-    print("\n--- PARTICELLA SINGOLA ---")
+    # print("\n--- PARTICELLA SINGOLA ---")
     print(f"Evento: {evento_idx}, Particella: {i}\n")
 
     # print("Input (status 23):")
