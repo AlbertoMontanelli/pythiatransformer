@@ -5,8 +5,6 @@ from transformer import ParticleTransformer
 from main import build_model
 from data_processing import loader_train
 from data_processing import dict_ids
-#from data_processing import loader_train, loader_padding_train
-#from data_processing import subset
 
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
@@ -38,14 +36,38 @@ with torch.no_grad():
         outputs.append(output)
 
 
+# Prepare output for fastjet.
 for output in outputs:
-    target_id = output[:, :, :len(dict_ids)]
-    idx = torch.argmax(target_id, dim=-1)
-    mass = masses[idx]
-    print(f"shape mass: {mass.shape}")
+    ids = output[:, :, :len(dict_ids)]
+    index = torch.argmax(ids, dim=-1)
+    mass = masses[index]
     output = output[:, :, len(dict_ids):]
-    mass = mass.unsqueeze(-1)
-    print(f"mass unsqeeze: {mass.shape}")
-    print(f"shape output prima: {output.shape}")
-    output = torch.cat((output, mass), dim=-1)
-    print(f"shape output dopo: {output.shape}")
+    #mass = mass.unsqueeze(-1)
+    #output = torch.cat((output, mass), dim=-1)
+    energy = torch.sqrt(
+        output[:,:,-1]**2 + output[:,:,-2]**2 + output[:,:,-3]**2 + mass**2
+    )
+    energy = energy.unsqueeze(-1)
+    output = output[:, :, len(dict_ids):]
+    output = torch.cat((output, energy), dim=-1)
+    print(f"output: {output}")
+    print(f"SHAPE: {output.shape}")
+
+
+# Prepare target for fastjet
+for i, batch in enumerate(loader_train):
+    data, target = batch
+    target = target.to(device)
+    ids = target[:, :, :len(dict_ids)]
+    index = torch.argmax(ids, dim=-1)
+    mass = masses[index]
+    target = target[:, :, len(dict_ids):]
+    #mass = mass.unsqueeze(-1)
+    #target = torch.cat((target, mass), dim=-1)
+    energy = torch.sqrt(
+        target[:,:,-1]**2 + target[:,:,-2]**2 + target[:,:,-3]**2 + mass**2
+    )
+    energy = energy.unsqueeze(-1)
+    target = target[:, :, len(dict_ids):]
+    target = torch.cat((target, energy), dim=-1)
+    print(f"target: {target}")
