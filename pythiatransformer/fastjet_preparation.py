@@ -1,9 +1,8 @@
 import numpy as np
 import torch
 import torch.nn as nn
-from transformer import ParticleTransformer
+
 from main import build_model
-from data_processing import loader_train
 from data_processing import dict_ids
 
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
@@ -18,56 +17,81 @@ transformer = build_model()
 transformer.load_state_dict(torch.load("transformer_model_true.pt", map_location=device))
 transformer.to(device)
 
-outputs = []
+def outputs_targets_tensor_list(model, device):
+    """
+    Esegue la forward su tutti i batch nel train set e restituisce
+    due liste: outputs e targets, entrambi depaddati e pronte per fastjet.
 
-transformer.eval()
-with torch.no_grad():
-    for (input, target), (input_padding_mask, target_padding_mask) in zip(transformer.train_data, transformer.train_data_pad_mask):
+    Args:
+        model (ParticleTransformer): modello già caricato.
+        device (torch.device): cpu o cuda.
 
-        input = input.to(device)
-        target = target.to(device)
-        input_padding_mask = input_padding_mask.to(device)
-        target_padding_mask = target_padding_mask.to(device)
+    Returns:
+        outputs_all (list[Tensor]): Lista di batch depaddati di output.
+        targets_all (list[Tensor]): Lista di batch depaddati di target.
+    """
+    model.eval()
+    outputs = []
+    targets = []
 
-        target, target_padding_mask, attention_mask = transformer.de_padding(target, target_padding_mask)
-        attention_mask = attention_mask.to(device)
+    with torch.no_grad():
+        for (input, target), (input_mask, target_mask) in zip(
+            model.train_data, model.train_data_pad_mask
+        ):
+            input = input.to(device)
+            target = target.to(device)
+            input_mask = input_mask.to(device)
+            target_mask = target_mask.to(device)
 
-        output = transformer.forward(input, target, input_padding_mask, target_padding_mask, attention_mask)
-        outputs.append(output)
+            target, target_mask, attn_mask = model.de_padding(target, target_mask)
+            attn_mask = attn_mask.to(device)
 
+            output = model.forward(input, target, input_mask, target_mask, attn_mask)
 
-# Prepare output for fastjet.
-for output in outputs:
-    ids = output[:, :, :len(dict_ids)]
-    index = torch.argmax(ids, dim=-1)
-    mass = masses[index]
-    output = output[:, :, len(dict_ids):]
-    #mass = mass.unsqueeze(-1)
-    #output = torch.cat((output, mass), dim=-1)
-    energy = torch.sqrt(
-        output[:,:,-1]**2 + output[:,:,-2]**2 + output[:,:,-3]**2 + mass**2
-    )
-    energy = energy.unsqueeze(-1)
-    output = output[:, :, len(dict_ids):]
-    output = torch.cat((output, energy), dim=-1)
-    print(f"output: {output}")
-    print(f"SHAPE: {output.shape}")
+            outputs.append(output)
+            targets.append(target)
+
+    return outputs, targets
 
 
-# Prepare target for fastjet
-for i, batch in enumerate(loader_train):
-    data, target = batch
-    target = target.to(device)
-    ids = target[:, :, :len(dict_ids)]
-    index = torch.argmax(ids, dim=-1)
-    mass = masses[index]
-    target = target[:, :, len(dict_ids):]
-    #mass = mass.unsqueeze(-1)
-    #target = torch.cat((target, mass), dim=-1)
-    energy = torch.sqrt(
-        target[:,:,-1]**2 + target[:,:,-2]**2 + target[:,:,-3]**2 + mass**2
-    )
-    energy = energy.unsqueeze(-1)
-    target = target[:, :, len(dict_ids):]
-    target = torch.cat((target, energy), dim=-1)
-    print(f"target: {target}")
+def tensor_convertion(batches, dict_ids, masses, device=None):
+    """
+    Converte una lista di batch (output o target) in una lista di tensori con [px, py, pz, E].
+
+    Args:
+        batches (list[Tensor]): lista di batch (ognuno [B, Nᵢ, F])
+        dict_ids (dict): dizionario one-hot degli ID.
+        masses (torch.Tensor): tensore delle masse ordinate come one-hot.
+        device (torch.device, optional): se specificato, sposta i tensori sul device.
+
+    Returns:
+        list[Tensor]: lista di tensori [B, Nᵢ, 4]
+    """
+    result = []
+    for batch in batches:
+        if device:
+            batch = batch.to(device)
+
+        ids = batch[:, :, :len(dict_ids)]
+        index = torch.argmax(ids, dim=-1)
+        mass = masses[index]
+
+        momentum = batch[:, :, len(dict_ids):len(dict_ids)+3]
+        px, py, pz = momentum.unbind(-1)
+
+        energy = torch.sqrt(px**2 + py**2 + pz**2 + mass**2).unsqueeze(-1)
+        result.append(torch.cat([momentum, energy], dim=-1))
+
+    return result
+
+outputs_list, targets_list = outputs_targets_tensor_list(transformer, device)
+
+outputs_fastjet = tensor_convertion(outputs_list, dict_ids, masses, device)
+targets_fastjet = tensor_convertion(targets_list, dict_ids, masses, device)
+
+if __name__== "__main__":
+    # Stampa di controllo
+    for (output,target) in zip(outputs_fastjet, targets_fastjet):
+        print(f"output: {output[0, 0:2, :]}")
+        print(f"target: {target[0, 0:2, :]}")
+        break
