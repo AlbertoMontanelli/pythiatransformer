@@ -2,22 +2,9 @@ import numpy as np
 import torch
 import torch.nn as nn
 
-from main import build_model
 from data_processing import dict_ids
 
-device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-
-# Masses array; the index corresponds to the one-hot-encoding index.
-masses = torch.tensor([
-    0.93827, 0.93957, 0.49368, 0.13957, 0, 0, 0.10566, 0, 0.000511, 4.183, 1.273, 0.0935, 0.00216, 0.0047,
-    0.0047, 0.00216, 0.0935, 1.273, 4.183, 0.000511, 0, 0.10566, 0, 0, 0, 0, 0.49761, 0.13957, 0.49368, 0.93957, 0.93827
-    ], device=device)
-
-transformer = build_model()
-transformer.load_state_dict(torch.load("transformer_model_true.pt", map_location=device))
-transformer.to(device)
-
-def outputs_targets_tensor_list(model, device):
+def outputs_targets_fastjet(model, device, data, data_pad_mask):
     """
     Esegue la forward su tutti i batch nel train set e restituisce
     due liste: outputs e targets, entrambi depaddati e pronte per fastjet.
@@ -32,29 +19,37 @@ def outputs_targets_tensor_list(model, device):
     """
     model.eval()
     outputs = []
+    outputs_mask = []
     targets = []
+    targets_mask = []
 
     with torch.no_grad():
         for (input, target), (input_mask, target_mask) in zip(
-            model.train_data, model.train_data_pad_mask
+            data, data_pad_mask
         ):
             input = input.to(device)
             target = target.to(device)
             input_mask = input_mask.to(device)
             target_mask = target_mask.to(device)
 
-            target, target_mask, attn_mask = model.de_padding(target, target_mask)
+            target, target_mask, attn_mask = model.de_padding(
+                target, target_mask
+            )
             attn_mask = attn_mask.to(device)
 
-            output = model.forward(input, target, input_mask, target_mask, attn_mask)
+            output = model.forward(
+                input, target, input_mask, target_mask, attn_mask
+            )
 
             outputs.append(output)
+            outputs_mask.append(target_mask)
             targets.append(target)
+            targets_mask.append(target_mask)
 
-    return outputs, targets
+    return outputs, outputs_mask, targets, target_masks
 
 
-def tensor_convertion(batches, dict_ids, masses, device=None):
+def fastjet_tensor(batches, dict_ids, masses, device=None):
     """
     Converte una lista di batch (output o target) in una lista di tensori con [px, py, pz, E].
 
@@ -67,6 +62,15 @@ def tensor_convertion(batches, dict_ids, masses, device=None):
     Returns:
         list[Tensor]: lista di tensori [B, Nᵢ, 4]
     """
+
+    # Masses array; the index corresponds to the one-hot-encoding index.
+    masses = torch.tensor(
+        [0.93827, 0.93957, 0.49368, 0.13957, 0, 0, 0.10566, 0, 0.000511,
+        4.183, 1.273, 0.0935, 0.00216, 0.0047, 0.0047, 0.00216, 0.0935,
+        1.273, 4.183, 0.000511, 0, 0.10566, 0, 0, 0, 0, 0.49761, 0.13957,
+        0.49368, 0.93957, 0.93827], device=device
+    )
+
     result = []
     for batch in batches:
         if device:
@@ -84,12 +88,29 @@ def tensor_convertion(batches, dict_ids, masses, device=None):
 
     return result
 
-outputs_list, targets_list = outputs_targets_tensor_list(transformer, device)
-
-outputs_fastjet = tensor_convertion(outputs_list, dict_ids, masses, device)
-targets_fastjet = tensor_convertion(targets_list, dict_ids, masses, device)
-
 if __name__== "__main__":
+
+    from main import build_model
+
+    device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+
+    transformer = build_model()
+    transformer.load_state_dict(
+        torch.load("transformer_model_true.pt", map_location=device)
+    )
+    transformer.to(device)
+
+    outputs, outputs_mask, targets, target_masks = outputs_targets_fastjet(
+        transformer, device,
+        transformer.train_data, transformer.train_data_pad_mask
+    )
+    outputs_fastjet = fastjet_tensor(
+        outputs, dict_ids, masses, device
+    )
+    targets_fastjet = fastjet_tensor(
+        targets, dict_ids, masses, device
+    )
+
     # Stampa di controllo
     for (output,target) in zip(outputs_fastjet, targets_fastjet):
         print(f"output: {output[0, 0:2, :]}")
