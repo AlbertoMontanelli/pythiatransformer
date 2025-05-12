@@ -27,7 +27,7 @@ def standardize_features(data, features):
         data[feature] = (data[feature] - mean) / std
     return data
 
-def awkward_to_padded_tensor(data, features, isTarget, eos_value=-999):
+def awkward_to_padded_tensor(data, features):
     """Convert Awkward Array to padded Torch tensor.
 
         Args:
@@ -51,7 +51,7 @@ def awkward_to_padded_tensor(data, features, isTarget, eos_value=-999):
     padded_events = {
         feature: ak.fill_none(
             ak.pad_none(data[feature], target=max_particles, axis=1), 0
-            )
+        )
         for feature in features
     }
     # Convert the features in numpy arrays and stack them to obtain the
@@ -78,33 +78,12 @@ def awkward_to_padded_tensor(data, features, isTarget, eos_value=-999):
         # index è un tensore della stessa forma di padded_tensor, gather dice di prendere
         # gli elementi di padded_tensor nell'ordine specificato dai valori degli elementi di index
     )
-    if isTarget:
-        # Initialize EOS tensor and padding mask (1 for padding, 0 for actual particles).
-        batch_size, max_len, num_features = padded_tensor_sorted.shape
-        new_max_len = max_len + 1
-        padded_tensor = torch.zeros((batch_size, new_max_len, num_features))
-        padding_mask = torch.ones((batch_size, new_max_len), dtype=torch.bool)
 
-        # Insert EOS token after last real particle in each event
-        for i, true_particles in enumerate(event_particles):
-            true_particles = true_particles.item()  # Length of real particles for event `i`
-            
-            # Copy real particles
-            padded_tensor[i, :true_particles, :] = padded_tensor_sorted[i, :true_particles, :]
-            padding_mask[i, :true_particles] = 0  # Valid tokens
-
-            # Insert EOS token
-            padded_tensor[i, true_particles, :] = eos_value  # EOS token (default: all zeros)
-            padding_mask[i, true_particles] = 0  # Mark EOS as a valid token
-
-            # Remaining positions stay as padding (default values)
-    else:
-        padded_tensor = padded_tensor_sorted.clone()
-        padding_mask = torch.tensor(
-        [[0] * num + [1] * (padded_array.shape[1] - num) for num in event_particles],
-        dtype=torch.bool
-        )
-
+    padded_tensor = padded_tensor_sorted.clone()
+    padding_mask = torch.tensor(
+    [[0] * num + [1] * (padded_array.shape[1] - num) for num in event_particles],
+    dtype=torch.bool
+    )
 
     return padded_tensor, padding_mask
 
@@ -139,8 +118,8 @@ def batching(input, target, shuffle = True, batch_size = 100):
 
     return loader
 
-def one_hot_encoding(tensor, dict_ids, num_classes, eos_token=-999, padding_token=0):
-    """One-hot-encoding of the ids, with EOS and padding replaced by zeros.
+def one_hot_encoding(tensor, dict_ids, num_classes, padding_token=0):
+    """One-hot-encoding of the ids, with padding replaced by zeros.
 
     Args:
         tensor (torch.Tensor): Input tensor.
@@ -150,7 +129,7 @@ def one_hot_encoding(tensor, dict_ids, num_classes, eos_token=-999, padding_toke
         padding_token (int): Value used for the padding token.
 
     Returns:
-        one_hot (torch.Tensor): One-hot-encoded tensor of the ids, with EOS and
+        one_hot (torch.Tensor): One-hot-encoded tensor of the ids, with
                                 padding replaced by zeros.
     """
     # Convert id from float type to long int type.
@@ -167,8 +146,7 @@ def one_hot_encoding(tensor, dict_ids, num_classes, eos_token=-999, padding_toke
             torch.tensor(index), num_classes=num_classes
         ).float()
     
-    # Handle EOS and padding tokens (set to zero).
-    one_hot[tensor_ids == eos_token] = 0
+    # Handle padding tokens (set to zero).
     one_hot[tensor_ids == padding_token] = 0
 
     return one_hot
@@ -244,13 +222,11 @@ data_final["pT_final"] = np.sqrt(
 # Padding.
 padded_tensor_23, padding_mask_23 = awkward_to_padded_tensor(
     data_23,
-    features=["id_23", "px_23", "py_23", "pz_23", "pT_23"],
-    isTarget=False
+    features=["id_23", "px_23", "py_23", "pz_23", "pT_23"]
 )
 padded_tensor_final, padding_mask_final = awkward_to_padded_tensor(
     data_final,
-    features=["id_final", "px_final", "py_final", "pz_final", "pT_final"],
-    isTarget=False
+    features=["id_final", "px_final", "py_final", "pz_final", "pT_final"]
 )
 
 
