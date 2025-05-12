@@ -13,8 +13,8 @@ def de_standardization(data, data_padding_mask, index):
 
     mean = all_values.mean()
     print(f"media: {mean}")
-    print(f"std: {std}")
     std = all_values.std()
+    print(f"std: {std}")
     for tensor, mask in zip(data, data_padding_mask):
         tensor[:, :, index][~mask] = tensor[:, :, index][~mask] * std + mean
     return data
