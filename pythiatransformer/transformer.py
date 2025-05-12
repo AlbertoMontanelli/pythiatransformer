@@ -300,7 +300,7 @@ class ParticleTransformer(nn.Module):
         
         mse_loss = nn.functional.mse_loss(output_p[valid_mask], target_p[valid_mask])
 
-        return ce_loss[valid_zmask].mean() + mse_loss
+        return ce_loss[valid_mask].mean() + mse_loss
 
     def train_one_epoch(self, epoch, optim):
         """This function trains the model for one epoch. It iterates
