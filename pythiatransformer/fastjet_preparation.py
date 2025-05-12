@@ -105,10 +105,10 @@ if __name__== "__main__":
         transformer.train_data, transformer.train_data_pad_mask
     )
     outputs_fastjet = fastjet_tensor(
-        outputs, dict_ids, masses, device
+        outputs, dict_ids, device
     )
     targets_fastjet = fastjet_tensor(
-        targets, dict_ids, masses, device
+        targets, dict_ids, device
     )
 
     # Stampa di controllo
