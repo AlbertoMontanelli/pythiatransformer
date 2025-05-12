@@ -8,7 +8,7 @@ def de_standardization(data, data_padding_mask, index):
         feature = tensor[:, :, index]
         valid_value = feature[~mask]
         valid_values.append(valid_value)
-    
+
     all_values = torch.cat(valid_values)
 
     mean = all_values.mean()
@@ -118,20 +118,40 @@ if __name__== "__main__":
         transformer.train_data, transformer.train_data_pad_mask
     )
 
-    print(f"primo evento, prima particella: {outputs[0, 0, :]}")
-
+    for (output,target) in zip(outputs, targets):
+        print(f"output: {output[0, 0:2, :]}")
+        print(f"target: {target[0, 0:2, :]}")
+        break
     outputs = de_standardization(outputs, outputs_mask, -1)
-    print(f"primo evento, prima particella: {outputs[0, 0, :]}")
+    for (output,target) in zip(outputs, targets):
+        print(f"output: {output[0, 0:2, :]}")
+        print(f"target: {target[0, 0:2, :]}")
+        break
     outputs = de_standardization(outputs, outputs_mask, -2)
-    print(f"primo evento, prima particella: {outputs[0, 0, :]}")
+    for (output,target) in zip(outputs, targets):
+        print(f"output: {output[0, 0:2, :]}")
+        print(f"target: {target[0, 0:2, :]}")
+        break
     outputs = de_standardization(outputs, outputs_mask, -3)
-    print(f"primo evento, prima particella: {outputs[0, 0, :]}")
+    for (output,target) in zip(outputs, targets):
+        print(f"output: {output[0, 0:2, :]}")
+        print(f"target: {target[0, 0:2, :]}")
+        break
     targets = de_standardization(targets, targets_mask, -1)
-    print(f"primo evento, prima particella: {outputs[0, 0, :]}")
+    for (output,target) in zip(outputs, targets):
+        print(f"output: {output[0, 0:2, :]}")
+        print(f"target: {target[0, 0:2, :]}")
+        break
     targets = de_standardization(targets, targets_mask, -2)
-    print(f"primo evento, prima particella: {outputs[0, 0, :]}")
+    for (output,target) in zip(outputs, targets):
+        print(f"output: {output[0, 0:2, :]}")
+        print(f"target: {target[0, 0:2, :]}")
+        break
     targets = de_standardization(targets, targets_mask, -3)
-    print(f"primo evento, prima particella: {outputs[0, 0, :]}")
+    for (output,target) in zip(outputs, targets):
+        print(f"output: {output[0, 0:2, :]}")
+        print(f"target: {target[0, 0:2, :]}")
+        break
 
 
     outputs_fastjet = fastjet_tensor_preparing(
