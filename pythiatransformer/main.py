@@ -24,7 +24,7 @@ epochs = 1000
 
 
 def plot_losses(
-    train_loss, val_loss, filename="learning_curve_true.pdf", dpi=1200
+    train_loss, val_loss, filename="learning_curve_eos.pdf", dpi=1200
 ):
     plt.figure()
     plt.plot(train_loss, label='Training Loss')
@@ -71,8 +71,8 @@ def train_and_save_model():
 
     plot_losses(train_loss, val_loss)
 
-    torch.save(transformer.state_dict(), "transformer_model_true.pt")
-    logger.info("Modello salvato in transformer_model_true.pt")
+    torch.save(transformer.state_dict(), "transformer_model_eos.pt")
+    logger.info("Modello salvato in transformer_model_eos.pt")
 
 
 # def generate_outputs_and_save():
