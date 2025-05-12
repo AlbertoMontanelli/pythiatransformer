@@ -31,7 +31,7 @@ def standardize_features(data, features):
         data[feature] = (data[feature] - mean) / std
     return data, means, stds
 
-def awkward_to_padded_tensor(data, features):
+def awkward_to_padded_tensor(data, features, eos_value=-999):
     """Convert Awkward Array to padded Torch tensor.
 
         Args:
@@ -55,7 +55,7 @@ def awkward_to_padded_tensor(data, features):
     padded_events = {
         feature: ak.fill_none(
             ak.pad_none(data[feature], target=max_particles, axis=1), 0
-        )
+            )
         for feature in features
     }
     # Convert the features in numpy arrays and stack them to obtain the
@@ -82,12 +82,26 @@ def awkward_to_padded_tensor(data, features):
         # index è un tensore della stessa forma di padded_tensor, gather dice di prendere
         # gli elementi di padded_tensor nell'ordine specificato dai valori degli elementi di index
     )
+    # Initialize EOS tensor and padding mask (1 for padding, 0 for actual particles).
+    batch_size, max_len, num_features = padded_tensor_sorted.shape
+    new_max_len = max_len + 1
+    padded_tensor = torch.zeros((batch_size, new_max_len, num_features))
+    padding_mask = torch.ones((batch_size, new_max_len), dtype=torch.bool)
 
-    padded_tensor = padded_tensor_sorted.clone()
-    padding_mask = torch.tensor(
-    [[0] * num + [1] * (padded_array.shape[1] - num) for num in event_particles],
-    dtype=torch.bool
-    )
+    # Insert EOS token after last real particle in each event
+    for i, true_particles in enumerate(event_particles):
+        true_particles = true_particles.item()  # Length of real particles for event `i`
+        
+        # Copy real particles
+        padded_tensor[i, :true_particles, :] = padded_tensor_sorted[i, :true_particles, :]
+        padding_mask[i, :true_particles] = 0  # Valid tokens
+
+        # Insert EOS token
+        padded_tensor[i, true_particles, :] = eos_value  # EOS token (default: all zeros)
+        padding_mask[i, true_particles] = 0  # Mark EOS as a valid token
+
+        # Remaining positions stay as padding (default values)
+
 
     return padded_tensor, padding_mask
 
@@ -122,38 +136,39 @@ def batching(input, target, shuffle = True, batch_size = 100):
 
     return loader
 
-def one_hot_encoding(tensor, dict_ids, num_classes, padding_token=0):
-    """One-hot-encoding of the ids, with padding replaced by zeros.
+def one_hot_encoding(tensor, dict_ids, num_classes, eos_token=-999, padding_token=0):
+    """One-hot-encoding of the ids, with EOS and padding handled correctly.
 
     Args:
         tensor (torch.Tensor): Input tensor.
         dict_ids (dict): Dictionary mapping PDG ids to integers.
-        num_classes (int): Maximum number of different ids.
-        eos_token (int): Value used for the EOS token.
-        padding_token (int): Value used for the padding token.
+        num_classes (int): Total number of IDs including EOS.
+        eos_token (int): Special value used for EOS.
+        padding_token (int): Special value used for padding.
 
     Returns:
-        one_hot (torch.Tensor): One-hot-encoded tensor of the ids, with
-                                padding replaced by zeros.
+        one_hot (torch.Tensor): One-hot-encoded tensor of shape (B, N, num_classes).
     """
-    # Convert id from float type to long int type.
+    # Convert id from float to int
     tensor_ids = tensor[:, :, 0].long()
-    # Initialize a one-hot tensor with zeros.
+
+    # Inizializza tutto a zero
     one_hot = torch.zeros(
         tensor.shape[0], tensor.shape[1], num_classes, dtype=torch.float
     )
-    
-    # Loop through dictionary and fill the one-hot tensor.
+
+    # Codifica normale con il dizionario
     for pdg_id, index in dict_ids.items():
         mask = (tensor_ids == pdg_id)
         one_hot[mask] = torch.nn.functional.one_hot(
             torch.tensor(index), num_classes=num_classes
         ).float()
-    
-    # Handle padding tokens (set to zero).
+
+    # Padding token = tutto 0 (già zero per default)
     one_hot[tensor_ids == padding_token] = 0
 
     return one_hot
+
 
 def train_val_test_split(
         tensor, train_perc = 0.6, val_perc = 0.2, test_perc = 0.2
@@ -258,11 +273,15 @@ id_all = np.unique(np.concatenate([id_23, id_final]))
 
 # One-hot dictionary
 dict_ids = {pdg_id.item(): index for index, pdg_id in enumerate(id_all)}
-padding_index = len(id_all)      # Ultima posizione per il padding
+eos_token = -999
+eos_index = len(dict_ids)        # EOS dopo tutti gli ID noti
+dict_ids[eos_token] = eos_index
+num_classes = len(dict_ids)     # include EOS
+print(f"dizionario one hot encoding: {dict_ids}")
 
 # One-hot encoding per padded_tensor_23 e padded_tensor_final
-one_hot_23 = one_hot_encoding(padded_tensor_23, dict_ids, padding_index)
-one_hot_final = one_hot_encoding(padded_tensor_final, dict_ids, padding_index)
+one_hot_23 = one_hot_encoding(padded_tensor_23, dict_ids, num_classes, eos_token=eos_token)
+one_hot_final = one_hot_encoding(padded_tensor_final, dict_ids, num_classes, eos_token=eos_token)
 
 padded_tensor_final = torch.cat((one_hot_final, padded_tensor_final[:, :, 1:]), dim=-1)
 padded_tensor_23 = torch.cat((one_hot_23, padded_tensor_23[:, :, 1:]), dim=-1)
