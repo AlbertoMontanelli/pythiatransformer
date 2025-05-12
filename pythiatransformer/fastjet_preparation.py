@@ -46,7 +46,7 @@ def outputs_targets_fastjet(model, device, data, data_pad_mask):
             targets.append(target)
             targets_mask.append(target_mask)
 
-    return outputs, outputs_mask, targets, target_masks
+    return outputs, outputs_mask, targets, targets_mask
 
 
 def fastjet_tensor(batches, dict_ids, device=None):
@@ -100,7 +100,7 @@ if __name__== "__main__":
     )
     transformer.to(device)
 
-    outputs, outputs_mask, targets, target_masks = outputs_targets_fastjet(
+    outputs, outputs_mask, targets, targets_mask = outputs_targets_fastjet(
         transformer, device,
         transformer.train_data, transformer.train_data_pad_mask
     )
