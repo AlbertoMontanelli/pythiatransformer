@@ -8,18 +8,19 @@ from fastjet_preparation import outputs_targets_fastjet, fastjet_tensor
 from main import build_model
 
 def clustering(model, device, data, data_pad_mask):
-
+    print("entro nel clustering")
     outputs, outputs_mask, targets, targets_mask = outputs_targets_fastjet(
         model, device,
         data, data_pad_mask
     )
+    print("forward finito")
     outputs_fastjet = fastjet_tensor(
         outputs, dict_ids, device
     )
     targets_fastjet = fastjet_tensor(
         targets, dict_ids, device
     )
-    
+
     # Jet clustering algorithm
     jet_def = fj.JetDefinition(fj.antikt_algorithm, 0.4)
     clustered_outputs = []
@@ -29,8 +30,10 @@ def clustering(model, device, data, data_pad_mask):
         outputs_fastjet, targets_fastjet, outputs_mask, targets_mask
     ):
         batch_size = output.shape[0]
+        print("Entro nella batch")
 
         for i in range(batch_size):  # loop su eventi nel batch
+            print(f"entro nell'evento {i}")
             particles_output = output[i]
             particles_target = target[i]
 
