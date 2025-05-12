@@ -1,20 +1,23 @@
 from collections import defaultdict
 import fastjet as fj
+import numpy as np
+import torch
 
+from data_processing import dict_ids
 from fastjet_preparation import outputs_targets_fastjet, fastjet_tensor
 from main import build_model
 
-def clustering(model, device):
+def clustering(model, device, data, data_pad_mask):
 
     outputs, outputs_mask, targets, targets_mask = outputs_targets_fastjet(
-        transformer, device,
-        transformer.train_data, transformer.train_data_pad_mask
+        model, device,
+        data, data_pad_mask
     )
     outputs_fastjet = fastjet_tensor(
-        outputs, dict_ids, masses, device
+        outputs, dict_ids, device
     )
     targets_fastjet = fastjet_tensor(
-        targets, dict_ids, masses, device
+        targets, dict_ids, device
     )
     
     # Jet clustering algorithm
@@ -23,7 +26,7 @@ def clustering(model, device):
     clustered_targets = []
 
     for output, target, output_mask, target_mask in zip(
-        outputs_fastjet, targets_fastjet, outputs_mask, target_masks
+        outputs_fastjet, targets_fastjet, outputs_mask, targets_mask
     ):
         batch_size = output.shape[0]
 
@@ -114,7 +117,9 @@ if __name__ == "__main__":
     transformer.load_state_dict(torch.load("transformer_model_true.pt", map_location=device))
     transformer.to(device)
 
-    clustered_outputs, clustered_targets = clustering(transformer, device)
+    clustered_outputs, clustered_targets = clustering(
+        transformer, device, transformer.train_data, transformer.train_data_pad_mask
+    )
 
     diffs = compute_jet_differences(clustered_outputs, clustered_targets, n_jets=3)
     plot_differences(diffs, "pt")
