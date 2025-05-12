@@ -37,13 +37,13 @@ def clustering(model, device, data, data_pad_mask):
             pseudojets_output = [
                 fj.PseudoJet(*particles_output[j].tolist())
                 for j in range(particles_output.shape[0])
-                if not output_mask[j]
+                if not output_mask[i, j]
             ]
 
             pseudojets_target = [
                 fj.PseudoJet(*particles_target[j].tolist())
                 for j in range(particles_target.shape[0])
-                if not target_mask[j]
+                if not target_mask[i, j]
             ]
 
             clustered_outputs.append(fj.ClusterSequence(pseudojets_output, jet_def))
