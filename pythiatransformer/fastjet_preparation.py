@@ -1,10 +1,25 @@
-import numpy as np
 import torch
-import torch.nn as nn
 
 from data_processing import dict_ids
 
-def outputs_targets_fastjet(model, device, data, data_pad_mask):
+def de_standardization(data, data_padding_mask, index):
+    valid_values = []
+    for tensor, mask in zip(data, data_padding_mask):
+        feature = tensor[:, :, index]
+        valid_value = feature[~mask]
+        valid_values.append(valid_value)
+
+    all_values = torch.cat(valid_values)
+
+    mean = all_values.mean()
+    print(f"media: {mean}")
+    std = all_values.std()
+    print(f"std: {std}")
+    for tensor, mask in zip(data, data_padding_mask):
+        tensor[:, :, index][~mask] = tensor[:, :, index][~mask] * std + mean
+    return data
+
+def outputs_computing(model, device, data, data_pad_mask):
     """
     Esegue la forward su tutti i batch nel train set e restituisce
     due liste: outputs e targets, entrambi depaddati e pronte per fastjet.
@@ -22,11 +37,13 @@ def outputs_targets_fastjet(model, device, data, data_pad_mask):
     outputs_mask = []
     targets = []
     targets_mask = []
+    print("inizio")
 
     with torch.no_grad():
         for (input, target), (input_mask, target_mask) in zip(
             data, data_pad_mask
         ):
+            print("batch")
             input = input.to(device)
             target = target.to(device)
             input_mask = input_mask.to(device)
@@ -49,7 +66,7 @@ def outputs_targets_fastjet(model, device, data, data_pad_mask):
     return outputs, outputs_mask, targets, targets_mask
 
 
-def fastjet_tensor(batches, dict_ids, device=None):
+def fastjet_tensor_preparing(batches, dict_ids, device=None):
     """
     Converte una lista di batch (output o target) in una lista di tensori con [px, py, pz, E].
 
@@ -100,14 +117,37 @@ if __name__== "__main__":
     )
     transformer.to(device)
 
-    outputs, outputs_mask, targets, targets_mask = outputs_targets_fastjet(
+    outputs, outputs_mask, targets, targets_mask = outputs_computing(
         transformer, device,
         transformer.train_data, transformer.train_data_pad_mask
     )
-    outputs_fastjet = fastjet_tensor(
+
+    for (output,target) in zip(outputs, targets):
+        #print(f"output: {output[0, 0:2, :]}")
+        print(f"target: {target[0, 0:2, :]}")
+        break
+    
+    outputs = de_standardization(outputs, outputs_mask, -1)
+
+    outputs = de_standardization(outputs, outputs_mask, -2)
+
+    outputs = de_standardization(outputs, outputs_mask, -3)
+
+    targets = de_standardization(targets, targets_mask, -1)
+
+    targets = de_standardization(targets, targets_mask, -2)
+
+    targets = de_standardization(targets, targets_mask, -3)
+    for (output,target) in zip(outputs, targets):
+        #print(f"output: {output[0, 0:2, :]}")
+        print(f"target: {target[0, 0:2, :]}")
+        break
+
+
+    outputs_fastjet = fastjet_tensor_preparing(
         outputs, dict_ids, device
     )
-    targets_fastjet = fastjet_tensor(
+    targets_fastjet = fastjet_tensor_preparing(
         targets, dict_ids, device
     )
 
