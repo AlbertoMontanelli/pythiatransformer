@@ -12,6 +12,8 @@ def de_standardization(data, data_padding_mask, index):
     all_values = torch.cat(valid_values)
 
     mean = all_values.mean()
+    print(f"media: {mean}")
+    print(f"std: {std}")
     std = all_values.std()
     for tensor, mask in zip(data, data_padding_mask):
         tensor[:, :, index][~mask] = tensor[:, :, index][~mask] * std + mean
@@ -122,31 +124,37 @@ if __name__== "__main__":
         print(f"output: {output[0, 0:2, :]}")
         print(f"target: {target[0, 0:2, :]}")
         break
+    
     outputs = de_standardization(outputs, outputs_mask, -1)
     for (output,target) in zip(outputs, targets):
         print(f"output: {output[0, 0:2, :]}")
         print(f"target: {target[0, 0:2, :]}")
         break
+
     outputs = de_standardization(outputs, outputs_mask, -2)
     for (output,target) in zip(outputs, targets):
         print(f"output: {output[0, 0:2, :]}")
         print(f"target: {target[0, 0:2, :]}")
         break
+
     outputs = de_standardization(outputs, outputs_mask, -3)
     for (output,target) in zip(outputs, targets):
         print(f"output: {output[0, 0:2, :]}")
         print(f"target: {target[0, 0:2, :]}")
         break
+
     targets = de_standardization(targets, targets_mask, -1)
     for (output,target) in zip(outputs, targets):
         print(f"output: {output[0, 0:2, :]}")
         print(f"target: {target[0, 0:2, :]}")
         break
+
     targets = de_standardization(targets, targets_mask, -2)
     for (output,target) in zip(outputs, targets):
         print(f"output: {output[0, 0:2, :]}")
         print(f"target: {target[0, 0:2, :]}")
         break
+
     targets = de_standardization(targets, targets_mask, -3)
     for (output,target) in zip(outputs, targets):
         print(f"output: {output[0, 0:2, :]}")
