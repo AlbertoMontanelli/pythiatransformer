@@ -21,11 +21,15 @@ def standardize_features(data, features):
         Returns:
             data (ak.Array): Standardized Awkward Array.
     """
+    means = []
+    stds = []
     for feature in features:
         mean = ak.mean(data[feature])
         std = ak.std(data[feature])
+        means.append(mean)
+        stds.append(std)
         data[feature] = (data[feature] - mean) / std
-    return data
+    return data, means, stds
 
 def awkward_to_padded_tensor(data, features):
     """Convert Awkward Array to padded Torch tensor.
@@ -208,11 +212,11 @@ for i in top2_indx:
     print(f"px particella target non std: {data_final['px_final'][0][i]}")
 
 # Standardization.
-data_23 = standardize_features(
+data_23, mean_23, std_23 = standardize_features(
     data_23, 
     features=["px_23", "py_23", "pz_23"]
 )
-data_final = standardize_features(
+data_final, mean_final, std_final = standardize_features(
     data_final, 
     features=["px_final", "py_final", "pz_final"]
 )

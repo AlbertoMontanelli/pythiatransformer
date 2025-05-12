@@ -1,20 +1,9 @@
 import torch
 
 from data_processing import dict_ids
+from data_processing import mean_final, std_final
 
-def de_standardization(data, data_padding_mask, index):
-    valid_values = []
-    for tensor, mask in zip(data, data_padding_mask):
-        feature = tensor[:, :, index]
-        valid_value = feature[~mask]
-        valid_values.append(valid_value)
-
-    all_values = torch.cat(valid_values)
-
-    mean = all_values.mean()
-    print(f"media: {mean}")
-    std = all_values.std()
-    print(f"std: {std}")
+def de_standardization(data, data_padding_mask, index, mean, std):
     for tensor, mask in zip(data, data_padding_mask):
         tensor[:, :, index][~mask] = tensor[:, :, index][~mask] * std + mean
     return data
@@ -127,17 +116,17 @@ if __name__== "__main__":
         print(f"target: {target[0, 0:2, :]}")
         break
     
-    outputs = de_standardization(outputs, outputs_mask, -1)
+    outputs = de_standardization(outputs, outputs_mask, -1, mean_final[2], std_final[2])
 
-    outputs = de_standardization(outputs, outputs_mask, -2)
+    outputs = de_standardization(outputs, outputs_mask, -2, mean_final[1], std_final[1])
 
-    outputs = de_standardization(outputs, outputs_mask, -3)
+    outputs = de_standardization(outputs, outputs_mask, -3, mean_final[0], std_final[0])
 
-    targets = de_standardization(targets, targets_mask, -1)
+    targets = de_standardization(targets, targets_mask, -1, mean_final[2], std_final[2])
 
-    targets = de_standardization(targets, targets_mask, -2)
+    targets = de_standardization(targets, targets_mask, -2, mean_final[1], std_final[1])
 
-    targets = de_standardization(targets, targets_mask, -3)
+    targets = de_standardization(targets, targets_mask, -3, mean_final[0], std_final[0])
     for (output,target) in zip(outputs, targets):
         #print(f"output: {output[0, 0:2, :]}")
         print(f"target: {target[0, 0:2, :]}")
