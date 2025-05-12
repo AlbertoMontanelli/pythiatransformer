@@ -97,7 +97,7 @@ def awkward_to_padded_tensor(data, features, eos_value=-999):
         padding_mask[i, :true_particles] = 0  # Valid tokens
 
         # Insert EOS token
-        padded_tensor[i, true_particles, :] = eos_value  # EOS token (default: all zeros)
+        padded_tensor[i, true_particles, :] = eos_value  # EOS token (default: -999)
         padding_mask[i, true_particles] = 0  # Mark EOS as a valid token
 
         # Remaining positions stay as padding (default values)

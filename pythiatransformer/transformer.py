@@ -293,9 +293,14 @@ class ParticleTransformer(nn.Module):
         ce = nn.CrossEntropyLoss(reduction='none')
         target_index = torch.argmax(target_id, dim=-1)
         ce_loss = ce(output_id.transpose(1, 2), target_index)
-        mse_loss = nn.functional.mse_loss(output_p[~mask], target_p[~mask])
 
-        return ce_loss[~mask].mean() + mse_loss
+        eos_index = len(dict_ids)  # deve essere consistente col preprocessing
+        eos_mask = (target_index == eos_index)
+        valid_mask = (~mask) & (~eos_mask)
+        
+        mse_loss = nn.functional.mse_loss(output_p[valid_mask], target_p[valid_mask])
+
+        return ce_loss[valid_zmask].mean() + mse_loss
 
     def train_one_epoch(self, epoch, optim):
         """This function trains the model for one epoch. It iterates
