@@ -37,11 +37,13 @@ def outputs_computing(model, device, data, data_pad_mask):
     outputs_mask = []
     targets = []
     targets_mask = []
+    print("inizio")
 
     with torch.no_grad():
         for (input, target), (input_mask, target_mask) in zip(
             data, data_pad_mask
         ):
+            print("batch")
             input = input.to(device)
             target = target.to(device)
             input_mask = input_mask.to(device)
@@ -121,43 +123,23 @@ if __name__== "__main__":
     )
 
     for (output,target) in zip(outputs, targets):
-        print(f"output: {output[0, 0:2, :]}")
+        #print(f"output: {output[0, 0:2, :]}")
         print(f"target: {target[0, 0:2, :]}")
         break
     
     outputs = de_standardization(outputs, outputs_mask, -1)
-    for (output,target) in zip(outputs, targets):
-        print(f"output: {output[0, 0:2, :]}")
-        print(f"target: {target[0, 0:2, :]}")
-        break
 
     outputs = de_standardization(outputs, outputs_mask, -2)
-    for (output,target) in zip(outputs, targets):
-        print(f"output: {output[0, 0:2, :]}")
-        print(f"target: {target[0, 0:2, :]}")
-        break
 
     outputs = de_standardization(outputs, outputs_mask, -3)
-    for (output,target) in zip(outputs, targets):
-        print(f"output: {output[0, 0:2, :]}")
-        print(f"target: {target[0, 0:2, :]}")
-        break
 
     targets = de_standardization(targets, targets_mask, -1)
-    for (output,target) in zip(outputs, targets):
-        print(f"output: {output[0, 0:2, :]}")
-        print(f"target: {target[0, 0:2, :]}")
-        break
 
     targets = de_standardization(targets, targets_mask, -2)
-    for (output,target) in zip(outputs, targets):
-        print(f"output: {output[0, 0:2, :]}")
-        print(f"target: {target[0, 0:2, :]}")
-        break
 
     targets = de_standardization(targets, targets_mask, -3)
     for (output,target) in zip(outputs, targets):
-        print(f"output: {output[0, 0:2, :]}")
+        #print(f"output: {output[0, 0:2, :]}")
         print(f"target: {target[0, 0:2, :]}")
         break
 
