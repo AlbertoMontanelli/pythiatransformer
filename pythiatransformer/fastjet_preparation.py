@@ -49,7 +49,7 @@ def outputs_targets_fastjet(model, device, data, data_pad_mask):
     return outputs, outputs_mask, targets, target_masks
 
 
-def fastjet_tensor(batches, dict_ids, masses, device=None):
+def fastjet_tensor(batches, dict_ids, device=None):
     """
     Converte una lista di batch (output o target) in una lista di tensori con [px, py, pz, E].
 
