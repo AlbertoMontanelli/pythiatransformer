@@ -291,15 +291,18 @@ class ParticleTransformer(nn.Module):
         target_p = target[:, :, len(dict_ids):]
 
         ce = nn.CrossEntropyLoss(reduction='none')
+
+        # Usa argmax dopo round per evitare imprecisioni numeriche
         target_index = torch.argmax(target_id, dim=-1)
         ce_loss = ce(output_id.transpose(1, 2), target_index)
 
-        eos_index = len(dict_ids)  # deve essere consistente col preprocessing
-        eos_mask = (target_index == eos_index)
+        eos_index = dict_ids[-999]
+        eos_mask = target_index == eos_index
+
+        # Costruzione della maschera finale per la MSE
         valid_mask = (~mask) & (~eos_mask)
         
         mse_loss = nn.functional.mse_loss(output_p[valid_mask], target_p[valid_mask])
-
         return ce_loss[valid_mask].mean() + mse_loss
 
     def train_one_epoch(self, epoch, optim):

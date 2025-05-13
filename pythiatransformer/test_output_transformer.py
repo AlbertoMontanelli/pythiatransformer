@@ -23,7 +23,7 @@ model = ParticleTransformer(
     dropout=0.1,
     activation=nn.ReLU()
 )
-model.load_state_dict(torch.load("transformer_model_true.pt", map_location=device))
+model.load_state_dict(torch.load("transformer_model_eos.pt", map_location=device))
 model.to(device)
 model.eval()
 

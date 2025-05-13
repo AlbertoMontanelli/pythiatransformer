@@ -15,6 +15,10 @@ from data_processing import (
     loader_padding_train, loader_padding_val, loader_padding_test
 )
 from data_processing import subset
+from data_processing import dict_ids
+print("dict_ids keys:", dict_ids.keys())
+print("eos_index:", len(dict_ids) - 1)
+
 
 print(f"dim features = {subset.shape[0]}")
 
