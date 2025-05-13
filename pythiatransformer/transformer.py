@@ -299,6 +299,8 @@ class ParticleTransformer(nn.Module):
         Returns:
             loss (Tensor): valore scalare della loss combinata
         """
+        device = output.device
+
         # Separazione delle componenti
         output_id = output[:, :, :len(dict_ids)]     # one-hot predetta
         target_id = target[:, :, :len(dict_ids)]     # one-hot target
@@ -309,6 +311,9 @@ class ParticleTransformer(nn.Module):
         ce = nn.CrossEntropyLoss(reduction='none')
         target_index = torch.argmax(target_id, dim=-1)  # [B, T]
         ce_loss = ce(output_id.transpose(1, 2), target_index)  # [B, T]
+
+        target_index = target_index.to(device)
+        mask = mask.to(device)
 
         eos_index = dict_ids[-999]
         eos_mask = target_index == eos_index       # EOS tokens
@@ -561,100 +566,100 @@ class ParticleTransformer(nn.Module):
             stop = False
         return stop
 
-    def generate_target(self, input, input_mask, target_reference):
-        """
-        Autoregressive generation of targets, one event at a time.
+    # def generate_target(self, input, input_mask, target_reference):
+    #     """
+    #     Autoregressive generation of targets, one event at a time.
 
-        Args:
-            input (Tensor): Input tensor [B, N_in, F].
-            input_mask (BoolTensor): Padding mask [B, N_in].
-            target_reference (Tensor): Used to infer max_len per batch.
+    #     Args:
+    #         input (Tensor): Input tensor [B, N_in, F].
+    #         input_mask (BoolTensor): Padding mask [B, N_in].
+    #         target_reference (Tensor): Used to infer max_len per batch.
 
-        Returns:
-            padded_outputs (Tensor): [B, T_max, F] with padding.
-            padding_mask (BoolTensor): [B, T_max], 1 = padding.
-        """
-        self.eval()
-        eos_index = dict_ids[-999]
+    #     Returns:
+    #         padded_outputs (Tensor): [B, T_max, F] with padding.
+    #         padding_mask (BoolTensor): [B, T_max], 1 = padding.
+    #     """
+    #     self.eval()
+    #     eos_index = dict_ids[-999]
 
-        # Project inputs
-        input_proj = self.input_projection(input)
-        B = input.size(0)
-        max_len = target_reference.size(1)
-        outputs_list = []
-        device = input.device
+    #     # Project inputs
+    #     input_proj = self.input_projection(input)
+    #     B = input.size(0)
+    #     max_len = target_reference.size(1)
+    #     outputs_list = []
+    #     device = input.device
 
-        for i in range(B):
-            single_input = input_proj[i, :, :].unsqueeze(0) # [1, N, F]
-            single_mask = input_mask[i, :].unsqueeze(0)  # [1, N]
+    #     for i in range(B):
+    #         single_input = input_proj[i, :, :].unsqueeze(0) # [1, N, F]
+    #         single_mask = input_mask[i, :].unsqueeze(0)  # [1, N]
 
-            sos_vec = torch.zeros(1, 1, self.dim_features, device=device)
-            sos_vec[0, 0, 0] = -999  # primo canale = id, lo stesso usato per EOS
-            sos_proj = self.input_projection(sos_vec)
-            target = sos_proj  # [1, 1, H]
-            generated = []
+    #         sos_vec = torch.zeros(1, 1, self.dim_features, device=device)
+    #         sos_vec[0, 0, 0] = -999  # primo canale = id, lo stesso usato per EOS
+    #         sos_proj = self.input_projection(sos_vec)
+    #         target = sos_proj  # [1, 1, H]
+    #         generated = []
 
-            found_eos = False
-            for step in range(max_len):
-                tgt_mask = nn.Transformer.generate_square_subsequent_mask(
-                    target.size(1)
-                ).to(device)
-                output = self.transformer(
-                    src=single_input,
-                    tgt=target,
-                    tgt_mask=tgt_mask,
-                    src_key_padding_mask=single_mask,
-                )
-                next_token = self.output_projection(
-                    output[:, -1:, :]
-                )  # shape [1, 1, F]
+    #         found_eos = False
+    #         for step in range(max_len):
+    #             tgt_mask = nn.Transformer.generate_square_subsequent_mask(
+    #                 target.size(1)
+    #             ).to(device)
+    #             output = self.transformer(
+    #                 src=single_input,
+    #                 tgt=target,
+    #                 tgt_mask=tgt_mask,
+    #                 src_key_padding_mask=single_mask,
+    #             )
+    #             next_token = self.output_projection(
+    #                 output[:, -1:, :]
+    #             )  # shape [1, 1, F]
 
-                # # === DEBUG: controllo EOS e distribuzione ID ===
-                # logits = next_token[0, 0, :len(dict_ids)]
-                # pred_id = torch.argmax(logits).item()
+    #             # # === DEBUG: controllo EOS e distribuzione ID ===
+    #             # logits = next_token[0, 0, :len(dict_ids)]
+    #             # pred_id = torch.argmax(logits).item()
 
-                # # Softmax opzionale per vedere se EOS è mai favorito
-                # probs = torch.softmax(logits, dim=0)
+    #             # # Softmax opzionale per vedere se EOS è mai favorito
+    #             # probs = torch.softmax(logits, dim=0)
 
-                # print(f"[Evento {i} | Step {step+1}] pred_id = {pred_id} "
-                #     f"(eos_index = {eos_index}) | prob_eos = {probs[eos_index]:.4f} | "
-                #     f"max_prob = {probs[pred_id]:.4f}")
-                # # ================================================
+    #             # print(f"[Evento {i} | Step {step+1}] pred_id = {pred_id} "
+    #             #     f"(eos_index = {eos_index}) | prob_eos = {probs[eos_index]:.4f} | "
+    #             #     f"max_prob = {probs[pred_id]:.4f}")
+    #             # # ================================================
 
-                generated.append(next_token.squeeze(1))  # [1, F]
+    #             generated.append(next_token.squeeze(1))  # [1, F]
 
-                # Controlla EOS
-                pred_id = torch.argmax(
-                    next_token[0, 0, :len(dict_ids)]
-                ).item()
-                if pred_id == eos_index:
-                    found_eos = True
-                    break
+    #             # Controlla EOS
+    #             pred_id = torch.argmax(
+    #                 next_token[0, 0, :len(dict_ids)]
+    #             ).item()
+    #             if pred_id == eos_index:
+    #                 found_eos = True
+    #                 break
                 
 
-                # Aggiungi token come input
-                projected = self.input_projection(next_token)
-                target = torch.cat([target, projected], dim=1)
-            if not found_eos:
-                print(f"⚠️  [Evento {i}] EOS NON trovato dopo {max_len} step!")
-            else:
-                print(f"[Evento {i}] EOS trovato dopo {step+1} step")
+    #             # Aggiungi token come input
+    #             projected = self.input_projection(next_token)
+    #             target = torch.cat([target, projected], dim=1)
+    #         if not found_eos:
+    #             print(f"⚠️  [Evento {i}] EOS NON trovato dopo {max_len} step!")
+    #         else:
+    #             print(f"[Evento {i}] EOS trovato dopo {step+1} step")
 
-            sequence = torch.cat(generated, dim=0)  # [Tᵢ, F]
-            outputs_list.append(sequence)
+    #         sequence = torch.cat(generated, dim=0)  # [Tᵢ, F]
+    #         outputs_list.append(sequence)
 
-        # Pad le sequenze a lunghezza massima
-        padded_outputs = pad_sequence(
-            outputs_list, batch_first=True
-        )  # [B, T_max, F]
+    #     # Pad le sequenze a lunghezza massima
+    #     padded_outputs = pad_sequence(
+    #         outputs_list, batch_first=True
+    #     )  # [B, T_max, F]
 
-        # Padding mask per gli outputs
-        lengths = [seq.size(0) for seq in outputs_list]
-        T_max = padded_outputs.size(1)
-        padding_mask = torch.tensor(
-            [[0] * l + [1] * (T_max - l) for l in lengths], dtype=torch.bool
-        )
+    #     # Padding mask per gli outputs
+    #     lengths = [seq.size(0) for seq in outputs_list]
+    #     T_max = padded_outputs.size(1)
+    #     padding_mask = torch.tensor(
+    #         [[0] * l + [1] * (T_max - l) for l in lengths], dtype=torch.bool
+    #     )
 
 
-        return padded_outputs, padding_mask
+    #     return padded_outputs, padding_mask
 

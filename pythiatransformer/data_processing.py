@@ -359,7 +359,7 @@ loader_padding_test = batching(padding_test_23, padding_test_final)
 
 subset = training_set_23[0, 0, :]
 
-# === DEBUG: verifica EOS nei dati batchati ===
+# ===================== DEBUG: verifica EOS nei dati batchati ===============
 
 # Estrai un batch qualunque
 inputs, targets = next(iter(loader_train))
