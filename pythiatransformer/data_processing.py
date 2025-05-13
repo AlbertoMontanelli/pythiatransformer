@@ -297,28 +297,6 @@ padded_tensor_final, padding_mask_final = awkward_to_padded_targets(
 padded_tensor_23 = padded_tensor_23[:, :, :-1]
 padded_tensor_final = padded_tensor_final[:, :, :-1]
 
-######################### EOS CHECKING ###########################################
-eos_token = -999
-id_channel = padded_tensor_final[:, :, 0]  # ID si trova sempre nella prima feature
-# posizione EOS per ciascun evento = ultima particella valida (padding_mask = 0)
-valid_mask = ~padding_mask_final
-num_real = valid_mask.sum(dim=1)
-last_valid_index = num_real - 1
-
-# estrai l'ID all'ultima posizione valida per ciascun evento
-eos_ids = id_channel[torch.arange(id_channel.size(0)), last_valid_index]
-
-# verifica che siano tutti uguali a eos_token (-999)
-assert torch.all(eos_ids == eos_token), "ERRORE: alcuni target non terminano con EOS!"
-
-print("Verifica EOS: tutti gli eventi terminano correttamente con il token EOS.")
-
-first_eos_vec = padded_tensor_final[0, last_valid_index[0]]
-print("Vettore EOS del primo evento (prima del one-hot):")
-print(first_eos_vec)
-
-######################################################################################
-
 # Finding unique ids for one_hot_encoding() function.
 id_23 = np.unique(ak.flatten(data_23["id_23"]))
 id_final = np.unique(ak.flatten(data_final["id_final"]))
@@ -380,3 +358,44 @@ loader_test = batching(test_set_23, test_set_final)
 loader_padding_test = batching(padding_test_23, padding_test_final)
 
 subset = training_set_23[0, 0, :]
+
+# === DEBUG: verifica EOS nei dati batchati ===
+
+# Estrai un batch qualunque
+inputs, targets = next(iter(loader_train))
+_, targets_mask = next(iter(loader_padding_train))
+
+# Il canale 0 è il one-hot: ricostruisci l'indice predetto
+# Supponiamo che one-hot abbia shape [..., num_classes]
+id_pred = torch.argmax(targets[:, :, :len(dict_ids)], dim=-1)  # [B, T]
+eos_index = dict_ids[-999]
+
+# Costruisci la maschera valida (non-padding)
+valid_mask = ~targets_mask  # [B, T]
+num_real = valid_mask.sum(dim=1)  # [B]
+last_index = num_real - 1  # [B]
+
+# Estrai l'ID predetto all'ultima posizione valida per ogni evento
+B = targets.size(0)
+last_ids = id_pred[torch.arange(B), last_index]
+
+"""
+supponi B=3 e last_index=[4,7,5], allora:
+torch.arange(B)            => [0, 1, 2]
+last_index                 => [4, 7, 5]
+e last_ids = id_pred[torch.arange(B), last_index] fa:
+id_pred[0, 4] → ID finale dell’evento 0
+id_pred[1, 7] → ID finale dell’evento 1
+id_pred[2, 5] → ID finale dell’evento 2
+"""
+
+# Conta quanti sono EOS
+num_eos = (last_ids == eos_index).sum().item()
+print(f"\n✅ DEBUG BATCH: {num_eos}/{B} eventi terminano con EOS")
+
+# Check hard
+assert torch.all(last_ids == eos_index), (
+    "❌ Alcuni target batchati non terminano con EOS!"
+)
+print("✅ Tutti i target nel batch terminano con EOS")
+# ==================================================================
