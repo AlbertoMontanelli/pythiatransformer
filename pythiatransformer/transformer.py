@@ -285,7 +285,7 @@ class ParticleTransformer(nn.Module):
         return output
 
     # === LOSS MISTA ===
-    def mixed_loss(self, output, target, mask, alpha=10.0):
+    def mixed_loss(self, output, target, mask, alpha=30.0):
         """
         Combina CrossEntropy per gli ID (one-hot) e MSE per px, py, pz,
         con un peso extra sulla CE degli EOS token.
@@ -334,10 +334,10 @@ class ParticleTransformer(nn.Module):
             )
 
         # Loss finale: CE + MSE + peso sugli EOS
-        total_loss = ce_loss[valid_mask].mean() + mse_loss
-        total_loss += alpha * eos_ce_loss.mean()
+        eos_ce_mean = eos_ce_loss.mean()
+        total_loss = ce_loss[valid_mask].mean() + mse_loss + alpha * eos_ce_mean
 
-        return total_loss
+        return total_loss, eos_ce_mean.item()
 
     def train_one_epoch(self, epoch, optim):
         """This function trains the model for one epoch. It iterates
@@ -355,6 +355,7 @@ class ParticleTransformer(nn.Module):
 
         self.train()
         loss_epoch = 0
+        ce_eos_epoch = 0
 
         for (input, target), (input_padding_mask, target_padding_mask) in zip(self.train_data, self.train_data_pad_mask):
             device = next(self.parameters()).device
@@ -373,7 +374,7 @@ class ParticleTransformer(nn.Module):
                 attention_mask
             )
 
-            loss = self.mixed_loss(output, target, target_padding_mask)
+            loss, eos_ce = self.mixed_loss(output, target, target_padding_mask)
             if not torch.isfinite(loss):
                 raise ValueError(
                     f"Loss is not finite at epoch {epoch + 1}"
@@ -381,6 +382,7 @@ class ParticleTransformer(nn.Module):
             loss.backward()
             optim.step()
             loss_epoch += loss.item()
+            ce_eos_epoch += eos_ce
 
             #del input, target, input_padding_mask, target_padding_mask, output, loss, attention_mask
             #torch.cuda.empty_cache()
@@ -388,7 +390,8 @@ class ParticleTransformer(nn.Module):
         #gc.collect() # forcing garbage collector
         #torch.cuda.empty_cache()
 
-        logger.debug(f"Loss at epoch {epoch + 1}: {loss_epoch:.4f}")
+        logger.debug(f"Training loss at epoch {epoch + 1}: {loss_epoch:.4f}")
+        logger.debug(f"Training C.E. eos at epoch {epoch + 1}: {ce_eos_epoch:.4f}")
         return loss_epoch
 
     def val_one_epoch(self, epoch, val):
@@ -411,6 +414,7 @@ class ParticleTransformer(nn.Module):
             mask_loader = self.test_data_pad_mask
         self.eval()
         loss_epoch = 0
+        ce_eos_epoch = 0
         with torch.no_grad(): # Compute only the loss value
             for (input, target), (input_padding_mask, target_padding_mask) in zip(data_loader, mask_loader):
                 
@@ -424,12 +428,13 @@ class ParticleTransformer(nn.Module):
                 attention_mask = attention_mask.to(device)
 
                 output = self.forward(input, target, input_padding_mask, target_padding_mask, attention_mask)
-                loss = self.mixed_loss(output, target, target_padding_mask)
+                loss, eos_ce = self.mixed_loss(output, target, target_padding_mask)
                 if not torch.isfinite(loss):
                     raise ValueError(
                         f"Loss is not finite at epoch {epoch + 1}"
                     )
                 loss_epoch += loss.item()
+                ce_eos_epoch += eos_ce
 
                 #del input, target, input_padding_mask, target_padding_mask, output, loss, attention_mask
                 #torch.cuda.empty_cache()
@@ -439,6 +444,7 @@ class ParticleTransformer(nn.Module):
         
         if val:
             logger.debug(f"Validation loss at epoch {epoch + 1}: {loss_epoch:.4f}")
+            logger.debug(f"Validation C.E. eos at epoch {epoch + 1}: {ce_eos_epoch:.4f}")
         else:
             logger.debug(f"Test loss at epoch {epoch + 1}: {loss_epoch:.4f}")
         return loss_epoch
