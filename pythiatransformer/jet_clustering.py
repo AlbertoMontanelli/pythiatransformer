@@ -2,23 +2,23 @@ from collections import defaultdict
 import fastjet as fj
 import numpy as np
 import torch
-from scipy.special import wasserstein_distance
+from scipy.stats import wasserstein_distance
 
 from data_processing import dict_ids
-from fastjet_preparation import outputs_targets_fastjet, fastjet_tensor
+from fastjet_preparation import fastjet_tensor_preparing, outputs_computing
 from main import build_model
 
 def clustering(model, device, data, data_pad_mask):
     print("entro nel clustering")
-    outputs, outputs_mask, targets, targets_mask = outputs_targets_fastjet(
+    outputs, outputs_mask, targets, targets_mask = outputs_computing(
         model, device,
         data, data_pad_mask
     )
     print("forward finito")
-    outputs_fastjet = fastjet_tensor(
+    outputs_fastjet = fastjet_tensor_preparing(
         outputs, dict_ids, device
     )
-    targets_fastjet = fastjet_tensor(
+    targets_fastjet = fastjet_tensor_preparing(
         targets, dict_ids, device
     )
 
@@ -168,7 +168,7 @@ if __name__ == "__main__":
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
     transformer = build_model()
-    transformer.load_state_dict(torch.load("transformer_model_true.pt", map_location=device))
+    transformer.load_state_dict(torch.load("transformer_model_eos.pt", map_location=device))
     transformer.to(device)
 
     clustered_outputs, clustered_targets = clustering(
