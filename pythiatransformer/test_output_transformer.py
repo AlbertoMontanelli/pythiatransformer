@@ -1,12 +1,16 @@
 import torch
 import torch.nn as nn
-from transformer import ParticleTransformer
+
 from data_processing import (
-    loader_train, loader_padding_train, subset, dict_ids
+    dict_ids,
+    loader_padding_train,
+    loader_train,
+    subset,
 )
+from transformer import ParticleTransformer
 
 # Imposta il dispositivo
-device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+device = torch.device("cuda:1" if torch.cuda.is_available() else "cpu")
 
 # Costruisci il modello e carica i pesi
 model = ParticleTransformer(
@@ -22,9 +26,11 @@ model = ParticleTransformer(
     num_decoder_layers=2,
     num_units=64,
     dropout=0.1,
-    activation=nn.ReLU()
+    activation=nn.ReLU(),
 )
-model.load_state_dict(torch.load("transformer_model_eos.pt", map_location=device))
+model.load_state_dict(
+    torch.load("transformer_model_eos_2.pt", map_location=device)
+)
 model.to(device)
 model.eval()
 
@@ -48,8 +54,7 @@ attn_mask = attn_mask.to(device)
 print("Inizio inferenza teacher forcing")
 with torch.no_grad():
     output_direct = model.forward(
-        inputs, targets_clean, inputs_mask,
-        targets_pad_mask, attn_mask
+        inputs, targets_clean, inputs_mask, targets_pad_mask, attn_mask
     )
 
 # ====== INFERENZA AUTOREGRESSIVA EVENTO PER EVENTO ======
@@ -63,7 +68,9 @@ with torch.no_grad():
 evento_idx = 0
 
 for i in range(10):
-    print(f"\n================ Evento {evento_idx}, Particella {i} ================\n")
+    print(
+        f"\n================ Evento {evento_idx}, Particella {i} ================\n"
+    )
 
     # --- Target reale
     print("🎯 Target reale (vero):")
@@ -111,4 +118,3 @@ print("Shape output generato:", output_gen.shape)
 
 #     print("\nPredizione (generata):")
 #     print(output[evento_idx, i].cpu().numpy())
-

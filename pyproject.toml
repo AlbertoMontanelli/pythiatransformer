@@ -22,3 +22,8 @@ build-backend = "setuptools.build_meta"
 
 [tool.pytest.ini_options]
 addopts = "--maxfail=3 --disable-warnings"
+
+[tool.black]
+line-length = 79
+target-version = ['py39']
+skip-string-normalization = false

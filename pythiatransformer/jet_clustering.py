@@ -7,19 +7,15 @@ from data_processing import dict_ids
 from fastjet_preparation import outputs_targets_fastjet, fastjet_tensor
 from main import build_model
 
+
 def clustering(model, device, data, data_pad_mask):
     print("entro nel clustering")
     outputs, outputs_mask, targets, targets_mask = outputs_targets_fastjet(
-        model, device,
-        data, data_pad_mask
+        model, device, data, data_pad_mask
     )
     print("forward finito")
-    outputs_fastjet = fastjet_tensor(
-        outputs, dict_ids, device
-    )
-    targets_fastjet = fastjet_tensor(
-        targets, dict_ids, device
-    )
+    outputs_fastjet = fastjet_tensor(outputs, dict_ids, device)
+    targets_fastjet = fastjet_tensor(targets, dict_ids, device)
 
     # Jet clustering algorithm
     jet_def = fj.JetDefinition(fj.antikt_algorithm, 0.4)
@@ -49,10 +45,15 @@ def clustering(model, device, data, data_pad_mask):
                 if not target_mask[i, j]
             ]
 
-            clustered_outputs.append(fj.ClusterSequence(pseudojets_output, jet_def))
-            clustered_targets.append(fj.ClusterSequence(pseudojets_target, jet_def))
+            clustered_outputs.append(
+                fj.ClusterSequence(pseudojets_output, jet_def)
+            )
+            clustered_targets.append(
+                fj.ClusterSequence(pseudojets_target, jet_def)
+            )
 
     return clustered_outputs, clustered_targets
+
 
 def compute_jet_differences(clustered_outputs, clustered_targets, n_jets=3):
     """
@@ -83,7 +84,9 @@ def compute_jet_differences(clustered_outputs, clustered_targets, n_jets=3):
             diffs["delta_eta"].append(jo.eta() - jt.eta())
             diffs["delta_phi"].append(wrap_delta_phi(jo.phi(), jt.phi()))
             diffs["delta_mass"].append(jo.m() - jt.m())
-            diffs["delta_nconst"].append(len(jo.constituents()) - len(jt.constituents()))
+            diffs["delta_nconst"].append(
+                len(jo.constituents()) - len(jt.constituents())
+            )
 
     return diffs
 
@@ -99,10 +102,17 @@ def wrap_delta_phi(phi1, phi2):
         dphi += 2 * np.pi
     return dphi
 
+
 import matplotlib.pyplot as plt
 
+
 def plot_differences(differences, variable, bins=50):
-    plt.hist(differences[f"delta_{variable}"], bins=bins, alpha=0.7, edgecolor='black')
+    plt.hist(
+        differences[f"delta_{variable}"],
+        bins=bins,
+        alpha=0.7,
+        edgecolor="black",
+    )
     plt.title(f"Δ{variable} tra output e target")
     plt.xlabel(f"Δ{variable}")
     plt.ylabel("Conteggi")
@@ -117,14 +127,21 @@ if __name__ == "__main__":
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
     transformer = build_model()
-    transformer.load_state_dict(torch.load("transformer_model_true.pt", map_location=device))
+    transformer.load_state_dict(
+        torch.load("transformer_model_true.pt", map_location=device)
+    )
     transformer.to(device)
 
     clustered_outputs, clustered_targets = clustering(
-        transformer, device, transformer.train_data, transformer.train_data_pad_mask
+        transformer,
+        device,
+        transformer.train_data,
+        transformer.train_data_pad_mask,
     )
 
-    diffs = compute_jet_differences(clustered_outputs, clustered_targets, n_jets=3)
+    diffs = compute_jet_differences(
+        clustered_outputs, clustered_targets, n_jets=3
+    )
     plot_differences(diffs, "pt")
     plot_differences(diffs, "mass")
     plot_differences(diffs, "eta")
