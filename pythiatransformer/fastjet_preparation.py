@@ -1,7 +1,6 @@
 import torch
 
-from data_processing import dict_ids
-from data_processing import mean_final, std_final
+from data_processing import dict_ids, mean_final, std_final
 
 
 def de_standardization(data, data_padding_mask, index, mean, std):
@@ -72,6 +71,7 @@ def fastjet_tensor_preparing(batches, dict_ids, device=None):
     """
 
     # Masses array; the index corresponds to the one-hot-encoding index.
+    # The last one is refered to EOS.
     masses = torch.tensor(
         [
             0.93827,
@@ -105,6 +105,7 @@ def fastjet_tensor_preparing(batches, dict_ids, device=None):
             0.49368,
             0.93957,
             0.93827,
+            0,
         ],
         device=device,
     )
@@ -135,7 +136,7 @@ if __name__ == "__main__":
 
     transformer = build_model()
     transformer.load_state_dict(
-        torch.load("transformer_model_true.pt", map_location=device)
+        torch.load("transformer_model_eos.pt", map_location=device)
     )
     transformer.to(device)
 
@@ -148,8 +149,11 @@ if __name__ == "__main__":
 
     for output, target in zip(outputs, targets):
         # print(f"output: {output[0, 0:2, :]}")
-        print(f"target: {target[0, 0:2, :]}")
+        print(f"target!!!!: {target[0, 0:2, :]}")
         break
+
+    print(f"media: {mean_final}")
+    print(f"std: {std_final}")
 
     outputs = de_standardization(
         outputs, outputs_mask, -1, mean_final[2], std_final[2]
@@ -174,9 +178,10 @@ if __name__ == "__main__":
     targets = de_standardization(
         targets, targets_mask, -3, mean_final[0], std_final[0]
     )
+
     for output, target in zip(outputs, targets):
         # print(f"output: {output[0, 0:2, :]}")
-        print(f"target: {target[0, 0:2, :]}")
+        print(f"target ricalcolati: {target[0, 0:2, :]}")
         break
 
     outputs_fastjet = fastjet_tensor_preparing(outputs, dict_ids, device)
