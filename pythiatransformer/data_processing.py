@@ -22,6 +22,8 @@ def standardize_features(data, features):
     for feature in features:
         mean = ak.mean(data[feature])
         std = ak.std(data[feature])
+        print(f"media: {mean}")
+        print(f"std: {std}")
         data[feature] = (data[feature] - mean) / std
         means.append(mean)
         stds.append(std)
@@ -183,6 +185,13 @@ with uproot.open("events.root") as file:
     data_23 = file["tree_23"].arrays(library="ak")
     data_final = file["tree_final"].arrays(library="ak")
 
+# pt_ordered = np.argsort(-np.sqrt(np.array(data_final["px_final"][0]**2) + np.array(data_final["py_final"][0]**2)))
+# top2_indx = pt_ordered[:2]
+# for i in top2_indx:
+#     print(f"px particella target non std: {data_final['px_final'][0][i]}")
+#     print(f"py particella target non std: {data_final['py_final'][0][i]}")
+#     print(f"pz particella target non std: {data_final['pz_final'][0][i]}")
+
 # Standardization.
 data_23, mean_23, std_23 = standardize_features(
     data_23, 
@@ -192,6 +201,13 @@ data_final, mean_final, std_final = standardize_features(
     data_final, 
     features=["px_final", "py_final", "pz_final"]
 )
+
+# pt_ordered = np.argsort(-np.sqrt(np.array(data_final["px_final"][0]**2) + np.array(data_final["py_final"][0]**2)))
+# top2_indx = pt_ordered[:2]
+# for i in top2_indx:
+#     print(f"px particella target non std: {data_final['px_final'][0][i]}")
+#     print(f"py particella target non std: {data_final['py_final'][0][i]}")
+#     print(f"pz particella target non std: {data_final['pz_final'][0][i]}")
 
 data_23 = compute_pt(data_23, "px_23", "py_23", "pT_23")
 data_final = compute_pt(data_final, "px_final", "py_final", "pT_final")
