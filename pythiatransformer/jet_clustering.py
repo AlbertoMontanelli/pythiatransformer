@@ -121,7 +121,9 @@ def plot_differences(differences, variable, bins=50):
     plt.show()
 
 
-def ws_distance_on_variable(clustered_outputs, clustered_targets, variable="pt", n_jets=3, bins=50):
+def ws_distance_on_variable(
+    clustered_outputs, clustered_targets, variable="pt", n_jets=3, bins=50
+):
     values_output = []
     values_target = []
 
@@ -158,8 +160,10 @@ def ws_distance_on_variable(clustered_outputs, clustered_targets, variable="pt",
     """
 
     plt.hist(
-        [values_output, values_target], bins=bins, 
-        alpha=0.5, label=[f"{variable}_output", f"{variable}_target"]
+        [values_output, values_target],
+        bins=bins,
+        alpha=0.5,
+        label=[f"{variable}_output", f"{variable}_target"],
     )
     plt.title(f"{variable} distribution for output and target")
     plt.xlabel(f"{variable}")
@@ -199,5 +203,11 @@ if __name__ == "__main__":
     plot_differences(diffs, "phi")
 
     for var in ["pt", "eta", "phi", "m"]:
-        ws_distance = ws_distance_on_variable(clustered_outputs, clustered_targets, variable=var, n_jets=3, bins=50)
+        ws_distance = ws_distance_on_variable(
+            clustered_outputs,
+            clustered_targets,
+            variable=var,
+            n_jets=3,
+            bins=50,
+        )
         print(f"Kullback-Leibler divergence of {var}: {ws_distance}")
