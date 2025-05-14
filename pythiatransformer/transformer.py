@@ -5,6 +5,7 @@ from loguru import logger
 import gc
 import torch
 import torch.nn as nn
+from torch.nn.utils.rnn import pad_sequence
 # from torch.nn import Transformer
 # from torch.utils.data import TensorDataset, DataLoader
 
@@ -284,23 +285,59 @@ class ParticleTransformer(nn.Module):
         return output
 
     # === LOSS MISTA ===
-    def mixed_loss(self, output, target, mask):
-        output_id = output[:, :, :len(dict_ids)]
-        target_id = target[:, :, :len(dict_ids)]
-        output_p = output[:, :, len(dict_ids):]
-        target_p = target[:, :, len(dict_ids):]
+    def mixed_loss(self, output, target, mask, alpha=30.0):
+        """
+        Combina CrossEntropy per gli ID (one-hot) e MSE per px, py, pz,
+        con un peso extra sulla CE degli EOS token.
 
+        Args:
+            output (Tensor): [B, T, F] - output del modello
+            target (Tensor): [B, T, F] - target ground truth
+            mask (BoolTensor): [B, T] - True = padding
+            alpha (float): peso moltiplicativo per la loss sugli EOS
+
+        Returns:
+            loss (Tensor): valore scalare della loss combinata
+        """
+        device = output.device
+
+        # Separazione delle componenti
+        output_id = output[:, :, :len(dict_ids)]     # one-hot predetta
+        target_id = target[:, :, :len(dict_ids)]     # one-hot target
+        output_p = output[:, :, len(dict_ids):]      # px,py,pz predetti
+        target_p = target[:, :, len(dict_ids):]      # px,py,pz target
+
+        # CrossEntropy sulla componente ID (ignora EOS e padding)
         ce = nn.CrossEntropyLoss(reduction='none')
-        target_index = torch.argmax(target_id, dim=-1)
-        ce_loss = ce(output_id.transpose(1, 2), target_index)
+        target_index = torch.argmax(target_id, dim=-1)  # [B, T]
+        ce_loss = ce(output_id.transpose(1, 2), target_index)  # [B, T]
 
-        eos_index = len(dict_ids)  # deve essere consistente col preprocessing
-        eos_mask = (target_index == eos_index)
-        valid_mask = (~mask) & (~eos_mask)
-        
-        mse_loss = nn.functional.mse_loss(output_p[valid_mask], target_p[valid_mask])
+        target_index = target_index.to(device)
+        mask = mask.to(device)
 
-        return ce_loss[valid_mask].mean() + mse_loss
+        eos_index = dict_ids[-999]
+        eos_mask = target_index == eos_index       # EOS tokens
+        valid_mask = (~mask) & (~eos_mask)         # solo token fisici
+
+        # MSE su momenti (solo dove non è EOS né padding)
+        mse_loss = nn.functional.mse_loss(
+            output_p[valid_mask],
+            target_p[valid_mask]
+        )
+
+        # Verifica che ci sia almeno un EOS
+        eos_ce_loss = ce_loss[eos_mask]
+        if eos_ce_loss.numel() == 0:
+            raise RuntimeError(
+                "mixed_loss(): nessun token EOS trovato nel batch. "
+                "Controlla i target o la costruzione del batch."
+            )
+
+        # Loss finale: CE + MSE + peso sugli EOS
+        eos_ce_mean = eos_ce_loss.mean()
+        total_loss = ce_loss[valid_mask].mean() + mse_loss + alpha * eos_ce_mean
+
+        return total_loss, eos_ce_mean.item()
 
     def train_one_epoch(self, epoch, optim):
         """This function trains the model for one epoch. It iterates
@@ -318,6 +355,7 @@ class ParticleTransformer(nn.Module):
 
         self.train()
         loss_epoch = 0
+        ce_eos_epoch = 0
 
         for (input, target), (input_padding_mask, target_padding_mask) in zip(self.train_data, self.train_data_pad_mask):
             device = next(self.parameters()).device
@@ -336,7 +374,7 @@ class ParticleTransformer(nn.Module):
                 attention_mask
             )
 
-            loss = self.mixed_loss(output, target, target_padding_mask)
+            loss, eos_ce = self.mixed_loss(output, target, target_padding_mask)
             if not torch.isfinite(loss):
                 raise ValueError(
                     f"Loss is not finite at epoch {epoch + 1}"
@@ -344,6 +382,7 @@ class ParticleTransformer(nn.Module):
             loss.backward()
             optim.step()
             loss_epoch += loss.item()
+            ce_eos_epoch += eos_ce
 
             #del input, target, input_padding_mask, target_padding_mask, output, loss, attention_mask
             #torch.cuda.empty_cache()
@@ -351,7 +390,8 @@ class ParticleTransformer(nn.Module):
         #gc.collect() # forcing garbage collector
         #torch.cuda.empty_cache()
 
-        logger.debug(f"Loss at epoch {epoch + 1}: {loss_epoch:.4f}")
+        logger.debug(f"Training loss at epoch {epoch + 1}: {loss_epoch:.4f}")
+        logger.debug(f"Training C.E. eos at epoch {epoch + 1}: {ce_eos_epoch:.4f}")
         return loss_epoch
 
     def val_one_epoch(self, epoch, val):
@@ -374,6 +414,7 @@ class ParticleTransformer(nn.Module):
             mask_loader = self.test_data_pad_mask
         self.eval()
         loss_epoch = 0
+        ce_eos_epoch = 0
         with torch.no_grad(): # Compute only the loss value
             for (input, target), (input_padding_mask, target_padding_mask) in zip(data_loader, mask_loader):
                 
@@ -387,12 +428,13 @@ class ParticleTransformer(nn.Module):
                 attention_mask = attention_mask.to(device)
 
                 output = self.forward(input, target, input_padding_mask, target_padding_mask, attention_mask)
-                loss = self.mixed_loss(output, target, target_padding_mask)
+                loss, eos_ce = self.mixed_loss(output, target, target_padding_mask)
                 if not torch.isfinite(loss):
                     raise ValueError(
                         f"Loss is not finite at epoch {epoch + 1}"
                     )
                 loss_epoch += loss.item()
+                ce_eos_epoch += eos_ce
 
                 #del input, target, input_padding_mask, target_padding_mask, output, loss, attention_mask
                 #torch.cuda.empty_cache()
@@ -402,6 +444,7 @@ class ParticleTransformer(nn.Module):
         
         if val:
             logger.debug(f"Validation loss at epoch {epoch + 1}: {loss_epoch:.4f}")
+            logger.debug(f"Validation C.E. eos at epoch {epoch + 1}: {ce_eos_epoch:.4f}")
         else:
             logger.debug(f"Test loss at epoch {epoch + 1}: {loss_epoch:.4f}")
         return loss_epoch
@@ -528,45 +571,101 @@ class ParticleTransformer(nn.Module):
         else:
             stop = False
         return stop
-    
-    # def generate_target(self, input, input_mask, max_len):
+
+    # def generate_target(self, input, input_mask, target_reference):
     #     """
-    #     Inferenza autoregressiva: genera il target passo dopo passo dato l'input.
+    #     Autoregressive generation of targets, one event at a time.
 
     #     Args:
-    #         input (torch.Tensor): Tensor di input (particelle di status 23).
-    #         input_mask (torch.Tensor): Maschera per l'input.
-    #         max_len (int): Lunghezza massima della sequenza target da generare.
+    #         input (Tensor): Input tensor [B, N_in, F].
+    #         input_mask (BoolTensor): Padding mask [B, N_in].
+    #         target_reference (Tensor): Used to infer max_len per batch.
 
     #     Returns:
-    #         torch.Tensor: Sequenza generata (particelle finali).
+    #         padded_outputs (Tensor): [B, T_max, F] with padding.
+    #         padding_mask (BoolTensor): [B, T_max], 1 = padding.
     #     """
-    #     # Proietta l'input nello spazio nascosto
-    #     input = self.input_projection(input)
-        
-    #     # Placeholder iniziale per il target nello spazio nascosto
-    #     target = torch.zeros((input.size(0), 1, self.num_units), device=input.device)
-        
-    #     # Lista per raccogliere i token generati
-    #     outputs = []
+    #     self.eval()
+    #     eos_index = dict_ids[-999]
 
-    #     # Loop autoregressivo per generare i token
-    #     for _ in range(max_len):
-    #         # Passa input e target corrente al transformer
-    #         output = self.transformer(
-    #             src=input,
-    #             tgt=target,
-    #             src_key_padding_mask=input_mask
-    #         )
-            
-    #         # Estrai il prossimo token generato (l'ultimo della sequenza output)
-    #         next_token = self.output_projection(output[:, -1:, :])  # Proietta nello spazio originale
-            
-    #         # Aggiungi il token generato alla lista degli output
-    #         outputs.append(next_token)
-            
-    #         # Aggiorna il target concatenando il nuovo token generato
-    #         target = torch.cat([target, self.input_projection(next_token)], dim=1)
+    #     # Project inputs
+    #     input_proj = self.input_projection(input)
+    #     B = input.size(0)
+    #     max_len = target_reference.size(1)
+    #     outputs_list = []
+    #     device = input.device
 
-    #     # Concatena tutti i token generati
-    #     return torch.cat(outputs, dim=1)
+    #     for i in range(B):
+    #         single_input = input_proj[i, :, :].unsqueeze(0) # [1, N, F]
+    #         single_mask = input_mask[i, :].unsqueeze(0)  # [1, N]
+
+    #         sos_vec = torch.zeros(1, 1, self.dim_features, device=device)
+    #         sos_vec[0, 0, 0] = -999  # primo canale = id, lo stesso usato per EOS
+    #         sos_proj = self.input_projection(sos_vec)
+    #         target = sos_proj  # [1, 1, H]
+    #         generated = []
+
+    #         found_eos = False
+    #         for step in range(max_len):
+    #             tgt_mask = nn.Transformer.generate_square_subsequent_mask(
+    #                 target.size(1)
+    #             ).to(device)
+    #             output = self.transformer(
+    #                 src=single_input,
+    #                 tgt=target,
+    #                 tgt_mask=tgt_mask,
+    #                 src_key_padding_mask=single_mask,
+    #             )
+    #             next_token = self.output_projection(
+    #                 output[:, -1:, :]
+    #             )  # shape [1, 1, F]
+
+    #             # # === DEBUG: controllo EOS e distribuzione ID ===
+    #             # logits = next_token[0, 0, :len(dict_ids)]
+    #             # pred_id = torch.argmax(logits).item()
+
+    #             # # Softmax opzionale per vedere se EOS è mai favorito
+    #             # probs = torch.softmax(logits, dim=0)
+
+    #             # print(f"[Evento {i} | Step {step+1}] pred_id = {pred_id} "
+    #             #     f"(eos_index = {eos_index}) | prob_eos = {probs[eos_index]:.4f} | "
+    #             #     f"max_prob = {probs[pred_id]:.4f}")
+    #             # # ================================================
+
+    #             generated.append(next_token.squeeze(1))  # [1, F]
+
+    #             # Controlla EOS
+    #             pred_id = torch.argmax(
+    #                 next_token[0, 0, :len(dict_ids)]
+    #             ).item()
+    #             if pred_id == eos_index:
+    #                 found_eos = True
+    #                 break
+                
+
+    #             # Aggiungi token come input
+    #             projected = self.input_projection(next_token)
+    #             target = torch.cat([target, projected], dim=1)
+    #         if not found_eos:
+    #             print(f"⚠️  [Evento {i}] EOS NON trovato dopo {max_len} step!")
+    #         else:
+    #             print(f"[Evento {i}] EOS trovato dopo {step+1} step")
+
+    #         sequence = torch.cat(generated, dim=0)  # [Tᵢ, F]
+    #         outputs_list.append(sequence)
+
+    #     # Pad le sequenze a lunghezza massima
+    #     padded_outputs = pad_sequence(
+    #         outputs_list, batch_first=True
+    #     )  # [B, T_max, F]
+
+    #     # Padding mask per gli outputs
+    #     lengths = [seq.size(0) for seq in outputs_list]
+    #     T_max = padded_outputs.size(1)
+    #     padding_mask = torch.tensor(
+    #         [[0] * l + [1] * (T_max - l) for l in lengths], dtype=torch.bool
+    #     )
+
+
+    #     return padded_outputs, padding_mask
+
