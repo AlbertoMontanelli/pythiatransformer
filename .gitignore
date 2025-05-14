@@ -2,6 +2,7 @@ __pycache__/
 tests/__pycache__
 CMEPDA_project.egg-info/
 .ipynb_checkpoints/
+.vscode/
 pythiatransformer/events.root
 events.root
 pythiatransformer/output_tensor.h5
