@@ -2,6 +2,7 @@ from collections import defaultdict
 import fastjet as fj
 import numpy as np
 import torch
+from scipy.special import wasserstein_distance
 
 from data_processing import dict_ids
 from fastjet_preparation import outputs_targets_fastjet, fastjet_tensor
@@ -110,6 +111,56 @@ def plot_differences(differences, variable, bins=50):
     plt.show()
 
 
+def ws_distance_on_variable(clustered_outputs, clustered_targets, variable="pt", n_jets=3, bins=50):
+    values_output = []
+    values_target = []
+
+    def get_jet_attr(jet, var):
+        val = getattr(jet, var)
+        return val() if callable(val) else val
+
+    for out_seq, tar_seq in zip(clustered_outputs, clustered_targets):
+        jets_out = out_seq.inclusive_jets()
+        jets_tar = tar_seq.inclusive_jets()
+
+        # ordering always with respect to pt
+        jets_out = sorted(out_seq.inclusive_jets(), key=lambda j: -j.pt())
+        jets_tar = sorted(tar_seq.inclusive_jets(), key=lambda j: -j.pt())
+
+        for i in range(min(n_jets, len(jets_out), len(jets_tar))):
+            jo = jets_out[i]
+            jt = jets_tar[i]
+
+            val_out = get_jet_attr(jo, variable)
+            val_tar = get_jet_attr(jt, variable)
+
+            values_output.append(val_out)
+            values_target.append(val_tar)
+
+    """
+    # HERE FOR KULLBACK-LEIBLER DIVERGENCE
+    hist_out, bin_edges = np.histogram(values_output, bins=bins, density=True)
+    hist_tar, _ = np.histogram(values_target, bins=bin_edges, density=True)
+
+    epsilon = 1e-10 # to avoid dividing by 0.
+    hist_out += epsilon
+    hist_tar += epsilon
+    """
+
+    plt.hist(
+        [values_output, values_target], bins=bins, 
+        alpha=0.5, label=[f"{variable}_output", f"{variable}_target"]
+    )
+    plt.title(f"{variable} distribution for output and target")
+    plt.xlabel(f"{variable}")
+    plt.ylabel(f"Counts")
+    plt.grid(True)
+    plt.show
+
+    ws_distance = wasserstein_distance(values_output, values_target)
+    return ws_distance
+
+
 if __name__ == "__main__":
 
     from main import build_model
@@ -129,3 +180,7 @@ if __name__ == "__main__":
     plot_differences(diffs, "mass")
     plot_differences(diffs, "eta")
     plot_differences(diffs, "phi")
+
+    for var in ["pt", "eta", "phi", "m"]:
+        ws_distance = ws_distance_on_variable(clustered_outputs, clustered_targets, variable=var, n_jets=3, bins=50)
+        print(f"Kullback-Leibler divergence of {var}: {ws_distance}")
