@@ -1,6 +1,5 @@
 import torch
 import torch.nn as nn
-
 from data_processing import (
     dict_ids,
     loader_padding_train,
@@ -29,7 +28,7 @@ model = ParticleTransformer(
     activation=nn.ReLU(),
 )
 model.load_state_dict(
-    torch.load("transformer_model_eos_2.pt", map_location=device)
+    torch.load("transformer_model_sos.pt", map_location=device)
 )
 model.to(device)
 model.eval()
@@ -45,16 +44,49 @@ targets_mask = targets_mask.to(device)
 
 # ====== INFERENZA DURANTE IL TRAINING (forward diretto) ======
 # De-padding dei target reali
-targets_clean, targets_pad_mask, attn_mask = model.de_padding(
-    targets, targets_mask
-)
+targets_clean, targets_pad_mask = model.de_padding(targets, targets_mask)
 targets_pad_mask = targets_pad_mask.to(device)
-attn_mask = attn_mask.to(device)
+
+# Lista per decoder_input e mask
+decoder_input_list = []
+decoder_input_mask_list = []
+
+# Per ogni evento nel batch
+for event in range(targets_clean.shape[0]):
+    # Trova l'indice dell'EOS → ultima particella valida prima del padding
+    eos_idx = (~targets_pad_mask[event]).sum().item() - 1
+    # Rimuovi l'EOS dal target: [0:eos_idx] + [eos_idx+1:]
+    event_target = targets_clean[event]
+    event_mask = targets_pad_mask[event]
+
+    event_input = torch.cat(
+        [event_target[:eos_idx], event_target[eos_idx + 1 :]],
+        dim=0,
+    )
+    event_input_mask = torch.cat(
+        [event_mask[:eos_idx], event_mask[eos_idx + 1 :]], dim=0
+    )
+
+    decoder_input_list.append(event_input)
+    decoder_input_mask_list.append(event_input_mask)
+
+decoder_input = torch.stack(decoder_input_list, dim=0)
+decoder_input_padding_mask = torch.stack(decoder_input_mask_list, dim=0)
+
+target_4_loss = targets_clean[:, 1:, :]
+target_4_loss_padding_mask = targets_pad_mask[:, 1:]
+attention_mask = nn.Transformer.generate_square_subsequent_mask(
+    decoder_input.size(1)
+).to(device)
 
 print("Inizio inferenza teacher forcing")
 with torch.no_grad():
     output_direct = model.forward(
-        inputs, targets_clean, inputs_mask, targets_pad_mask, attn_mask
+        inputs,
+        decoder_input,
+        inputs_mask,
+        decoder_input_padding_mask,
+        attention_mask,
     )
 
 # ====== INFERENZA AUTOREGRESSIVA EVENTO PER EVENTO ======

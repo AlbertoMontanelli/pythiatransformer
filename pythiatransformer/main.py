@@ -1,31 +1,22 @@
 """ """
 
+import os
+
 import matplotlib.pyplot as plt
 import torch
-import os
 import torch.nn as nn
 import torch.optim as optimizer
-
-# import h5py
-
-from loguru import logger
-from transformer import ParticleTransformer
 from data_processing import (
-    loader_train,
-    loader_val,
-    loader_test,
+    loader_padding_test,
     loader_padding_train,
     loader_padding_val,
-    loader_padding_test,
+    loader_test,
+    loader_train,
+    loader_val,
+    subset,
 )
-from data_processing import subset
-from data_processing import dict_ids
-
-print("dict_ids keys:", dict_ids.keys())
-print("eos_index:", len(dict_ids) - 1)
-
-
-print(f"dim features = {subset.shape[0]}")
+from loguru import logger
+from transformer import ParticleTransformer
 
 os.environ["PYTORCH_CUDA_ALLOC_CONF"] = "expandable_segments:True"
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
@@ -33,7 +24,7 @@ epochs = 1000
 
 
 def plot_losses(
-    train_loss, val_loss, filename="learning_curve_eos_2.pdf", dpi=1200
+    train_loss, val_loss, filename="learning_curve_sos.pdf", dpi=1200
 ):
     plt.figure()
     plt.plot(train_loss, label="Training Loss")
@@ -79,8 +70,8 @@ def train_and_save_model():
 
     plot_losses(train_loss, val_loss)
 
-    torch.save(transformer.state_dict(), "transformer_model_eos_2.pt")
-    logger.info("Modello salvato in transformer_model_eos_2.pt")
+    torch.save(transformer.state_dict(), "transformer_model_sos.pt")
+    logger.info("Modello salvato in transformer_model_sos.pt")
 
 
 # def generate_outputs_and_save():

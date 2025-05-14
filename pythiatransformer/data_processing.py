@@ -23,8 +23,6 @@ def standardize_features(data, features):
     for feature in features:
         mean = ak.mean(data[feature])
         std = ak.std(data[feature])
-        print(f"media: {mean}")
-        print(f"std: {std}")
         data[feature] = (data[feature] - mean) / std
         means.append(mean)
         stds.append(std)
@@ -37,7 +35,7 @@ def compute_pt(data, px_key, py_key, new_key):
     return data
 
 
-def awkward_to_padded_targets(data, features, eos_token=-999):
+def awkward_to_padded_targets(data, features, eos_token=-999, sos_token=-998):
     """Convert Awkward Array to padded torch.Tensor and insert EOS.
 
     Args:
@@ -52,7 +50,7 @@ def awkward_to_padded_targets(data, features, eos_token=-999):
     max_particles = ak.max(event_particles)
     batch_size = len(event_particles)
     num_features = len(features)
-    new_max_len = max_particles + 1
+    new_max_len = max_particles + 2
 
     padded_events = {
         f: ak.fill_none(ak.pad_none(data[f], target=max_particles, axis=1), 0)
@@ -75,10 +73,10 @@ def awkward_to_padded_targets(data, features, eos_token=-999):
 
     for i, true_particles in enumerate(event_particles):
         n = true_particles.item()
-        padded_tensor[i, :n] = base_tensor_sorted[i, :n]
-        padding_mask[i, :n] = 0
-        padded_tensor[i, n, 0] = eos_token
-        padding_mask[i, n] = 0
+        padded_tensor[i, 0, 0] = sos_token
+        padded_tensor[i, 1 : n + 1] = base_tensor_sorted[i, :n]
+        padded_tensor[i, n + 1, 0] = eos_token
+        padding_mask[i, : n + 2] = 0
 
     return padded_tensor, padding_mask
 
@@ -95,7 +93,6 @@ def awkward_to_padded_inputs(data, features):
     """
     event_particles = ak.num(data[features[0]], axis=1)
     max_particles = ak.max(event_particles)
-    batch_size = len(event_particles)
     num_features = len(features)
 
     padded_events = {
@@ -121,9 +118,7 @@ def awkward_to_padded_inputs(data, features):
     return padded_tensor, padding_mask
 
 
-def one_hot_encoding(
-    tensor, dict_ids, num_classes, eos_token=-999, padding_token=0
-):
+def one_hot_encoding(tensor, dict_ids, num_classes, padding_token=0):
     """Apply one-hot encoding to IDs in a tensor, handling EOS and padding.
 
     Args:
@@ -238,21 +233,20 @@ padded_tensor_final = drop_pt(padded_tensor_final)
 
 # Dict ID & One-hot
 eos_token = -999
+sos_token = -998
 id_all = np.unique(
     np.concatenate(
         [ak.flatten(data_23["id_23"]), ak.flatten(data_final["id_final"])]
     )
 )
 dict_ids = {int(pid): idx for idx, pid in enumerate(id_all)}
+dict_ids[sos_token] = len(dict_ids)
 dict_ids[eos_token] = len(dict_ids)
+print(dict_ids)
 num_classes = len(dict_ids)
 
-one_hot_23 = one_hot_encoding(
-    padded_tensor_23, dict_ids, num_classes, eos_token
-)
-one_hot_final = one_hot_encoding(
-    padded_tensor_final, dict_ids, num_classes, eos_token
-)
+one_hot_23 = one_hot_encoding(padded_tensor_23, dict_ids, num_classes)
+one_hot_final = one_hot_encoding(padded_tensor_final, dict_ids, num_classes)
 
 padded_tensor_23 = torch.cat((one_hot_23, padded_tensor_23[:, :, 1:]), dim=-1)
 padded_tensor_final = torch.cat(

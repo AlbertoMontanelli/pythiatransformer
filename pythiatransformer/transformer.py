@@ -6,10 +6,9 @@ import gc
 
 import torch
 import torch.nn as nn
+from data_processing import dict_ids
 from loguru import logger
 from torch.nn.utils.rnn import pad_sequence
-
-from data_processing import dict_ids
 
 # from torch.nn import Transformer
 # from torch.utils.data import TensorDataset, DataLoader
@@ -251,7 +250,6 @@ class ParticleTransformer(nn.Module):
         max_len = max_len_tensor.item()
         input = input[:, :max_len, :]
         padding_mask = padding_mask[:, :max_len]
-        att_mask = nn.Transformer.generate_square_subsequent_mask(max_len)
 
         # print("Train Tensor:")
         # print(input)
@@ -261,7 +259,7 @@ class ParticleTransformer(nn.Module):
 
         # print("att Mask:")
         # print(att_mask)
-        return input, padding_mask, att_mask
+        return input, padding_mask
 
     def forward(self, input, target, input_mask, target_mask, attention_mask):
         """The aim of this function is computed the output of the model by
@@ -292,7 +290,7 @@ class ParticleTransformer(nn.Module):
         return output
 
     # === LOSS MISTA ===
-    def mixed_loss(self, output, target, mask, alpha=30.0):
+    def mixed_loss(self, output, target, mask, alpha=10.0):
         """
         Combina CrossEntropy per gli ID (one-hot) e MSE per px, py, pz,
         con un peso extra sulla CE degli EOS token.
@@ -373,20 +371,56 @@ class ParticleTransformer(nn.Module):
             target = target.to(device)
             input_padding_mask = input_padding_mask.to(device)
             target_padding_mask = target_padding_mask.to(device)
-            target, target_padding_mask, attention_mask = self.de_padding(
+            target, target_padding_mask = self.de_padding(
                 target, target_padding_mask
             )
-            attention_mask = attention_mask.to(device)
+
+            # Lista per decoder_input e mask
+            decoder_input_list = []
+            decoder_input_mask_list = []
+
+            # Per ogni evento nel batch
+            for event in range(target.shape[0]):
+                # Trova l'indice dell'EOS → ultima particella valida prima del padding
+                eos_idx = (~target_padding_mask[event]).sum().item() - 1
+                # Rimuovi l'EOS dal target: [0:eos_idx] + [eos_idx+1:]
+                event_target = target[event]
+                event_mask = target_padding_mask[event]
+
+                event_input = torch.cat(
+                    [event_target[:eos_idx], event_target[eos_idx + 1 :]],
+                    dim=0,
+                )
+                event_input_mask = torch.cat(
+                    [event_mask[:eos_idx], event_mask[eos_idx + 1 :]], dim=0
+                )
+
+                decoder_input_list.append(event_input)
+                decoder_input_mask_list.append(event_input_mask)
+
+            decoder_input = torch.stack(decoder_input_list, dim=0)
+            decoder_input_padding_mask = torch.stack(
+                decoder_input_mask_list, dim=0
+            )
+
+            target_4_loss = target[:, 1:, :]
+            target_4_loss_padding_mask = target_padding_mask[:, 1:]
+            attention_mask = nn.Transformer.generate_square_subsequent_mask(
+                decoder_input.size(1)
+            ).to(device)
+
             optim.zero_grad()
             output = self.forward(
                 input,
-                target,
+                decoder_input,
                 input_padding_mask,
-                target_padding_mask,
+                decoder_input_padding_mask,
                 attention_mask,
             )
 
-            loss, eos_ce = self.mixed_loss(output, target, target_padding_mask)
+            loss, eos_ce = self.mixed_loss(
+                output, target_4_loss, target_4_loss_padding_mask
+            )
             if not torch.isfinite(loss):
                 raise ValueError(f"Loss is not finite at epoch {epoch + 1}")
             loss.backward()
@@ -439,20 +473,57 @@ class ParticleTransformer(nn.Module):
                 input_padding_mask = input_padding_mask.to(device)
                 target_padding_mask = target_padding_mask.to(device)
 
-                target, target_padding_mask, attention_mask = self.de_padding(
+                target, target_padding_mask = self.de_padding(
                     target, target_padding_mask
                 )
-                attention_mask = attention_mask.to(device)
+
+                # Lista per decoder_input e mask
+                decoder_input_list = []
+                decoder_input_mask_list = []
+
+                # Per ogni evento nel batch
+                for event in range(target.shape[0]):
+                    # Trova l'indice dell'EOS → ultima particella valida prima del padding
+                    eos_idx = (~target_padding_mask[event]).sum().item() - 1
+                    # Rimuovi l'EOS dal target: [0:eos_idx] + [eos_idx+1:]
+                    event_target = target[event]
+                    event_mask = target_padding_mask[event]
+
+                    event_input = torch.cat(
+                        [event_target[:eos_idx], event_target[eos_idx + 1 :]],
+                        dim=0,
+                    )
+                    event_input_mask = torch.cat(
+                        [event_mask[:eos_idx], event_mask[eos_idx + 1 :]],
+                        dim=0,
+                    )
+
+                    decoder_input_list.append(event_input)
+                    decoder_input_mask_list.append(event_input_mask)
+
+                decoder_input = torch.stack(decoder_input_list, dim=0)
+                decoder_input_padding_mask = torch.stack(
+                    decoder_input_mask_list, dim=0
+                )
+
+                target_4_loss = target[:, 1:, :]
+                target_4_loss_padding_mask = target_padding_mask[:, 1:]
+                attention_mask = (
+                    nn.Transformer.generate_square_subsequent_mask(
+                        decoder_input.size(1)
+                    ).to(device)
+                )
 
                 output = self.forward(
                     input,
-                    target,
+                    decoder_input,
                     input_padding_mask,
-                    target_padding_mask,
+                    decoder_input_padding_mask,
                     attention_mask,
                 )
+
                 loss, eos_ce = self.mixed_loss(
-                    output, target, target_padding_mask
+                    output, target_4_loss, target_4_loss_padding_mask
                 )
                 if not torch.isfinite(loss):
                     raise ValueError(
@@ -479,7 +550,7 @@ class ParticleTransformer(nn.Module):
         return loss_epoch
 
     def train_val(
-        self, num_epochs, optim, val=True, patient_smooth=50, patient_early=10
+        self, num_epochs, optim, val=True, patient_smooth=30, patient_early=10
     ):
         """This function trains and validates the model for the given
         number of epochs.
