@@ -6,6 +6,8 @@ import matplotlib.pyplot as plt
 import torch
 import torch.nn as nn
 import torch.optim as optimizer
+from loguru import logger
+
 from data_processing import (
     loader_padding_test,
     loader_padding_train,
@@ -15,7 +17,6 @@ from data_processing import (
     loader_val,
     subset,
 )
-from loguru import logger
 from transformer import ParticleTransformer
 
 os.environ["PYTORCH_CUDA_ALLOC_CONF"] = "expandable_segments:True"
@@ -49,9 +50,9 @@ def build_model():
         test_data_pad_mask=loader_padding_test,
         dim_features=subset.shape[0],
         num_heads=8,
-        num_encoder_layers=2,
-        num_decoder_layers=2,
-        num_units=64,
+        num_encoder_layers=5,
+        num_decoder_layers=5,
+        num_units=256,
         dropout=0.1,
         activation=nn.ReLU(),
     )
