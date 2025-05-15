@@ -290,11 +290,12 @@ class ParticleTransformer(nn.Module):
         output = self.output_projection(output)
         return output
 
-    def mixed_loss(self, output, target, mask, alpha=10.0, beta=5.0):
+    def mixed_loss(self, output, target, mask, alpha=30.0, beta=2.5):
         """
         Combina CrossEntropy per ID e MSE per px,py,pz, con:
         - rinforzo EOS corretti (alpha),
-        - penalità EOS predetti in posizioni sbagliate (beta).
+        - penalità EOS predetti in posizioni sbagliate (beta),
+        evitando allocazioni inutili per EOS assenti.
         """
         device = output.device
 
@@ -304,11 +305,10 @@ class ParticleTransformer(nn.Module):
         output_p = output[:, :, len(dict_ids) :]
         target_p = target[:, :, len(dict_ids) :]
 
-        # Class index
-        target_index = torch.argmax(target_id, dim=-1)  # [B, T]
-        pred_index = torch.argmax(output_id, dim=-1)  # [B, T]
+        # Indici
+        target_index = torch.argmax(target_id, dim=-1)
+        pred_index = torch.argmax(output_id, dim=-1)
 
-        # CE loss per token
         ce = nn.CrossEntropyLoss(reduction="none")
         ce_loss = ce(output_id.transpose(1, 2), target_index)
 
@@ -316,44 +316,34 @@ class ParticleTransformer(nn.Module):
         target_index = target_index.to(device)
         pred_index = pred_index.to(device)
 
-        eos_index = dict_ids[-999]  # ID EOS
+        eos_index = dict_ids[-999]  # EOS token index
+        eos_true_mask = target_index == eos_index
+        eos_pred_mask = pred_index == eos_index
+        padding_mask = mask
+        valid_mask = (~padding_mask) & (~eos_true_mask)
 
-        eos_true_mask = target_index == eos_index  # EOS nei target
-        eos_pred_mask = pred_index == eos_index  # EOS predetti
-        padding_mask = mask  # True = padding
-        valid_mask = (~padding_mask) & (
-            ~eos_true_mask
-        )  # token fisici (no pad, no EOS)
-
-        # MSE solo su token validi (no EOS né padding)
+        # MSE sui momenti (no EOS, no padding)
         mse_loss = nn.functional.mse_loss(
             output_p[valid_mask], target_p[valid_mask]
         )
 
-        # EOS corretti (match EOS predetto == EOS target)
-        eos_correct_mask = eos_true_mask & eos_pred_mask & (~padding_mask)
-        eos_wrong_mask = eos_pred_mask & (~eos_true_mask) & (~padding_mask)
-
-        # Calcolo singole componenti
+        # CE solo su token fisici (no pad, no EOS)
         loss_ce_valid = ce_loss[valid_mask].mean()
 
+        # Loss totale iniziale
+        total_loss = loss_ce_valid + mse_loss
+
+        # Rinforza EOS corretti se presenti
+        eos_correct_mask = eos_true_mask & eos_pred_mask & (~padding_mask)
         if eos_correct_mask.any():
             eos_loss = ce_loss[eos_correct_mask].mean()
-        else:
-            eos_loss = torch.tensor(0.0, device=device)
+            total_loss += alpha * eos_loss
 
+        # Penalizza EOS fuori posto se presenti
+        eos_wrong_mask = eos_pred_mask & (~eos_true_mask) & (~padding_mask)
         if eos_wrong_mask.any():
             extra_eos_penalty = ce_loss[eos_wrong_mask].mean()
-        else:
-            extra_eos_penalty = torch.tensor(0.0, device=device)
-
-        # Loss totale
-        total_loss = (
-            loss_ce_valid
-            + mse_loss
-            + alpha * eos_loss
-            + beta * extra_eos_penalty
-        )
+            total_loss += beta * extra_eos_penalty
 
         return total_loss, eos_loss.item()
 
@@ -566,7 +556,7 @@ class ParticleTransformer(nn.Module):
         num_epochs,
         optim,
         val=True,
-        patient_smooth=1000,
+        patient_smooth=999,
         patient_early=10,
     ):
         """This function trains and validates the model for the given

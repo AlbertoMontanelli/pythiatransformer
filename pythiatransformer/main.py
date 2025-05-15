@@ -20,12 +20,12 @@ from data_processing import (
 from transformer import ParticleTransformer
 
 os.environ["PYTORCH_CUDA_ALLOC_CONF"] = "expandable_segments:True"
-device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
 epochs = 1000
 
 
 def plot_losses(
-    train_loss, val_loss, filename="learning_curve_sos.pdf", dpi=1200
+    train_loss, val_loss, filename="learning_curve_alberto.pdf", dpi=1200
 ):
     plt.figure()
     plt.plot(train_loss, label="Training Loss")
@@ -71,8 +71,8 @@ def train_and_save_model():
 
     plot_losses(train_loss, val_loss)
 
-    torch.save(transformer.state_dict(), "transformer_model_sos.pt")
-    logger.info("Modello salvato in transformer_model_sos.pt")
+    torch.save(transformer.state_dict(), "transformer_model_alberto.pt")
+    logger.info("Modello salvato in transformer_model_alberto.pt")
 
 
 # def generate_outputs_and_save():
