@@ -696,14 +696,16 @@ class ParticleTransformer(nn.Module):
         for i in range(B):
             single_input = input_proj[i, :, :].unsqueeze(0)  # [1, N, F]
             single_mask = input_mask[i, :].unsqueeze(0)  # [1, N]
-
-            # sos_vec = torch.zeros(1, 1, self.dim_features, device=device)
-            # sos_vec[0, 0, 0] = (
-            #     -999
-            # )  # primo canale = id, lo stesso usato per EOS
-            # sos_proj = self.input_projection(sos_vec)
-            # target = sos_proj  # [1, 1, H]
+            ############################################################
+            # CONTROLLARE
+            sos_vec = torch.zeros(1, 1, self.dim_features, device=device)
+            sos_vec[0, 0, 0] = (
+                -999
+            )  # primo canale = id, lo stesso usato per EOS
+            sos_proj = self.input_projection(sos_vec)
+            target = sos_proj  # [1, 1, H]
             target = torch.zeros((1, 1, self.num_units), device=device)
+            ############################################################
             generated = []
 
             found_eos = False

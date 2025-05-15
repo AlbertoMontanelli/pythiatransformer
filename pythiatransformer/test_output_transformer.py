@@ -106,7 +106,7 @@ for i in range(10):
 
     # --- Target reale
     print("🎯 Target reale (vero):")
-    print(targets_clean[evento_idx, i].cpu().numpy())
+    print(target_4_loss[evento_idx, i].cpu().numpy())
 
     # --- Output generato durante il training (forward diretto)
     print("\n📘 Predizione diretta (forward training):")
