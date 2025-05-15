@@ -1,26 +1,22 @@
-"""
-"""
+""" """
+
+import os
 
 import matplotlib.pyplot as plt
 import torch
-import os
 import torch.nn as nn
 import torch.optim as optimizer
-# import h5py
-
+from data_processing import (
+    loader_padding_test,
+    loader_padding_train,
+    loader_padding_val,
+    loader_test,
+    loader_train,
+    loader_val,
+    subset,
+)
 from loguru import logger
 from transformer import ParticleTransformer
-from data_processing import (
-    loader_train, loader_val, loader_test,
-    loader_padding_train, loader_padding_val, loader_padding_test
-)
-from data_processing import subset
-from data_processing import dict_ids
-print("dict_ids keys:", dict_ids.keys())
-print("eos_index:", len(dict_ids) - 1)
-
-
-print(f"dim features = {subset.shape[0]}")
 
 os.environ["PYTORCH_CUDA_ALLOC_CONF"] = "expandable_segments:True"
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
@@ -28,14 +24,14 @@ epochs = 1000
 
 
 def plot_losses(
-    train_loss, val_loss, filename="learning_curve_eos_2.pdf", dpi=1200
+    train_loss, val_loss, filename="learning_curve_sos.pdf", dpi=1200
 ):
     plt.figure()
-    plt.plot(train_loss, label='Training Loss')
-    plt.plot(val_loss, label='Validation Loss')
-    plt.xlabel('Epoch')
-    plt.ylabel('Loss')
-    plt.title('Learning curve')
+    plt.plot(train_loss, label="Training Loss")
+    plt.plot(val_loss, label="Validation Loss")
+    plt.xlabel("Epoch")
+    plt.ylabel("Loss")
+    plt.title("Learning curve")
     plt.legend()
     plt.grid(True)
     plt.savefig(filename, dpi=dpi)
@@ -43,8 +39,7 @@ def plot_losses(
 
 
 def build_model():
-    """Build a unique istance of ParticleTransformer class.
-    """
+    """Build a unique istance of ParticleTransformer class."""
     return ParticleTransformer(
         train_data=loader_train,
         val_data=loader_val,
@@ -58,7 +53,7 @@ def build_model():
         num_decoder_layers=2,
         num_units=64,
         dropout=0.1,
-        activation=nn.ReLU()
+        activation=nn.ReLU(),
     )
 
 
@@ -70,13 +65,13 @@ def train_and_save_model():
 
     train_loss, val_loss = transformer.train_val(
         num_epochs=epochs,
-        optim=optimizer.Adam(transformer.parameters(), lr=learning_rate)
+        optim=optimizer.Adam(transformer.parameters(), lr=learning_rate),
     )
 
     plot_losses(train_loss, val_loss)
 
-    torch.save(transformer.state_dict(), "transformer_model_eos_2.pt")
-    logger.info("Modello salvato in transformer_model_eos_2.pt")
+    torch.save(transformer.state_dict(), "transformer_model_sos.pt")
+    logger.info("Modello salvato in transformer_model_sos.pt")
 
 
 # def generate_outputs_and_save():
