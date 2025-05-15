@@ -71,7 +71,7 @@ def fastjet_tensor_preparing(batches, dict_ids, device=None):
     """
 
     # Masses array; the index corresponds to the one-hot-encoding index.
-    # The last one is refered to EOS.
+    # The last two are refered to EOS.
     masses = torch.tensor(
         [
             0.93827,
@@ -105,6 +105,7 @@ def fastjet_tensor_preparing(batches, dict_ids, device=None):
             0.49368,
             0.93957,
             0.93827,
+            0,
             0,
         ],
         device=device,
