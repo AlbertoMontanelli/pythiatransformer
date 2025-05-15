@@ -2,23 +2,23 @@ from collections import defaultdict
 import fastjet as fj
 import numpy as np
 import torch
-from scipy.special import wasserstein_distance
+from scipy.stats import wasserstein_distance
 
 from data_processing import dict_ids
-from fastjet_preparation import outputs_targets_fastjet, fastjet_tensor
+from fastjet_preparation import fastjet_tensor_preparing, outputs_computing
 from main import build_model
 
 def clustering(model, device, data, data_pad_mask):
     print("entro nel clustering")
-    outputs, outputs_mask, targets, targets_mask = outputs_targets_fastjet(
+    outputs, outputs_mask, targets, targets_mask = outputs_computing(
         model, device,
         data, data_pad_mask
     )
     print("forward finito")
-    outputs_fastjet = fastjet_tensor(
+    outputs_fastjet = fastjet_tensor_preparing(
         outputs, dict_ids, device
     )
-    targets_fastjet = fastjet_tensor(
+    targets_fastjet = fastjet_tensor_preparing(
         targets, dict_ids, device
     )
 
@@ -183,4 +183,4 @@ if __name__ == "__main__":
 
     for var in ["pt", "eta", "phi", "m"]:
         ws_distance = ws_distance_on_variable(clustered_outputs, clustered_targets, variable=var, n_jets=3, bins=50)
-        print(f"Kullback-Leibler divergence of {var}: {ws_distance}")
+        print(f"Wasseristein distance of {var}: {ws_distance}")
