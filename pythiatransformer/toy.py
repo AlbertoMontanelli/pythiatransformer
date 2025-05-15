@@ -21,11 +21,11 @@ EOS_TOKEN_IDX = NUM_CLASSES + 1  # 4
 
 INPUT_DIM = NUM_TOTAL_CLASSES + 1  # one-hot + pT
 OUTPUT_DIM = NUM_TOTAL_CLASSES + 1
-HIDDEN_DIM = 128
-EPOCHS = 4000
+HIDDEN_DIM = 256
+EPOCHS = 8000
 LR = 2e-4
 
-device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
 
 
 # === GENERAZIONE DATI ===
@@ -115,16 +115,6 @@ class ParticleTransformer(nn.Module):
 
 
 def log_eos_prediction(pred, target, mask, eos_token_idx, num_total_classes):
-    """
-    Logga statistiche sulla predizione dell'EOS durante teacher forcing.
-
-    Args:
-        pred: tensor [B, T, F] - output del modello
-        target: tensor [B, T, F] - target vero (contenente EOS)
-        mask: tensor [B, T] - padding mask (True = padding)
-        eos_token_idx: int - indice del token EOS
-        num_total_classes: int - classi totali (e, mu, tau, SOS, EOS)
-    """
     with torch.no_grad():
         pred_ids = torch.argmax(pred[:, :, :num_total_classes], dim=-1)
         target_ids = torch.argmax(target[:, :, :num_total_classes], dim=-1)
@@ -147,35 +137,68 @@ def log_eos_prediction(pred, target, mask, eos_token_idx, num_total_classes):
         print()
 
 
+def print_pred_event(pred, evento_idx, num_total_classes):
+    print(f"\n🔍 Predizioni per evento {evento_idx} (teacher forcing)")
+    for i in range(pred.size(1)):
+        pred_token = pred[evento_idx, i].detach().cpu().numpy()
+        cls_logits = pred_token[:num_total_classes]
+        pt_val = pred_token[-1]
+
+        pred_id = cls_logits.argmax()
+        cls_str = (
+            ["e", "mu", "tau", "SOS", "EOS"][pred_id] if pred_id < 5 else "??"
+        )
+
+        print(
+            f"🧩 Particella {i+1}: {cls_str:<4} | pT = {pt_val:.3f} | logits = {cls_logits.round(2)}"
+        )
+    print()
+
+
 # === LOSS ===
-def mixed_loss(pred, target, mask, alpha=1):
-    # Separazione componenti
+def mixed_loss(pred, target, mask, alpha=20, beta=2.5):
+    """
+    Loss mista con:
+    - CrossEntropy sugli ID (inclusi EOS),
+    - MSE sul pT,
+    - penalità extra per EOS predetti fuori posizione (beta),
+    - rinforzo della loss sugli EOS corretti (alpha).
+    """
+    # Separazione classi e pT
     pred_cls = pred[:, :, :NUM_TOTAL_CLASSES]
     target_cls = target[:, :, :NUM_TOTAL_CLASSES]
     pred_pt = pred[:, :, -1]
     target_pt = target[:, :, -1]
 
-    # ID target come indice
-    target_idx = torch.argmax(target_cls, dim=-1)  # [B, T]
+    # Class index per ogni token
+    target_idx = torch.argmax(target_cls, dim=-1)
+    pred_idx = torch.argmax(pred_cls, dim=-1)
 
-    # CrossEntropy
+    # CrossEntropy standard (token-wise)
     ce = nn.CrossEntropyLoss(reduction="none")
-    ce_loss = ce(pred_cls.transpose(1, 2), target_idx)  # [B, T]
+    ce_loss = ce(pred_cls.transpose(1, 2), target_idx)
 
-    # MSE su pT (solo sui token validi, esclusi i padding)
+    # MSE solo sui pT validi
     mse_loss = nn.functional.mse_loss(pred_pt[~mask], target_pt[~mask])
 
-    # Separazione delle posizioni EOS
-    eos_mask = target_idx == EOS_TOKEN_IDX
+    # Maschere EOS
+    eos_mask_true = target_idx == EOS_TOKEN_IDX  # EOS nei target
+    eos_mask_pred = pred_idx == EOS_TOKEN_IDX  # EOS predetti
+    eos_correct = eos_mask_true & eos_mask_pred & (~mask)  # EOS giusti
+    eos_wrong = eos_mask_pred & (~eos_mask_true) & (~mask)  # EOS sbagliati
 
-    # Loss finale
+    # Loss totale
     total_loss = ce_loss[~mask].mean() + mse_loss
-    if eos_mask.any():
-        eos_loss = ce_loss[eos_mask].mean()
-        print(f"[DEBUG] eos_loss: {eos_loss.item():.4f}, alpha: {alpha}")
-        total_loss += alpha * eos_loss
-    else:
-        print("[DEBUG] nessun EOS trovato nei target")
+
+    # Penalizza EOS fuori posto
+    if eos_wrong.any():
+        extra_eos_penalty = ce_loss[eos_wrong].mean()
+        total_loss += beta * extra_eos_penalty
+
+    # Rinforza EOS corretti
+    if eos_correct.any():
+        eos_correct_loss = ce_loss[eos_correct].mean()
+        total_loss += alpha * eos_correct_loss
 
     return total_loss
 
@@ -208,6 +231,8 @@ losses = []
 for epoch in range(EPOCHS):
     model.train()
     pred = model(inputs, decoder_inputs, None, masks, attn_mask)
+    log_eos_prediction(pred, targets, masks, EOS_TOKEN_IDX, NUM_TOTAL_CLASSES)
+    print_pred_event(pred, evento_idx=0, num_total_classes=NUM_TOTAL_CLASSES)
     loss = mixed_loss(pred, targets, masks)
     loss.backward()
     optimizer.step()
@@ -219,18 +244,19 @@ torch.save(model.state_dict(), "toy_model_with_sos_eos.pt")
 print("✅ Modello salvato in toy_model_with_sos_eos.pt")
 
 # === PLOT ===
+plt.figure()
 plt.plot(losses)
 plt.title("Training Loss (con SOS/EOS)")
 plt.xlabel("Epoch")
 plt.ylabel("Loss")
 plt.grid(True)
-plt.show()
+plt.savefig("toy_training_curve.pdf", dpi=1200)
+plt.close()
 
 # === CONFRONTO TRA TARGET E OUTPUT (teacher forcing) ===
 model.eval()
 with torch.no_grad():
     pred = model(inputs, decoder_inputs, None, masks, attn_mask)
-    log_eos_prediction(pred, targets, masks, EOS_TOKEN_IDX, NUM_TOTAL_CLASSES)
 
 evento_idx = 0
 print(f"\n🔎 Confronto evento {evento_idx} (teacher forcing)\n")
