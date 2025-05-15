@@ -6,9 +6,10 @@ import gc
 
 import torch
 import torch.nn as nn
-from data_processing import dict_ids
 from loguru import logger
 from torch.nn.utils.rnn import pad_sequence
+
+from data_processing import dict_ids
 
 # from torch.nn import Transformer
 # from torch.utils.data import TensorDataset, DataLoader
@@ -289,61 +290,72 @@ class ParticleTransformer(nn.Module):
         output = self.output_projection(output)
         return output
 
-    # === LOSS MISTA ===
-    def mixed_loss(self, output, target, mask, alpha=10.0):
+    def mixed_loss(self, output, target, mask, alpha=10.0, beta=5.0):
         """
-        Combina CrossEntropy per gli ID (one-hot) e MSE per px, py, pz,
-        con un peso extra sulla CE degli EOS token.
-
-        Args:
-            output (Tensor): [B, T, F] - output del modello
-            target (Tensor): [B, T, F] - target ground truth
-            mask (BoolTensor): [B, T] - True = padding
-            alpha (float): peso moltiplicativo per la loss sugli EOS
-
-        Returns:
-            loss (Tensor): valore scalare della loss combinata
+        Combina CrossEntropy per ID e MSE per px,py,pz, con:
+        - rinforzo EOS corretti (alpha),
+        - penalità EOS predetti in posizioni sbagliate (beta).
         """
         device = output.device
 
-        # Separazione delle componenti
-        output_id = output[:, :, : len(dict_ids)]  # one-hot predetta
-        target_id = target[:, :, : len(dict_ids)]  # one-hot target
-        output_p = output[:, :, len(dict_ids) :]  # px,py,pz predetti
-        target_p = target[:, :, len(dict_ids) :]  # px,py,pz target
+        # Separazione componenti
+        output_id = output[:, :, : len(dict_ids)]
+        target_id = target[:, :, : len(dict_ids)]
+        output_p = output[:, :, len(dict_ids) :]
+        target_p = target[:, :, len(dict_ids) :]
 
-        # CrossEntropy sulla componente ID (ignora EOS e padding)
-        ce = nn.CrossEntropyLoss(reduction="none")
+        # Class index
         target_index = torch.argmax(target_id, dim=-1)  # [B, T]
-        ce_loss = ce(output_id.transpose(1, 2), target_index)  # [B, T]
+        pred_index = torch.argmax(output_id, dim=-1)  # [B, T]
 
-        target_index = target_index.to(device)
+        # CE loss per token
+        ce = nn.CrossEntropyLoss(reduction="none")
+        ce_loss = ce(output_id.transpose(1, 2), target_index)
+
         mask = mask.to(device)
+        target_index = target_index.to(device)
+        pred_index = pred_index.to(device)
 
-        eos_index = dict_ids[-999]
-        eos_mask = target_index == eos_index  # EOS tokens
-        valid_mask = (~mask) & (~eos_mask)  # solo token fisici
+        eos_index = dict_ids[-999]  # ID EOS
 
-        # MSE su momenti (solo dove non è EOS né padding)
+        eos_true_mask = target_index == eos_index  # EOS nei target
+        eos_pred_mask = pred_index == eos_index  # EOS predetti
+        padding_mask = mask  # True = padding
+        valid_mask = (~padding_mask) & (
+            ~eos_true_mask
+        )  # token fisici (no pad, no EOS)
+
+        # MSE solo su token validi (no EOS né padding)
         mse_loss = nn.functional.mse_loss(
             output_p[valid_mask], target_p[valid_mask]
         )
 
-        # Verifica che ci sia almeno un EOS
-        eos_ce_loss = ce_loss[eos_mask]
-        if eos_ce_loss.numel() == 0:
-            raise RuntimeError(
-                "mixed_loss(): nessun token EOS trovato nel batch. "
-                "Controlla i target o la costruzione del batch."
-            )
+        # EOS corretti (match EOS predetto == EOS target)
+        eos_correct_mask = eos_true_mask & eos_pred_mask & (~padding_mask)
+        eos_wrong_mask = eos_pred_mask & (~eos_true_mask) & (~padding_mask)
 
-        # Loss finale: CE + MSE + peso sugli EOS
-        eos_ce_mean = eos_ce_loss.mean()
+        # Calcolo singole componenti
+        loss_ce_valid = ce_loss[valid_mask].mean()
+
+        if eos_correct_mask.any():
+            eos_loss = ce_loss[eos_correct_mask].mean()
+        else:
+            eos_loss = torch.tensor(0.0, device=device)
+
+        if eos_wrong_mask.any():
+            extra_eos_penalty = ce_loss[eos_wrong_mask].mean()
+        else:
+            extra_eos_penalty = torch.tensor(0.0, device=device)
+
+        # Loss totale
         total_loss = (
-            ce_loss[valid_mask].mean() + mse_loss + alpha * eos_ce_mean
+            loss_ce_valid
+            + mse_loss
+            + alpha * eos_loss
+            + beta * extra_eos_penalty
         )
 
-        return total_loss, eos_ce_mean.item()
+        return total_loss, eos_loss.item()
 
     def train_one_epoch(self, epoch, optim):
         """This function trains the model for one epoch. It iterates
@@ -550,7 +562,12 @@ class ParticleTransformer(nn.Module):
         return loss_epoch
 
     def train_val(
-        self, num_epochs, optim, val=True, patient_smooth=30, patient_early=10
+        self,
+        num_epochs,
+        optim,
+        val=True,
+        patient_smooth=1000,
+        patient_early=10,
     ):
         """This function trains and validates the model for the given
         number of epochs.
