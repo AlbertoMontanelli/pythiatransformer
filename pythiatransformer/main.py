@@ -1,5 +1,3 @@
-""" """
-
 import os
 
 import matplotlib.pyplot as plt
@@ -17,18 +15,19 @@ from data_processing import (
     loader_train,
     loader_val,
     subset,
+    batch_size
 )
 from transformer import ParticleTransformer
 
 os.environ["PYTORCH_CUDA_ALLOC_CONF"] = "expandable_segments:True"
-device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
+device = torch.device("cuda:1" if torch.cuda.is_available() else "cpu")
 epochs = 100
-steps_per_epoch = 60000 // 32  # dataset_size // batch_size
+steps_per_epoch = 60000 // batch_size  # dataset_size // batch_size
 total_steps = epochs * steps_per_epoch
 
 
 def plot_losses(
-    train_loss, val_loss, filename="learning_curve_alberto.pdf", dpi=1200
+    train_loss, val_loss, filename="learning_curve_leonardo.pdf", dpi=1200
 ):
     plt.figure()
     plt.plot(train_loss, label="Training Loss")
@@ -53,8 +52,8 @@ def build_model():
         test_data_pad_mask=loader_padding_test,
         dim_features=subset.shape[0],
         num_heads=8,
-        num_encoder_layers=4,
-        num_decoder_layers=8,
+        num_encoder_layers=3,
+        num_decoder_layers=6,
         num_units=256,
         dropout=0.1,
         activation=nn.ReLU(),
@@ -65,7 +64,7 @@ def train_and_save_model():
     transformer = build_model()
     transformer.to(device)
 
-    learning_rate = 5e-4
+    learning_rate = 3e-4
     optim = optimizer.Adam(
         transformer.parameters(), lr=learning_rate, weight_decay=1e-4
     )
@@ -81,8 +80,8 @@ def train_and_save_model():
 
     plot_losses(train_loss, val_loss)
 
-    torch.save(transformer.state_dict(), "transformer_model_alberto.pt")
-    logger.info("Modello salvato in transformer_model_alberto.pt")
+    torch.save(transformer.state_dict(), "transformer_model_leonardo.pt")
+    logger.info("Modello salvato in transformer_model_leonardo.pt")
 
 
 # def generate_outputs_and_save():

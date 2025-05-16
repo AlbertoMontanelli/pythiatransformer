@@ -290,7 +290,7 @@ class ParticleTransformer(nn.Module):
         output = self.output_projection(output)
         return output
 
-    def mixed_loss(self, output, target, mask, alpha=30.0, beta=2.5):
+    def mixed_loss(self, output, target, mask, alpha=1, beta=0):
         """
         Combina CrossEntropy per ID e MSE per px,py,pz, con:
         - rinforzo EOS corretti (alpha),
