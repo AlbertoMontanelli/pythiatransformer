@@ -7,6 +7,7 @@ import torch
 import torch.nn as nn
 import torch.optim as optimizer
 from loguru import logger
+from transformers.optimization import get_cosine_schedule_with_warmup
 
 from data_processing import (
     loader_padding_test,
@@ -22,6 +23,8 @@ from transformer import ParticleTransformer
 os.environ["PYTORCH_CUDA_ALLOC_CONF"] = "expandable_segments:True"
 device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
 epochs = 100
+steps_per_epoch = 60000 // 32  # dataset_size // batch_size
+total_steps = epochs * steps_per_epoch
 
 
 def plot_losses(
@@ -63,12 +66,17 @@ def train_and_save_model():
     transformer.to(device)
 
     learning_rate = 5e-4
-
+    optim = optimizer.Adam(
+        transformer.parameters(), lr=learning_rate, weight_decay=1e-4
+    )
+    scheduler = get_cosine_schedule_with_warmup(
+        optim,
+        num_warmup_steps=1000,
+        num_training_steps=total_steps,
+        num_cycles=0.5,  # default: mezzo ciclo coseno
+    )
     train_loss, val_loss = transformer.train_val(
-        num_epochs=epochs,
-        optim=optimizer.Adam(
-            transformer.parameters(), lr=learning_rate, weight_decay=1e-4
-        ),
+        num_epochs=epochs, optim=optim, scheduler=scheduler
     )
 
     plot_losses(train_loss, val_loss)

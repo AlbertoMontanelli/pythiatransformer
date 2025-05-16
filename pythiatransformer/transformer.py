@@ -345,7 +345,7 @@ class ParticleTransformer(nn.Module):
 
         return total_loss, eos_loss.item()
 
-    def train_one_epoch(self, epoch, optim):
+    def train_one_epoch(self, epoch, optim, scheduler):
         """This function trains the model for one epoch. It iterates
         through the training data, computes the model's output and the
         loss, performs backpropagation and updates the model parameters
@@ -425,6 +425,7 @@ class ParticleTransformer(nn.Module):
                 raise ValueError(f"Loss is not finite at epoch {epoch + 1}")
             loss.backward()
             optim.step()
+            scheduler.step()
             loss_epoch += loss.item()
             ce_eos_epoch += eos_ce
 
@@ -553,6 +554,7 @@ class ParticleTransformer(nn.Module):
         self,
         num_epochs,
         optim,
+        scheduler,
         val=True,
         patient_smooth=99,
         patient_early=10,
@@ -602,7 +604,7 @@ class ParticleTransformer(nn.Module):
         logger.info("Training started!")
         for epoch in range(num_epochs):
             torch.cuda.reset_peak_memory_stats()
-            train_loss_epoch = self.train_one_epoch(epoch, optim)
+            train_loss_epoch = self.train_one_epoch(epoch, optim, scheduler)
             val_loss_epoch = self.val_one_epoch(epoch, val)
             # train_loss.append(float(train_loss_epoch))
             # val_loss.append(float(val_loss_epoch))
