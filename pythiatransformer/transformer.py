@@ -294,8 +294,7 @@ class ParticleTransformer(nn.Module):
         """
         Combina CrossEntropy per ID e MSE per px,py,pz, con:
         - rinforzo EOS corretti (alpha),
-        - penalità EOS predetti in posizioni sbagliate (beta),
-        evitando allocazioni inutili per EOS assenti.
+        - penalità EOS predetti in posizioni sbagliate (beta).
         """
         device = output.device
 
@@ -316,31 +315,30 @@ class ParticleTransformer(nn.Module):
         target_index = target_index.to(device)
         pred_index = pred_index.to(device)
 
-        eos_index = dict_ids[-999]  # EOS token index
+        eos_index = dict_ids[-999]
         eos_true_mask = target_index == eos_index
         eos_pred_mask = pred_index == eos_index
-        padding_mask = mask
-        valid_mask = (~padding_mask) & (~eos_true_mask)
+        valid_mask = (~mask) & (~eos_true_mask)
 
-        # MSE sui momenti (no EOS, no padding)
+        # MSE + CE standard
         mse_loss = nn.functional.mse_loss(
             output_p[valid_mask], target_p[valid_mask]
         )
-
-        # CE solo su token fisici (no pad, no EOS)
         loss_ce_valid = ce_loss[valid_mask].mean()
-
-        # Loss totale iniziale
         total_loss = loss_ce_valid + mse_loss
 
-        # Rinforza EOS corretti se presenti
-        eos_correct_mask = eos_true_mask & eos_pred_mask & (~padding_mask)
+        # Default valori a 0.0 per sicurezza
+        eos_loss = torch.tensor(0.0, device=device)
+        extra_eos_penalty = torch.tensor(0.0, device=device)
+
+        # Rinforzo EOS corretti
+        eos_correct_mask = eos_true_mask & eos_pred_mask & (~mask)
         if eos_correct_mask.any():
             eos_loss = ce_loss[eos_correct_mask].mean()
             total_loss += alpha * eos_loss
 
-        # Penalizza EOS fuori posto se presenti
-        eos_wrong_mask = eos_pred_mask & (~eos_true_mask) & (~padding_mask)
+        # Penalità EOS sbagliati
+        eos_wrong_mask = eos_pred_mask & (~eos_true_mask) & (~mask)
         if eos_wrong_mask.any():
             extra_eos_penalty = ce_loss[eos_wrong_mask].mean()
             total_loss += beta * extra_eos_penalty
@@ -556,7 +554,7 @@ class ParticleTransformer(nn.Module):
         num_epochs,
         optim,
         val=True,
-        patient_smooth=999,
+        patient_smooth=99,
         patient_early=10,
     ):
         """This function trains and validates the model for the given

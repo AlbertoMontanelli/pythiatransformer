@@ -21,7 +21,7 @@ from transformer import ParticleTransformer
 
 os.environ["PYTORCH_CUDA_ALLOC_CONF"] = "expandable_segments:True"
 device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
-epochs = 1000
+epochs = 100
 
 
 def plot_losses(
@@ -50,8 +50,8 @@ def build_model():
         test_data_pad_mask=loader_padding_test,
         dim_features=subset.shape[0],
         num_heads=8,
-        num_encoder_layers=5,
-        num_decoder_layers=5,
+        num_encoder_layers=4,
+        num_decoder_layers=8,
         num_units=256,
         dropout=0.1,
         activation=nn.ReLU(),
@@ -66,7 +66,9 @@ def train_and_save_model():
 
     train_loss, val_loss = transformer.train_val(
         num_epochs=epochs,
-        optim=optimizer.Adam(transformer.parameters(), lr=learning_rate),
+        optim=optimizer.Adam(
+            transformer.parameters(), lr=learning_rate, weight_decay=1e-4
+        ),
     )
 
     plot_losses(train_loss, val_loss)

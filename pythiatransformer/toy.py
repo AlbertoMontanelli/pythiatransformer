@@ -226,7 +226,7 @@ attn_mask = nn.Transformer.generate_square_subsequent_mask(targets.size(1)).to(
 
 # === TRAINING ===
 model = ParticleTransformer().to(device)
-optimizer = torch.optim.Adam(model.parameters(), lr=LR)
+optimizer = torch.optim.Adam(model.parameters(), lr=LR, weight_decay=1e-4)
 losses = []
 for epoch in range(EPOCHS):
     model.train()

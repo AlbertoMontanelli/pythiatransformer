@@ -5,9 +5,8 @@ final stable particles into a ROOT file with two separate TTrees.
 from pathlib import Path
 
 import awkward as ak
-from loguru import logger
 import uproot
-
+from loguru import logger
 from pythia8 import Pythia
 
 
@@ -172,4 +171,4 @@ def generate_events(output_file: str, n_events: int):
 
 
 if __name__ == "__main__":
-    generate_events("events.root", n_events=10000)
+    generate_events("events.root", n_events=100000)

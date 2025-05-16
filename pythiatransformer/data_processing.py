@@ -141,7 +141,7 @@ def one_hot_encoding(tensor, dict_ids, num_classes, padding_token=0):
     return one_hot
 
 
-def batching(input, target, shuffle=True, batch_size=100):
+def batching(input, target, shuffle=True, batch_size=32):
     """Create a DataLoader for batching and shuffling input/target pairs."""
     generator = torch.Generator().manual_seed(1)
     loader = DataLoader(
@@ -228,7 +228,7 @@ id_all = np.unique(
 dict_ids = {int(pid): idx for idx, pid in enumerate(id_all)}
 dict_ids[sos_token] = len(dict_ids)
 dict_ids[eos_token] = len(dict_ids)
-print(dict_ids)
+
 num_classes = len(dict_ids)
 
 one_hot_23 = one_hot_encoding(padded_tensor_23, dict_ids, num_classes)
