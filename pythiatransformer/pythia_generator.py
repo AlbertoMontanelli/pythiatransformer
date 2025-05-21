@@ -171,4 +171,4 @@ def generate_events(output_file: str, n_events: int):
 
 
 if __name__ == "__main__":
-    generate_events("events.root", n_events=100000)
+    generate_events("events_10k.root", n_events=10000)

@@ -184,8 +184,8 @@ def train_val_test_split(tensor, train_perc=0.6, val_perc=0.2, test_perc=0.2):
     return tensor[:i1], tensor[i1:i2], tensor[i2:]
 
 
-def load_and_prepare_data(batch_size):
-    with uproot.open("events.root") as file:
+def load_and_prepare_data(filename, batch_size):
+    with uproot.open(filename) as file:
         data_23 = file["tree_23"].arrays(library="ak")
         data_final = file["tree_final"].arrays(library="ak")
 

@@ -10,7 +10,7 @@ from transformers.optimization import get_cosine_schedule_with_warmup
 from data_processing import load_and_prepare_data
 from transformer import ParticleTransformer
 
-print("ciao")
+batch_size = 32
 (
     loader_train,
     loader_val,
@@ -19,11 +19,10 @@ print("ciao")
     loader_padding_val,
     loader_padding_test,
     subset,
-    batch_size
     dict_ids,
     mean_final,
     std_final,
-) = load_and_prepare_data(batch_size=8)
+) = load_and_prepare_data(filename="events_10k.root", batch_size=batch_size)
 print("dizionario")
 print(dict_ids)
 
