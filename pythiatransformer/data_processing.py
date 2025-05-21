@@ -35,7 +35,7 @@ def compute_pt(data, px_key, py_key, new_key):
     return data
 
 
-def awkward_to_padded_targets(data, features, eos_token=-999, sos_token=-998):
+def awkward_to_padded_targets(data, features, eos_token=723, sos_token=-143):
     """Convert Awkward Array to padded torch.Tensor and insert EOS.
 
     Args:
@@ -141,7 +141,7 @@ def one_hot_encoding(tensor, dict_ids, num_classes, padding_token=0):
     return one_hot
 
 
-def batching(input, target, shuffle=True, batch_size=32):
+def batching(input, target, batch_size, shuffle=True):
     """Create a DataLoader for batching and shuffling input/target pairs."""
     generator = torch.Generator().manual_seed(1)
     loader = DataLoader(
@@ -184,98 +184,125 @@ def train_val_test_split(tensor, train_perc=0.6, val_perc=0.2, test_perc=0.2):
     return tensor[:i1], tensor[i1:i2], tensor[i2:]
 
 
-#######################################
-#        ESECUZIONE DATI ROOT        #
-#######################################
+def load_and_prepare_data(batch_size):
+    with uproot.open("events.root") as file:
+        data_23 = file["tree_23"].arrays(library="ak")
+        data_final = file["tree_final"].arrays(library="ak")
 
-with uproot.open("events.root") as file:
-    data_23 = file["tree_23"].arrays(library="ak")
-    data_final = file["tree_final"].arrays(library="ak")
+    data_23, mean_23, std_23 = standardize_features(data_23, ["px_23", "py_23", "pz_23"])
+    data_final, mean_final, std_final = standardize_features(data_final, ["px_final", "py_final", "pz_final"])
 
-# Standardization.
-data_23, mean_23, std_23 = standardize_features(
-    data_23, features=["px_23", "py_23", "pz_23"]
-)
-data_final, mean_final, std_final = standardize_features(
-    data_final, features=["px_final", "py_final", "pz_final"]
-)
+    data_23 = compute_pt(data_23, "px_23", "py_23", "pT_23")
+    data_final = compute_pt(data_final, "px_final", "py_final", "pT_final")
 
-data_23 = compute_pt(data_23, "px_23", "py_23", "pT_23")
-data_final = compute_pt(data_final, "px_final", "py_final", "pT_final")
+    padded_tensor_23, padding_mask_23 = awkward_to_padded_inputs(data_23, ["id_23", "px_23", "py_23", "pz_23", "pT_23"])
+    padded_tensor_final, padding_mask_final = awkward_to_padded_targets(data_final, ["id_final", "px_final", "py_final", "pz_final", "pT_final"])
 
-# Padding.
-padded_tensor_23, padding_mask_23 = awkward_to_padded_inputs(
-    data_23, features=["id_23", "px_23", "py_23", "pz_23", "pT_23"]
-)
-padded_tensor_final, padding_mask_final = awkward_to_padded_targets(
-    data_final,
-    features=["id_final", "px_final", "py_final", "pz_final", "pT_final"],
-)
+    # drop_pt = lambda t: t[:, :, :-1]
+    # padded_tensor_23 = drop_pt(padded_tensor_23)
+    # padded_tensor_final = drop_pt(padded_tensor_final)
 
-# Remove pT before one-hot
-drop_pt = lambda t: t[:, :, :-1]
-padded_tensor_23 = drop_pt(padded_tensor_23)
-padded_tensor_final = drop_pt(padded_tensor_final)
+    drop_p = lambda t: t[:, :, :-4]
+    padded_tensor_23 = drop_p(padded_tensor_23)
+    padded_tensor_final = drop_p(padded_tensor_final)
 
-# Dict ID & One-hot
-eos_token = -999
-sos_token = -998
-id_all = np.unique(
-    np.concatenate(
-        [ak.flatten(data_23["id_23"]), ak.flatten(data_final["id_final"])]
+    eos_token = -999
+    sos_token = -998
+    id_all = np.unique(np.concatenate([ak.flatten(data_23["id_23"]), ak.flatten(data_final["id_final"])]))
+    dict_ids = {int(pid): idx for idx, pid in enumerate(id_all)}
+    dict_ids[sos_token] = len(dict_ids)
+    dict_ids[eos_token] = len(dict_ids)
+    num_classes = len(dict_ids)
+
+    one_hot_23 = one_hot_encoding(padded_tensor_23, dict_ids, num_classes)
+    one_hot_final = one_hot_encoding(padded_tensor_final, dict_ids, num_classes)
+
+    # padded_tensor_23 = torch.cat((one_hot_23, padded_tensor_23[:, :, 1:]), dim=-1)
+    # padded_tensor_final = torch.cat((one_hot_final, padded_tensor_final[:, :, 1:]), dim=-1)
+
+    train_23, val_23, test_23 = train_val_test_split(padded_tensor_23)
+    train_final, val_final, test_final = train_val_test_split(padded_tensor_final)
+    mask_train_23, mask_val_23, mask_test_23 = train_val_test_split(padding_mask_23)
+    mask_train_final, mask_val_final, mask_test_final = train_val_test_split(padding_mask_final)
+
+    loader_train = batching(train_23, train_final, batch_size)
+    loader_val = batching(val_23, val_final, batch_size)
+    loader_test = batching(test_23, test_final, batch_size)
+    loader_padding_train = batching(mask_train_23, mask_train_final, batch_size)
+    loader_padding_val = batching(mask_val_23, mask_val_final, batch_size)
+    loader_padding_test = batching(mask_test_23, mask_test_final, batch_size)
+
+    subset = train_23[0, 0, :]
+
+    return (
+        loader_train,
+        loader_val,
+        loader_test,
+        loader_padding_train,
+        loader_padding_val,
+        loader_padding_test,
+        subset,
+        dict_ids,
+        mean_final,
+        std_final,
     )
+
+    masses = torch.tensor(
+    [
+        0.93827,
+        0.93957,
+        0.49368,
+        0.13957,
+        0,
+        0,
+        0.10566,
+        0,
+        0.000511,
+        4.183,
+        1.273,
+        0.0935,
+        0.00216,
+        0.0047,
+        0.0047,
+        0.00216,
+        0.0935,
+        1.273,
+        4.183,
+        0.000511,
+        0,
+        0.10566,
+        0,
+        0,
+        0,
+        0,
+        0.49761,
+        0.13957,
+        0.49368,
+        0.93957,
+        0.93827,
+        0,
+        0,
+    ]
 )
-dict_ids = {int(pid): idx for idx, pid in enumerate(id_all)}
-dict_ids[sos_token] = len(dict_ids)
-dict_ids[eos_token] = len(dict_ids)
 
-num_classes = len(dict_ids)
+# if __name__ == "__main__":
 
-one_hot_23 = one_hot_encoding(padded_tensor_23, dict_ids, num_classes)
-one_hot_final = one_hot_encoding(padded_tensor_final, dict_ids, num_classes)
-
-padded_tensor_23 = torch.cat((one_hot_23, padded_tensor_23[:, :, 1:]), dim=-1)
-padded_tensor_final = torch.cat(
-    (one_hot_final, padded_tensor_final[:, :, 1:]), dim=-1
-)
-
-# Split
-train_23, val_23, test_23 = train_val_test_split(padded_tensor_23)
-train_final, val_final, test_final = train_val_test_split(padded_tensor_final)
-mask_train_23, mask_val_23, mask_test_23 = train_val_test_split(
-    padding_mask_23
-)
-mask_train_final, mask_val_final, mask_test_final = train_val_test_split(
-    padding_mask_final
-)
-
-# Loader
-loader_train = batching(train_23, train_final)
-loader_val = batching(val_23, val_final)
-loader_test = batching(test_23, test_final)
-loader_padding_train = batching(mask_train_23, mask_train_final)
-loader_padding_val = batching(mask_val_23, mask_val_final)
-loader_padding_test = batching(mask_test_23, mask_test_final)
-
-subset = train_23[0, 0, :]
-
-if __name__ == "__main__":
     # ===================== DEBUG: verifica EOS nei dati batchati ===============
-    inputs, targets = next(iter(loader_train))
-    _, targets_mask = next(iter(loader_padding_train))
+    # inputs, targets = next(iter(loader_train))
+    # _, targets_mask = next(iter(loader_padding_train))
 
-    id_pred = torch.argmax(targets[:, :, : len(dict_ids)], dim=-1)
-    eos_index = dict_ids[eos_token]
-    valid_mask = ~targets_mask
-    num_real = valid_mask.sum(dim=1)
-    last_index = num_real - 1
-    B = targets.size(0)
-    last_ids = id_pred[torch.arange(B), last_index]
+    # id_pred = torch.argmax(targets[:, :, : len(dict_ids)], dim=-1)
+    # eos_index = dict_ids[eos_token]
+    # valid_mask = ~targets_mask
+    # num_real = valid_mask.sum(dim=1)
+    # last_index = num_real - 1
+    # B = targets.size(0)
+    # last_ids = id_pred[torch.arange(B), last_index]
 
-    num_eos = (last_ids == eos_index).sum().item()
-    print(f"\n✅ DEBUG BATCH: {num_eos}/{B} eventi terminano con EOS")
-    assert torch.all(
-        last_ids == eos_index
-    ), "❌ Alcuni target batchati non terminano con EOS!"
-    print("✅ Tutti i target nel batch terminano con EOS")
+    # num_eos = (last_ids == eos_index).sum().item()
+    # print(f"\n✅ DEBUG BATCH: {num_eos}/{B} eventi terminano con EOS")
+    # assert torch.all(
+    #     last_ids == eos_index
+    # ), "❌ Alcuni target batchati non terminano con EOS!"
+    # print("✅ Tutti i target nel batch terminano con EOS")
     # ==================================================================
