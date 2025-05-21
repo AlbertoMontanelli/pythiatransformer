@@ -9,16 +9,24 @@ import torch.optim as optimizer
 from loguru import logger
 from transformers.optimization import get_cosine_schedule_with_warmup
 
-from data_processing import (
-    loader_padding_test,
-    loader_padding_train,
-    loader_padding_val,
-    loader_test,
+from data_processing import load_and_prepare_data
+from transformer import ParticleTransformer
+
+print("ciao")
+(
     loader_train,
     loader_val,
+    loader_test,
+    loader_padding_train,
+    loader_padding_val,
+    loader_padding_test,
     subset,
-)
-from transformer import ParticleTransformer
+    dict_ids,
+    mean_final,
+    std_final,
+) = load_and_prepare_data(batch_size=8)
+print("dizionario")
+print(dict_ids)
 
 os.environ["PYTORCH_CUDA_ALLOC_CONF"] = "expandable_segments:True"
 device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
@@ -53,17 +61,24 @@ def build_model():
         test_data_pad_mask=loader_padding_test,
         dim_features=subset.shape[0],
         num_heads=8,
-        num_encoder_layers=4,
-        num_decoder_layers=8,
+        num_encoder_layers=2,
+        num_decoder_layers=4,
         num_units=256,
         dropout=0.1,
         activation=nn.ReLU(),
+        dict_ids=dict_ids
     )
 
 
 def train_and_save_model():
     transformer = build_model()
     transformer.to(device)
+    num_params = sum(p.numel() for p in transformer.parameters() if p.requires_grad)
+    print(f"📊 Numero totale di parametri allenabili: {num_params}")
+    print(f"Numero totali di parametri")
+    print(sum(p.numel() for p in transformer.parameters()))
+
+
 
     learning_rate = 5e-4
     optim = optimizer.Adam(
