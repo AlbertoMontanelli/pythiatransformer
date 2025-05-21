@@ -1,5 +1,3 @@
-""" """
-
 import os
 
 import matplotlib.pyplot as plt
@@ -21,6 +19,7 @@ print("ciao")
     loader_padding_val,
     loader_padding_test,
     subset,
+    batch_size
     dict_ids,
     mean_final,
     std_final,
@@ -29,14 +28,14 @@ print("dizionario")
 print(dict_ids)
 
 os.environ["PYTORCH_CUDA_ALLOC_CONF"] = "expandable_segments:True"
-device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
+device = torch.device("cuda:1" if torch.cuda.is_available() else "cpu")
 epochs = 100
-steps_per_epoch = 60000 // 32  # dataset_size // batch_size
+steps_per_epoch = 60000 // batch_size  # dataset_size // batch_size
 total_steps = epochs * steps_per_epoch
 
 
 def plot_losses(
-    train_loss, val_loss, filename="learning_curve_alberto.pdf", dpi=1200
+    train_loss, val_loss, filename="learning_curve_leonardo.pdf", dpi=1200
 ):
     plt.figure()
     plt.plot(train_loss, label="Training Loss")
@@ -80,7 +79,7 @@ def train_and_save_model():
 
 
 
-    learning_rate = 5e-4
+    learning_rate = 3e-4
     optim = optimizer.Adam(
         transformer.parameters(), lr=learning_rate, weight_decay=1e-4
     )
@@ -96,8 +95,8 @@ def train_and_save_model():
 
     plot_losses(train_loss, val_loss)
 
-    torch.save(transformer.state_dict(), "transformer_model_alberto.pt")
-    logger.info("Modello salvato in transformer_model_alberto.pt")
+    torch.save(transformer.state_dict(), "transformer_model_leonardo.pt")
+    logger.info("Modello salvato in transformer_model_leonardo.pt")
 
 
 # def generate_outputs_and_save():

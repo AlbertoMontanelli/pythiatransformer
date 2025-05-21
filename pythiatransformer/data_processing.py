@@ -8,7 +8,7 @@ from torch.utils.data import DataLoader, TensorDataset
 #           UTILITY FUNCTIONS         #
 #######################################
 
-
+batch_size = 16
 def standardize_features(data, features):
     """Standardize features (mean=0, std=1) directly on Awkward Arrays.
 
@@ -141,7 +141,7 @@ def one_hot_encoding(tensor, dict_ids, num_classes, padding_token=0):
     return one_hot
 
 
-def batching(input, target, batch_size, shuffle=True):
+def batching(input, target, shuffle=True, batch_size=batch_size):
     """Create a DataLoader for batching and shuffling input/target pairs."""
     generator = torch.Generator().manual_seed(1)
     loader = DataLoader(
