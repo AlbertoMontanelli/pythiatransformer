@@ -9,8 +9,6 @@ import torch.nn as nn
 from loguru import logger
 from torch.nn.utils.rnn import pad_sequence
 
-from data_processing import dict_ids
-
 # from torch.nn import Transformer
 # from torch.utils.data import TensorDataset, DataLoader
 
@@ -61,7 +59,7 @@ class ParticleTransformer(nn.Module):
         num_decoder_layers,
         num_units,
         dropout,
-        activation,
+        activation
     ):
         """
         Args:
