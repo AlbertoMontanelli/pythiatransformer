@@ -145,25 +145,6 @@ class ParticleTransformer(nn.Module):
 
         self.build_projection_layer()
         self.initialize_transformer()
-        # logger.info("Data preprocessing...")
-        # self.train_data = self.data_processing(input_train, target_train)
-        # self.val_data = self.data_processing(input_val, target_val, False)
-        # self.test_data = self.data_processing(input_test, target_test, False)
-        # self.attention_train_data = self.data_processing(
-        #     attention_input_train,
-        #     attention_target_train
-        # )
-        # self.attention_val_data = self.data_processing(
-        #     attention_input_val,
-        #     attention_target_val,
-        #     False
-        # )
-        # self.attention_test_data = self.data_processing(
-        #     attention_input_test,
-        #     attention_target_test,
-        #     False
-        # )
-        # logger.info("Data preprocessed.")
 
     def build_projection_layer(self):
         """This function transforms input and output data into a
@@ -204,33 +185,6 @@ class ParticleTransformer(nn.Module):
             f"activation function: {self.activation}."
         )
 
-    # def data_processing(self, input, target, shuffle = True):
-    #     """This function prepares the data for training by splitting it
-    #     into batches and shuffling the training data.
-
-    #     Args:
-    #         shuffle (bool):
-    #     Returns:
-    #         loader (Iterator): An iterator for the training
-    #                                     data, with batching and
-    #                                     shuffling enabled.
-    #         loader (Iterator): An iterator for the test data, with
-    #                                 batching and shuffling enabled.
-
-    #     """
-    #     seed = 1
-    #     generator = torch.Generator() # creation of a new generator
-    #     generator.manual_seed(seed)
-    #     set = TensorDataset(input, target)
-
-    #     loader = DataLoader(
-    #         set,
-    #         self.batch_size,
-    #         shuffle = shuffle,
-    #         generator = generator if shuffle else None
-    #     )
-
-    #     return loader
 
     def de_padding(self, input, padding_mask):
         """ """
@@ -288,60 +242,7 @@ class ParticleTransformer(nn.Module):
         output = self.output_projection(output)
         return output
 
-    def mixed_loss(self, output, target, mask, alpha=1, beta=0):
-        """
-        Combina CrossEntropy per ID e MSE per px,py,pz, con:
-        - rinforzo EOS corretti (alpha),
-        - penalità EOS predetti in posizioni sbagliate (beta).
-        """
-        device = output.device
 
-        # Separazione componenti
-        output_id = output[:, :, : len(dict_ids)]
-        target_id = target[:, :, : len(dict_ids)]
-        output_p = output[:, :, len(dict_ids) :]
-        target_p = target[:, :, len(dict_ids) :]
-
-        # Indici
-        target_index = torch.argmax(target_id, dim=-1)
-        pred_index = torch.argmax(output_id, dim=-1)
-
-        ce = nn.CrossEntropyLoss(reduction="none")
-        ce_loss = ce(output_id.transpose(1, 2), target_index)
-
-        mask = mask.to(device)
-        target_index = target_index.to(device)
-        pred_index = pred_index.to(device)
-
-        eos_index = dict_ids[-999]
-        eos_true_mask = target_index == eos_index
-        eos_pred_mask = pred_index == eos_index
-        valid_mask = (~mask) & (~eos_true_mask)
-
-        # MSE + CE standard
-        mse_loss = nn.functional.mse_loss(
-            output_p[valid_mask], target_p[valid_mask]
-        )
-        loss_ce_valid = ce_loss[valid_mask].mean()
-        total_loss = loss_ce_valid + mse_loss
-
-        # Default valori a 0.0 per sicurezza
-        eos_loss = torch.tensor(0.0, device=device)
-        extra_eos_penalty = torch.tensor(0.0, device=device)
-
-        # Rinforzo EOS corretti
-        eos_correct_mask = eos_true_mask & eos_pred_mask & (~mask)
-        if eos_correct_mask.any():
-            eos_loss = ce_loss[eos_correct_mask].mean()
-            total_loss += alpha * eos_loss
-
-        # Penalità EOS sbagliati
-        eos_wrong_mask = eos_pred_mask & (~eos_true_mask) & (~mask)
-        if eos_wrong_mask.any():
-            extra_eos_penalty = ce_loss[eos_wrong_mask].mean()
-            total_loss += beta * extra_eos_penalty
-
-        return total_loss, eos_loss.item()
 
     def train_one_epoch(self, epoch, optim, scheduler):
         """This function trains the model for one epoch. It iterates
@@ -427,11 +328,11 @@ class ParticleTransformer(nn.Module):
             loss_epoch += loss.item()
             ce_eos_epoch += eos_ce
 
-            # del input, target, input_padding_mask, target_padding_mask, output, loss, attention_mask
-            # torch.cuda.empty_cache()
+            del input, target, input_padding_mask, target_padding_mask, output, loss, attention_mask
+            torch.cuda.empty_cache()
 
-        # gc.collect() # forcing garbage collector
-        # torch.cuda.empty_cache()
+        gc.collect() # forcing garbage collector
+        torch.cuda.empty_cache()
 
         logger.debug(f"Training loss at epoch {epoch + 1}: {loss_epoch:.4f}")
         logger.debug(
@@ -531,11 +432,11 @@ class ParticleTransformer(nn.Module):
                 loss_epoch += loss.item()
                 ce_eos_epoch += eos_ce
 
-                # del input, target, input_padding_mask, target_padding_mask, output, loss, attention_mask
-                # torch.cuda.empty_cache()
+                del input, target, input_padding_mask, target_padding_mask, output, loss, attention_mask
+                torch.cuda.empty_cache()
 
-        # gc.collect()
-        # torch.cuda.empty_cache()
+        gc.collect()
+        torch.cuda.empty_cache()
 
         if val:
             logger.debug(
@@ -775,3 +676,63 @@ class ParticleTransformer(nn.Module):
         )
 
         return padded_outputs, padding_mask
+
+
+# ÷÷÷÷÷÷÷÷÷÷÷÷÷÷÷÷÷÷÷÷÷÷÷÷÷÷÷÷÷÷÷÷÷÷÷÷÷÷÷÷÷÷÷÷÷÷÷÷÷÷÷÷÷÷÷÷÷÷÷÷÷÷÷÷÷÷÷÷÷÷÷÷÷÷÷÷÷÷÷÷÷÷÷÷÷÷÷÷÷÷÷÷÷
+
+# MIXED LOSS VECCHIA
+
+    # def mixed_loss(self, output, target, mask, alpha=1, beta=0):
+    #     """
+    #     Combina CrossEntropy per ID e MSE per px,py,pz, con:
+    #     - rinforzo EOS corretti (alpha),
+    #     - penalità EOS predetti in posizioni sbagliate (beta).
+    #     """
+    #     device = output.device
+
+    #     # Separazione componenti
+    #     output_id = output[:, :, : len(dict_ids)]
+    #     target_id = target[:, :, : len(dict_ids)]
+    #     output_p = output[:, :, len(dict_ids) :]
+    #     target_p = target[:, :, len(dict_ids) :]
+
+    #     # Indici
+    #     target_index = torch.argmax(target_id, dim=-1)
+    #     pred_index = torch.argmax(output_id, dim=-1)
+
+    #     ce = nn.CrossEntropyLoss(reduction="none")
+    #     ce_loss = ce(output_id.transpose(1, 2), target_index)
+
+    #     mask = mask.to(device)
+    #     target_index = target_index.to(device)
+    #     pred_index = pred_index.to(device)
+
+    #     eos_index = dict_ids[-999]
+    #     eos_true_mask = target_index == eos_index
+    #     eos_pred_mask = pred_index == eos_index
+    #     valid_mask = (~mask) & (~eos_true_mask)
+
+    #     # MSE + CE standard
+    #     mse_loss = nn.functional.mse_loss(
+    #         output_p[valid_mask], target_p[valid_mask]
+    #     )
+    #     loss_ce_valid = ce_loss[valid_mask].mean()
+    #     total_loss = loss_ce_valid + mse_loss
+
+    #     # Default valori a 0.0 per sicurezza
+    #     eos_loss = torch.tensor(0.0, device=device)
+    #     extra_eos_penalty = torch.tensor(0.0, device=device)
+
+    #     # Rinforzo EOS corretti
+    #     eos_correct_mask = eos_true_mask & eos_pred_mask & (~mask)
+    #     if eos_correct_mask.any():
+    #         eos_loss = ce_loss[eos_correct_mask].mean()
+    #         total_loss += alpha * eos_loss
+
+    #     # Penalità EOS sbagliati
+    #     eos_wrong_mask = eos_pred_mask & (~eos_true_mask) & (~mask)
+    #     if eos_wrong_mask.any():
+    #         extra_eos_penalty = ce_loss[eos_wrong_mask].mean()
+    #         total_loss += beta * extra_eos_penalty
+
+    #     return total_loss, eos_loss.item()

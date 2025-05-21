@@ -35,7 +35,7 @@ def compute_pt(data, px_key, py_key, new_key):
     return data
 
 
-def awkward_to_padded_targets(data, features, eos_token=723, sos_token=-143):
+def awkward_to_padded_targets(data, features, eos_token=723, sos_token=-443):
     """Convert Awkward Array to padded torch.Tensor and insert EOS.
 
     Args:
@@ -118,29 +118,6 @@ def awkward_to_padded_inputs(data, features):
     return padded_tensor, padding_mask
 
 
-def one_hot_encoding(tensor, dict_ids, num_classes, padding_token=0):
-    """Apply one-hot encoding to IDs in a tensor, handling EOS and padding.
-
-    Args:
-        tensor (torch.Tensor): Input tensor.
-        dict_ids (dict): Mapping of PDG IDs to one-hot indices.
-        num_classes (int): Total number of classes.
-        eos_token (int): EOS token.
-        padding_token (int): Token to treat as padding.
-
-    Returns:
-        torch.Tensor: One-hot-encoded tensor.
-    """
-    ids = tensor[:, :, 0].long()
-    one_hot = torch.zeros(tensor.size(0), tensor.size(1), num_classes)
-    for pdg_id, index in dict_ids.items():
-        one_hot[ids == pdg_id] = torch.nn.functional.one_hot(
-            torch.tensor(index), num_classes=num_classes
-        ).float()
-    one_hot[ids == padding_token] = 0
-    return one_hot
-
-
 def batching(input, target, shuffle=True, batch_size=batch_size):
     """Create a DataLoader for batching and shuffling input/target pairs."""
     generator = torch.Generator().manual_seed(1)
@@ -183,6 +160,44 @@ def train_val_test_split(tensor, train_perc=0.6, val_perc=0.2, test_perc=0.2):
     i2 = i1 + int(val_perc * n)
     return tensor[:i1], tensor[i1:i2], tensor[i2:]
 
+def embedding(tensor):
+    dict_ids = {
+        21: 30, # gluon
+        22: 31, # photon
+        -12: 32, # antineutrino e 
+        12: 33, # neutrino e
+        -14: 34, # antineutrino mu
+        14: 35, # neutrino mu
+        -16: 36, # antineutrino tau
+        16: 37, # neutrino tau
+        -11: 38, # positron
+        11: 39, # electron
+        -2: 40, # antiup
+        2: 41, # up
+        -1: 42, # antidown
+        1: 43, # down
+        -3: 44, # antistrange
+        3: 45, # strange
+        -13: 46, # antimu
+        13: 47, # mu
+        -211: 48, # pi-
+        211: 49, # pi +
+        -321: 50, # K-
+        321: 51, # K+
+        130: 52, # K0 long
+        -2212: 53, # antiproton
+        2212: 54, # proton
+        -2112: 55, # antineutron
+        2112: 56, # neutron
+        -4: 57, # anticharm
+        4: 58, # charm
+        -5: 59, # antibottom
+        5: 60 # bottom
+    }
+    for pdg_id, index in dict_ids.items():
+        mask = tensor[:, :, 0] == pdg_id
+        tensor[:, :, 0][mask] = index
+    return tensor
 
 def load_and_prepare_data(filename, batch_size):
     with uproot.open(filename) as file:
@@ -206,19 +221,14 @@ def load_and_prepare_data(filename, batch_size):
     padded_tensor_23 = drop_p(padded_tensor_23)
     padded_tensor_final = drop_p(padded_tensor_final)
 
-    eos_token = -999
-    sos_token = -998
-    id_all = np.unique(np.concatenate([ak.flatten(data_23["id_23"]), ak.flatten(data_final["id_final"])]))
-    dict_ids = {int(pid): idx for idx, pid in enumerate(id_all)}
-    dict_ids[sos_token] = len(dict_ids)
-    dict_ids[eos_token] = len(dict_ids)
-    num_classes = len(dict_ids)
+    print("evento 0 per il 23 prima dell'embedding:\n", padded_tensor_23[0, :, :])
+    print("evento 0 per il finale prima dell'embedding:\n", padded_tensor_final[0, :, :])
 
-    one_hot_23 = one_hot_encoding(padded_tensor_23, dict_ids, num_classes)
-    one_hot_final = one_hot_encoding(padded_tensor_final, dict_ids, num_classes)
+    padded_tensor_23 = embedding(padded_tensor_23)
+    padded_tensor_final = embedding(padded_tensor_final)
 
-    # padded_tensor_23 = torch.cat((one_hot_23, padded_tensor_23[:, :, 1:]), dim=-1)
-    # padded_tensor_final = torch.cat((one_hot_final, padded_tensor_final[:, :, 1:]), dim=-1)
+    print("evento 0 per il 23 dopo l'embedding:\n", padded_tensor_23[0, :, :])
+    print("evento 0 per il finale dopo l'embedding:\n", padded_tensor_final[0, :, :])
 
     train_23, val_23, test_23 = train_val_test_split(padded_tensor_23)
     train_final, val_final, test_final = train_val_test_split(padded_tensor_final)
@@ -247,45 +257,6 @@ def load_and_prepare_data(filename, batch_size):
         std_final,
     )
 
-masses = torch.tensor(
-[
-    0.93827,
-    0.93957,
-    0.49368,
-    0.13957,
-    0,
-    0,
-    0.10566,
-    0,
-    0.000511,
-    4.183,
-    1.273,
-    0.0935,
-    0.00216,
-    0.0047,
-    0.0047,
-    0.00216,
-    0.0935,
-    1.273,
-    4.183,
-    0.000511,
-    0,
-    0.10566,
-    0,
-    0,
-    0,
-    0,
-    0.49761,
-    0.13957,
-    0.49368,
-    0.93957,
-    0.93827,
-    0,
-    0,
-]
-)
-
-dict = {-2212: 0, -2112: 1, -321: 2, -211: 3, -16: 4, -14: 5, -13: 6, -12: 7, -11: 8, -5: 9, -4: 10, -3: 11, -2: 12, -1: 13, 1: 14, 2: 15, 3: 16, 4: 17, 5: 18, 11: 19, 12: 20, 13: 21, 14: 22, 16: 23, 21: 24, 22: 25, 130: 26, 211: 27, 321: 28, 2112: 29, 2212: 30, -998: 31, -999: 32}
 
 # if __name__ == "__main__":
 
@@ -307,4 +278,53 @@ dict = {-2212: 0, -2112: 1, -321: 2, -211: 3, -16: 4, -14: 5, -13: 6, -12: 7, -1
     #     last_ids == eos_index
     # ), "❌ Alcuni target batchati non terminano con EOS!"
     # print("✅ Tutti i target nel batch terminano con EOS")
-    # ==================================================================
+    
+
+
+
+
+
+
+# ====================================================================================
+
+# ROBA PER LO ONE HOT INUTILE ADESSO
+
+
+#     def one_hot_encoding(tensor, dict_ids, num_classes, padding_token=0):
+#     """Apply one-hot encoding to IDs in a tensor, handling EOS and padding.
+
+#     Args:
+#         tensor (torch.Tensor): Input tensor.
+#         dict_ids (dict): Mapping of PDG IDs to one-hot indices.
+#         num_classes (int): Total number of classes.
+#         eos_token (int): EOS token.
+#         padding_token (int): Token to treat as padding.
+
+#     Returns:
+#         torch.Tensor: One-hot-encoded tensor.
+#     """
+#     ids = tensor[:, :, 0].long()
+#     one_hot = torch.zeros(tensor.size(0), tensor.size(1), num_classes)
+#     for pdg_id, index in dict_ids.items():
+#         one_hot[ids == pdg_id] = torch.nn.functional.one_hot(
+#             torch.tensor(index), num_classes=num_classes
+#         ).float()
+#     one_hot[ids == padding_token] = 0
+#     return one_hot
+
+
+#     eos_token = -999
+#     sos_token = -998
+#     id_all = np.unique(np.concatenate([ak.flatten(data_23["id_23"]), ak.flatten(data_final["id_final"])]))
+#     dict_ids = {int(pid): idx for idx, pid in enumerate(id_all)}
+#     dict_ids[sos_token] = len(dict_ids)
+#     dict_ids[eos_token] = len(dict_ids)
+#     num_classes = len(dict_ids)
+
+#     one_hot_23 = one_hot_encoding(padded_tensor_23, dict_ids, num_classes)
+#     one_hot_final = one_hot_encoding(padded_tensor_final, dict_ids, num_classes)
+
+#     padded_tensor_23 = torch.cat((one_hot_23, padded_tensor_23[:, :, 1:]), dim=-1)
+#     padded_tensor_final = torch.cat((one_hot_final, padded_tensor_final[:, :, 1:]), dim=-1)
+
+
