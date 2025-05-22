@@ -8,7 +8,6 @@ from torch.utils.data import DataLoader, TensorDataset
 #           UTILITY FUNCTIONS         #
 #######################################
 
-batch_size = 16
 def standardize_features(data, features):
     """Standardize features (mean=0, std=1) directly on Awkward Arrays.
 
@@ -35,7 +34,7 @@ def compute_pt(data, px_key, py_key, new_key):
     return data
 
 
-def awkward_to_padded_targets(data, features, eos_token=723, sos_token=-443):
+def awkward_to_padded_targets(data, features, eos_token=61, sos_token=62):
     """Convert Awkward Array to padded torch.Tensor and insert EOS.
 
     Args:
@@ -118,7 +117,7 @@ def awkward_to_padded_inputs(data, features):
     return padded_tensor, padding_mask
 
 
-def batching(input, target, shuffle=True, batch_size=batch_size):
+def batching(input, target, batch_size, shuffle=True):
     """Create a DataLoader for batching and shuffling input/target pairs."""
     generator = torch.Generator().manual_seed(1)
     loader = DataLoader(
@@ -132,7 +131,7 @@ def batching(input, target, shuffle=True, batch_size=batch_size):
     return loader
 
 
-def train_val_test_split(tensor, train_perc=0.6, val_perc=0.2, test_perc=0.2):
+def train_val_test_split(tensor, train_perc=0.8, val_perc=0.19, test_perc=0.01):
     """Split a tensor into training, validation, and test sets.
 
     Args:
@@ -160,7 +159,7 @@ def train_val_test_split(tensor, train_perc=0.6, val_perc=0.2, test_perc=0.2):
     i2 = i1 + int(val_perc * n)
     return tensor[:i1], tensor[i1:i2], tensor[i2:]
 
-def embedding(tensor):
+def pdg_to_index(tensor, padding_mask):
     dict_ids = {
         21: 30, # gluon
         22: 31, # photon
@@ -197,6 +196,8 @@ def embedding(tensor):
     for pdg_id, index in dict_ids.items():
         mask = tensor[:, :, 0] == pdg_id
         tensor[:, :, 0][mask] = index
+    tensor[~padding_mask] = tensor[~padding_mask] - 29 
+    tensor = tensor.long()
     return tensor
 
 def load_and_prepare_data(filename, batch_size):
@@ -221,14 +222,14 @@ def load_and_prepare_data(filename, batch_size):
     padded_tensor_23 = drop_p(padded_tensor_23)
     padded_tensor_final = drop_p(padded_tensor_final)
 
-    print("evento 0 per il 23 prima dell'embedding:\n", padded_tensor_23[0, :, :])
-    print("evento 0 per il finale prima dell'embedding:\n", padded_tensor_final[0, :, :])
+    print("evento 0 per il 23 prima del pdg_to_index:\n", padded_tensor_23[0, :, :])
+    print("evento 0 per il finale prima del pdg_to_index:\n", padded_tensor_final[0, :, :])
 
-    padded_tensor_23 = embedding(padded_tensor_23)
-    padded_tensor_final = embedding(padded_tensor_final)
+    padded_tensor_23 = pdg_to_index(padded_tensor_23, padding_mask_23)
+    padded_tensor_final = pdg_to_index(padded_tensor_final, padding_mask_final)
 
-    print("evento 0 per il 23 dopo l'embedding:\n", padded_tensor_23[0, :, :])
-    print("evento 0 per il finale dopo l'embedding:\n", padded_tensor_final[0, :, :])
+    print("evento 0 per il 23 dopo il pdg_to_index:\n", padded_tensor_23[0, :, :])
+    print("evento 0 per il finale dopo il pdg_to_index:\n", padded_tensor_final[0, :, :])
 
     train_23, val_23, test_23 = train_val_test_split(padded_tensor_23)
     train_final, val_final, test_final = train_val_test_split(padded_tensor_final)
@@ -252,7 +253,6 @@ def load_and_prepare_data(filename, batch_size):
         loader_padding_val,
         loader_padding_test,
         subset,
-        dict_ids,
         mean_final,
         std_final,
     )
@@ -273,11 +273,11 @@ def load_and_prepare_data(filename, batch_size):
     # last_ids = id_pred[torch.arange(B), last_index]
 
     # num_eos = (last_ids == eos_index).sum().item()
-    # print(f"\n✅ DEBUG BATCH: {num_eos}/{B} eventi terminano con EOS")
+    # print(f"\n DEBUG BATCH: {num_eos}/{B} eventi terminano con EOS")
     # assert torch.all(
     #     last_ids == eos_index
-    # ), "❌ Alcuni target batchati non terminano con EOS!"
-    # print("✅ Tutti i target nel batch terminano con EOS")
+    # ), "Alcuni target batchati non terminano con EOS!"
+    # print("Tutti i target nel batch terminano con EOS")
     
 
 

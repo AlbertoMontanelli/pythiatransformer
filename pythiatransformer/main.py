@@ -19,17 +19,14 @@ batch_size = 32
     loader_padding_val,
     loader_padding_test,
     subset,
-    dict_ids,
     mean_final,
     std_final,
 ) = load_and_prepare_data(filename="events_10k.root", batch_size=batch_size)
-print("dizionario")
-print(dict_ids)
 
 os.environ["PYTORCH_CUDA_ALLOC_CONF"] = "expandable_segments:True"
 device = torch.device("cuda:1" if torch.cuda.is_available() else "cpu")
 epochs = 100
-steps_per_epoch = 60000 // batch_size  # dataset_size // batch_size
+steps_per_epoch = len(loader_train)  # dataset_size // batch_size
 total_steps = epochs * steps_per_epoch
 
 
@@ -51,20 +48,20 @@ def plot_losses(
 def build_model():
     """Build a unique istance of ParticleTransformer class."""
     return ParticleTransformer(
-        train_data=loader_train,
-        val_data=loader_val,
-        test_data=loader_test,
-        train_data_pad_mask=loader_padding_train,
-        val_data_pad_mask=loader_padding_val,
-        test_data_pad_mask=loader_padding_test,
-        dim_features=subset.shape[0],
-        num_heads=8,
-        num_encoder_layers=2,
-        num_decoder_layers=4,
-        num_units=256,
-        dropout=0.1,
-        activation=nn.ReLU(),
-        dict_ids=dict_ids
+        train_data = loader_train,
+        val_data = loader_val,
+        test_data = loader_test,
+        train_data_pad_mask = loader_padding_train,
+        val_data_pad_mask = loader_padding_val,
+        test_data_pad_mask = loader_padding_test,
+        dim_features = subset.shape[0],
+        num_heads = 8,
+        num_encoder_layers = 2,
+        num_decoder_layers = 4,
+        num_units = 64,
+        num_classes = 34,
+        dropout = 0.1,
+        activation = nn.ReLU()
     )
 
 
@@ -76,20 +73,13 @@ def train_and_save_model():
     print(f"Numero totali di parametri")
     print(sum(p.numel() for p in transformer.parameters()))
 
-
-
     learning_rate = 3e-4
     optim = optimizer.Adam(
         transformer.parameters(), lr=learning_rate, weight_decay=1e-4
     )
-    scheduler = get_cosine_schedule_with_warmup(
-        optim,
-        num_warmup_steps=1000,
-        num_training_steps=total_steps,
-        num_cycles=0.5,  # default: mezzo ciclo coseno
-    )
+    ce = nn.CrossEntropyLoss(ignore_index = 0)
     train_loss, val_loss = transformer.train_val(
-        num_epochs=epochs, optim=optim, scheduler=scheduler
+        num_epochs=epochs, optim=optim, loss_func = ce
     )
 
     plot_losses(train_loss, val_loss)
