@@ -292,17 +292,19 @@ class ParticleTransformer(nn.Module):
                 # Rimuovi l'EOS dal target: [0:eos_idx] + [eos_idx+1:]
                 event_target = target[event]
                 event_mask = target_padding_mask[event]
+                
+                decoder_input_event = event_target[:-1]
+                decoder_input_event_mask = event_mask[:-1]
+                #event_input = torch.cat(
+                    #[event_target[:eos_idx], event_target[eos_idx + 1 :]],
+                    #dim=0,
+                #)
+                #event_input_mask = torch.cat(
+                    #[event_mask[:eos_idx], event_mask[eos_idx + 1 :]], dim=0
+                #)
 
-                event_input = torch.cat(
-                    [event_target[:eos_idx], event_target[eos_idx + 1 :]],
-                    dim=0,
-                )
-                event_input_mask = torch.cat(
-                    [event_mask[:eos_idx], event_mask[eos_idx + 1 :]], dim=0
-                )
-
-                decoder_input_list.append(event_input)
-                decoder_input_mask_list.append(event_input_mask)
+                decoder_input_list.append(decoder_input_event)
+                decoder_input_mask_list.append(decoder_input_event_mask)
 
             decoder_input = torch.stack(decoder_input_list, dim=0)
             decoder_input_padding_mask = torch.stack(
