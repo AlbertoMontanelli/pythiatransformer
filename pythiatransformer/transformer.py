@@ -312,7 +312,6 @@ class ParticleTransformer(nn.Module):
             )
 
             target_4_loss = target[:, 1:, :]
-            print(target_4_loss.shape())
             # target_4_loss_padding_mask = target_padding_mask[:, 1:]
             attention_mask = nn.Transformer.generate_square_subsequent_mask(
                 decoder_input.size(1)
