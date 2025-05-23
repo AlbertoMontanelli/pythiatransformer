@@ -5,7 +5,6 @@ import torch
 import torch.nn as nn
 import torch.optim as optimizer
 from loguru import logger
-from transformers.optimization import get_cosine_schedule_with_warmup
 
 from data_processing import load_and_prepare_data
 from transformer import ParticleTransformer
@@ -21,17 +20,17 @@ batch_size = 32
     subset,
     mean_final,
     std_final,
-) = load_and_prepare_data(filename="events_10k.root", batch_size=batch_size)
+) = load_and_prepare_data(filename="events_100k.root", batch_size=batch_size)
 
 os.environ["PYTORCH_CUDA_ALLOC_CONF"] = "expandable_segments:True"
-device = torch.device("cuda:1" if torch.cuda.is_available() else "cpu")
+device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
 epochs = 100
 steps_per_epoch = len(loader_train)  # dataset_size // batch_size
 total_steps = epochs * steps_per_epoch
 
 
 def plot_losses(
-    train_loss, val_loss, filename="learning_curve_leonardo.pdf", dpi=1200
+    train_loss, val_loss, filename="learning_curve_alberto.pdf", dpi=1200
 ):
     plt.figure()
     plt.plot(train_loss, label="Training Loss")
@@ -58,7 +57,7 @@ def build_model():
         num_heads = 8,
         num_encoder_layers = 2,
         num_decoder_layers = 4,
-        num_units = 64,
+        num_units = 128,
         num_classes = 34,
         dropout = 0.1,
         activation = nn.ReLU()
@@ -73,7 +72,7 @@ def train_and_save_model():
     print(f"Numero totali di parametri")
     print(sum(p.numel() for p in transformer.parameters()))
 
-    learning_rate = 3e-4
+    learning_rate = 5e-4
     optim = optimizer.Adam(
         transformer.parameters(), lr=learning_rate, weight_decay=1e-4
     )
@@ -84,8 +83,8 @@ def train_and_save_model():
 
     plot_losses(train_loss, val_loss)
 
-    torch.save(transformer.state_dict(), "transformer_model_leonardo.pt")
-    logger.info("Modello salvato in transformer_model_leonardo.pt")
+    torch.save(transformer.state_dict(), "transformer_model_alberto.pt")
+    logger.info("Modello salvato in transformer_model_alberto.pt")
 
 
 # def generate_outputs_and_save():
