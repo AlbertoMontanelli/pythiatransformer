@@ -9,9 +9,6 @@ import torch.nn as nn
 from loguru import logger
 from torch.nn.utils.rnn import pad_sequence
 
-# from torch.nn import Transformer
-# from torch.utils.data import TensorDataset, DataLoader
-
 
 def log_peak_memory(epoch=None):
     """
@@ -133,16 +130,6 @@ class ParticleTransformer(nn.Module):
         if not (0.0 <= dropout <= 1.0):
             raise ValueError("dropout must be between 0.0 and 1.0")
 
-        # self.batch_size = batch_size
-        # if not isinstance(batch_size, int):
-        #     raise TypeError(
-        #         f"Batch size must be int, got {type(batch_size)}"
-        #     )
-        # if not (batch_size <= input_train.shape[0]):
-        #     raise ValueError(
-        #         f"Batch size must be smaller than the input dataset size."
-        #     )
-
         if not (num_units % num_heads == 0):
             raise ValueError(
                 "Number of units must be a multiple of number of heads."
@@ -195,31 +182,14 @@ class ParticleTransformer(nn.Module):
 
 
     def de_padding(self, input, padding_mask):
-        """ """
-        # print("Train Tensor:")
-        # print(input)
-
-        # print("Padding Mask:")
-        # print(padding_mask)
-
-        non_pad_mask = ~padding_mask  # inverto la matrice di padding
-        num_particles = non_pad_mask.sum(
-            dim=1
-        )  # tensore di lunghezza batch_size, con valori il numero di particelle vere
+        """Function that eliminate extra padding for each batch
+        """
+        non_pad_mask = ~padding_mask # inverto la matrice di padding
+        num_particles = non_pad_mask.sum(dim=1) # tensore di lunghezza batch_size, con valori il numero di particelle vere
         max_len_tensor = num_particles.max()
-        # print(f"max_len = {max_len_tensor}")
         max_len = max_len_tensor.item()
         input = input[:, :max_len, :]
         padding_mask = padding_mask[:, :max_len]
-
-        # print("Train Tensor:")
-        # print(input)
-
-        # print("Padding Mask:")
-        # print(padding_mask)
-
-        # print("att Mask:")
-        # print(att_mask)
         return input, padding_mask
 
     def forward(self, input, target, input_mask, target_mask, attention_mask):
@@ -285,24 +255,14 @@ class ParticleTransformer(nn.Module):
             decoder_input_list = []
             decoder_input_mask_list = []
 
-            # Per ogni evento nel batch
+            # Per ogni evento nel batch, rimuoviamo l'ultimo elemento dall'input del 
+            # decoder e il primo dal target per la loss
             for event in range(target.shape[0]):
-                # Trova l'indice dell'EOS → ultima particella valida prima del padding
-                # eos_idx = (~target_padding_mask[event]).sum().item() - 1
-                # Rimuovi l'EOS dal target: [0:eos_idx] + [eos_idx+1:]
                 event_target = target[event]
                 event_mask = target_padding_mask[event]
                 
                 decoder_input_event = event_target[:-1]
                 decoder_input_event_mask = event_mask[:-1]
-                #event_input = torch.cat(
-                    #[event_target[:eos_idx], event_target[eos_idx + 1 :]],
-                    #dim=0,
-                #)
-                #event_input_mask = torch.cat(
-                    #[event_mask[:eos_idx], event_mask[eos_idx + 1 :]], dim=0
-                #)
-
                 decoder_input_list.append(decoder_input_event)
                 decoder_input_mask_list.append(decoder_input_event_mask)
 
@@ -312,7 +272,6 @@ class ParticleTransformer(nn.Module):
             )
 
             target_4_loss = target[:, 1:, :]
-            # target_4_loss_padding_mask = target_padding_mask[:, 1:]
             attention_mask = nn.Transformer.generate_square_subsequent_mask(
                 decoder_input.size(1)
             ).to(device)
@@ -386,23 +345,13 @@ class ParticleTransformer(nn.Module):
 
                 # Per ogni evento nel batch
                 for event in range(target.shape[0]):
-                    # Trova l'indice dell'EOS → ultima particella valida prima del padding
-                    eos_idx = (~target_padding_mask[event]).sum().item() - 1
-                    # Rimuovi l'EOS dal target: [0:eos_idx] + [eos_idx+1:]
                     event_target = target[event]
                     event_mask = target_padding_mask[event]
-
-                    event_input = torch.cat(
-                        [event_target[:eos_idx], event_target[eos_idx + 1 :]],
-                        dim=0,
-                    )
-                    event_input_mask = torch.cat(
-                        [event_mask[:eos_idx], event_mask[eos_idx + 1 :]],
-                        dim=0,
-                    )
-
-                    decoder_input_list.append(event_input)
-                    decoder_input_mask_list.append(event_input_mask)
+                    
+                    decoder_input_event = event_target[:-1]
+                    decoder_input_event_mask = event_mask[:-1]
+                    decoder_input_list.append(decoder_input_event)
+                    decoder_input_mask_list.append(decoder_input_event_mask)
 
                 decoder_input = torch.stack(decoder_input_list, dim=0)
                 decoder_input_padding_mask = torch.stack(
@@ -410,7 +359,6 @@ class ParticleTransformer(nn.Module):
                 )
 
                 target_4_loss = target[:, 1:, :]
-                target_4_loss_padding_mask = target_padding_mask[:, 1:]
                 attention_mask = (
                     nn.Transformer.generate_square_subsequent_mask(
                         decoder_input.size(1)
@@ -503,8 +451,6 @@ class ParticleTransformer(nn.Module):
             torch.cuda.reset_peak_memory_stats()
             train_loss_epoch = self.train_one_epoch(epoch, optim, loss_func)
             val_loss_epoch = self.val_one_epoch(loss_func, epoch, val)
-            # train_loss.append(float(train_loss_epoch))
-            # val_loss.append(float(val_loss_epoch))
             train_loss.append(train_loss_epoch)
             val_loss.append(val_loss_epoch)
 
@@ -574,6 +520,9 @@ class ParticleTransformer(nn.Module):
             stop = False
         return stop
 
+    ########################################################################
+    # Questa ha degli errori va risistemata
+    ########################################################################
     def generate_target(self, input, input_mask, target_reference):
         """
         Autoregressive generation of targets, one event at a time.
