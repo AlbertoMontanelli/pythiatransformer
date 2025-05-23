@@ -58,6 +58,7 @@ class ParticleTransformer(nn.Module):
         num_encoder_layers,
         num_decoder_layers,
         num_units,
+        num_classes,
         dropout,
         activation
     ):
@@ -120,6 +121,12 @@ class ParticleTransformer(nn.Module):
                 f"The number of unit must be int, got {type(num_units)}"
             )
 
+        self.num_classes = num_classes
+        if not isinstance(num_classes, int):
+            raise TypeError(
+                f"The number of unit must be int, got {type(num_classes)}"
+            )
+
         self.dropout = dropout
         if not isinstance(dropout, float):
             raise TypeError(f"dropout must be float, got {type(dropout)}")
@@ -155,8 +162,9 @@ class ParticleTransformer(nn.Module):
         of input features. Subsequently, a linear trasformation is
         applied to restore the data to its original dimensions.
         """
-        self.input_projection = nn.Linear(self.dim_features, self.num_units)
-        self.output_projection = nn.Linear(self.num_units, self.dim_features)
+        # self.input_projection = nn.Linear(self.dim_features, self.num_units)
+        self.output_projection = nn.Linear(self.num_units, self.num_classes)
+        self.embedding = nn.Embedding(num_embeddings = self.num_classes, embedding_dim = self.num_units, padding_idx = 0)
         logger.info("Projection layers input/output created.")
 
     def initialize_transformer(self):
@@ -230,8 +238,10 @@ class ParticleTransformer(nn.Module):
             output (torch.Tensor): The output tensor after processing
                                    through the model.
         """
-        input = self.input_projection(input)
-        target = self.input_projection(target)
+        input = self.embedding(input)
+        target = self.embedding(target)
+        input = input.squeeze(-2)
+        target = target.squeeze(-2)
         output = self.transformer(
             src=input,
             tgt=target,
@@ -242,9 +252,7 @@ class ParticleTransformer(nn.Module):
         output = self.output_projection(output)
         return output
 
-
-
-    def train_one_epoch(self, epoch, optim, scheduler):
+    def train_one_epoch(self, epoch, optim, loss_func):
         """This function trains the model for one epoch. It iterates
         through the training data, computes the model's output and the
         loss, performs backpropagation and updates the model parameters
@@ -260,7 +268,6 @@ class ParticleTransformer(nn.Module):
 
         self.train()
         loss_epoch = 0
-        ce_eos_epoch = 0
 
         for (input, target), (input_padding_mask, target_padding_mask) in zip(
             self.train_data, self.train_data_pad_mask
@@ -281,21 +288,23 @@ class ParticleTransformer(nn.Module):
             # Per ogni evento nel batch
             for event in range(target.shape[0]):
                 # Trova l'indice dell'EOS → ultima particella valida prima del padding
-                eos_idx = (~target_padding_mask[event]).sum().item() - 1
+                # eos_idx = (~target_padding_mask[event]).sum().item() - 1
                 # Rimuovi l'EOS dal target: [0:eos_idx] + [eos_idx+1:]
                 event_target = target[event]
                 event_mask = target_padding_mask[event]
+                
+                decoder_input_event = event_target[:-1]
+                decoder_input_event_mask = event_mask[:-1]
+                #event_input = torch.cat(
+                    #[event_target[:eos_idx], event_target[eos_idx + 1 :]],
+                    #dim=0,
+                #)
+                #event_input_mask = torch.cat(
+                    #[event_mask[:eos_idx], event_mask[eos_idx + 1 :]], dim=0
+                #)
 
-                event_input = torch.cat(
-                    [event_target[:eos_idx], event_target[eos_idx + 1 :]],
-                    dim=0,
-                )
-                event_input_mask = torch.cat(
-                    [event_mask[:eos_idx], event_mask[eos_idx + 1 :]], dim=0
-                )
-
-                decoder_input_list.append(event_input)
-                decoder_input_mask_list.append(event_input_mask)
+                decoder_input_list.append(decoder_input_event)
+                decoder_input_mask_list.append(decoder_input_event_mask)
 
             decoder_input = torch.stack(decoder_input_list, dim=0)
             decoder_input_padding_mask = torch.stack(
@@ -303,7 +312,7 @@ class ParticleTransformer(nn.Module):
             )
 
             target_4_loss = target[:, 1:, :]
-            target_4_loss_padding_mask = target_padding_mask[:, 1:]
+            # target_4_loss_padding_mask = target_padding_mask[:, 1:]
             attention_mask = nn.Transformer.generate_square_subsequent_mask(
                 decoder_input.size(1)
             ).to(device)
@@ -317,30 +326,25 @@ class ParticleTransformer(nn.Module):
                 attention_mask,
             )
 
-            loss, eos_ce = self.mixed_loss(
-                output, target_4_loss, target_4_loss_padding_mask
-            )
+            loss = loss_func(output.transpose(1, 2), target_4_loss.squeeze(-1))
+            
             if not torch.isfinite(loss):
                 raise ValueError(f"Loss is not finite at epoch {epoch + 1}")
             loss.backward()
             optim.step()
-            scheduler.step()
             loss_epoch += loss.item()
-            ce_eos_epoch += eos_ce
 
             del input, target, input_padding_mask, target_padding_mask, output, loss, attention_mask
             torch.cuda.empty_cache()
 
         gc.collect() # forcing garbage collector
         torch.cuda.empty_cache()
-
+        
+        loss_epoch = loss_epoch / len(self.train_data)
         logger.debug(f"Training loss at epoch {epoch + 1}: {loss_epoch:.4f}")
-        logger.debug(
-            f"Training C.E. eos at epoch {epoch + 1}: {ce_eos_epoch:.4f}"
-        )
         return loss_epoch
 
-    def val_one_epoch(self, epoch, val):
+    def val_one_epoch(self, loss_func, epoch, val):
         """This function validates the model for one epoch. It iterates
         through the validation data, computes the model's output and
         the loss.
@@ -360,7 +364,6 @@ class ParticleTransformer(nn.Module):
             mask_loader = self.test_data_pad_mask
         self.eval()
         loss_epoch = 0
-        ce_eos_epoch = 0
         with torch.no_grad():  # Compute only the loss value
             for (input, target), (
                 input_padding_mask,
@@ -422,15 +425,12 @@ class ParticleTransformer(nn.Module):
                     attention_mask,
                 )
 
-                loss, eos_ce = self.mixed_loss(
-                    output, target_4_loss, target_4_loss_padding_mask
-                )
+                loss = loss_func(output.transpose(1, 2), target_4_loss.squeeze(-1))
                 if not torch.isfinite(loss):
                     raise ValueError(
                         f"Loss is not finite at epoch {epoch + 1}"
                     )
                 loss_epoch += loss.item()
-                ce_eos_epoch += eos_ce
 
                 del input, target, input_padding_mask, target_padding_mask, output, loss, attention_mask
                 torch.cuda.empty_cache()
@@ -438,12 +438,10 @@ class ParticleTransformer(nn.Module):
         gc.collect()
         torch.cuda.empty_cache()
 
+        loss_epoch = loss_epoch / len(self.val_data)
         if val:
             logger.debug(
                 f"Validation loss at epoch {epoch + 1}: {loss_epoch:.4f}"
-            )
-            logger.debug(
-                f"Validation C.E. eos at epoch {epoch + 1}: {ce_eos_epoch:.4f}"
             )
         else:
             logger.debug(f"Test loss at epoch {epoch + 1}: {loss_epoch:.4f}")
@@ -453,7 +451,7 @@ class ParticleTransformer(nn.Module):
         self,
         num_epochs,
         optim,
-        scheduler,
+        loss_func,
         val=True,
         patient_smooth=99,
         patient_early=10,
@@ -503,8 +501,8 @@ class ParticleTransformer(nn.Module):
         logger.info("Training started!")
         for epoch in range(num_epochs):
             torch.cuda.reset_peak_memory_stats()
-            train_loss_epoch = self.train_one_epoch(epoch, optim, scheduler)
-            val_loss_epoch = self.val_one_epoch(epoch, val)
+            train_loss_epoch = self.train_one_epoch(epoch, optim, loss_func)
+            val_loss_epoch = self.val_one_epoch(loss_func, epoch, val)
             # train_loss.append(float(train_loss_epoch))
             # val_loss.append(float(val_loss_epoch))
             train_loss.append(train_loss_epoch)
@@ -678,7 +676,7 @@ class ParticleTransformer(nn.Module):
         return padded_outputs, padding_mask
 
 
-# ÷÷÷÷÷÷÷÷÷÷÷÷÷÷÷÷÷÷÷÷÷÷÷÷÷÷÷÷÷÷÷÷÷÷÷÷÷÷÷÷÷÷÷÷÷÷÷÷÷÷÷÷÷÷÷÷÷÷÷÷÷÷÷÷÷÷÷÷÷÷÷÷÷÷÷÷÷÷÷÷÷÷÷÷÷÷÷÷÷÷÷÷÷
+# ÷÷÷÷÷÷÷÷÷÷÷÷÷÷÷÷÷÷÷÷÷÷÷÷÷÷÷÷÷÷÷÷÷÷÷÷÷÷÷÷÷÷÷÷÷÷÷÷÷÷÷÷÷÷÷÷÷÷÷÷÷÷÷÷÷÷÷÷÷÷÷÷÷÷÷÷÷÷÷÷÷÷÷÷÷÷÷÷÷÷÷÷
 
 # MIXED LOSS VECCHIA
 
