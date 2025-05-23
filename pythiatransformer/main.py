@@ -5,7 +5,6 @@ import torch
 import torch.nn as nn
 import torch.optim as optimizer
 from loguru import logger
-from transformers.optimization import get_cosine_schedule_with_warmup
 
 from data_processing import load_and_prepare_data
 from transformer import ParticleTransformer
@@ -69,7 +68,7 @@ def train_and_save_model():
     transformer = build_model()
     transformer.to(device)
     num_params = sum(p.numel() for p in transformer.parameters() if p.requires_grad)
-    print(f"📊 Numero totale di parametri allenabili: {num_params}")
+    print(f"Numero totale di parametri allenabili: {num_params}")
     print(f"Numero totali di parametri")
     print(sum(p.numel() for p in transformer.parameters()))
 
