@@ -288,7 +288,7 @@ class ParticleTransformer(nn.Module):
             # Per ogni evento nel batch
             for event in range(target.shape[0]):
                 # Trova l'indice dell'EOS → ultima particella valida prima del padding
-                eos_idx = (~target_padding_mask[event]).sum().item() - 1
+                # eos_idx = (~target_padding_mask[event]).sum().item() - 1
                 # Rimuovi l'EOS dal target: [0:eos_idx] + [eos_idx+1:]
                 event_target = target[event]
                 event_mask = target_padding_mask[event]
@@ -312,7 +312,7 @@ class ParticleTransformer(nn.Module):
             )
 
             target_4_loss = target[:, 1:, :]
-            target_4_loss_padding_mask = target_padding_mask[:, 1:]
+            # target_4_loss_padding_mask = target_padding_mask[:, 1:]
             attention_mask = nn.Transformer.generate_square_subsequent_mask(
                 decoder_input.size(1)
             ).to(device)

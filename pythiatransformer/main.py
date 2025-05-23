@@ -68,7 +68,7 @@ def train_and_save_model():
     transformer = build_model()
     transformer.to(device)
     num_params = sum(p.numel() for p in transformer.parameters() if p.requires_grad)
-    print(f"📊 Numero totale di parametri allenabili: {num_params}")
+    print(f"Numero totale di parametri allenabili: {num_params}")
     print(f"Numero totali di parametri")
     print(sum(p.numel() for p in transformer.parameters()))
 
