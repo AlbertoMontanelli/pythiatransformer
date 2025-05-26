@@ -118,7 +118,16 @@ def awkward_to_padded_inputs(data, features):
 
 
 def batching(input, target, batch_size, shuffle=True):
-    """Create a DataLoader for batching and shuffling input/target pairs."""
+    """Create a DataLoader for batching and shuffling input/target pairs.
+    """
+    if not isinstance(batch_size, int):
+        raise TypeError(
+            f"Batch size must be int, got {type(batch_size)}"
+        )
+    if not (batch_size <= input.shape[0]):
+        raise ValueError(
+            f"Batch size must be smaller than the input dataset size."
+        )
     generator = torch.Generator().manual_seed(1)
     loader = DataLoader(
         TensorDataset(input, target),
@@ -326,5 +335,3 @@ def load_and_prepare_data(filename, batch_size):
 
 #     padded_tensor_23 = torch.cat((one_hot_23, padded_tensor_23[:, :, 1:]), dim=-1)
 #     padded_tensor_final = torch.cat((one_hot_final, padded_tensor_final[:, :, 1:]), dim=-1)
-
-
