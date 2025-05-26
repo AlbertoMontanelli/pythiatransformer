@@ -30,7 +30,7 @@ total_steps = epochs * steps_per_epoch
 
 
 def plot_losses(
-    train_loss, val_loss, filename="learning_curve_alberto.pdf", dpi=1200
+    train_loss, val_loss, filename="learning_curve_100k.pdf", dpi=1200
 ):
     plt.figure()
     plt.plot(train_loss, label="Training Loss")
@@ -47,27 +47,29 @@ def plot_losses(
 def build_model():
     """Build a unique istance of ParticleTransformer class."""
     return ParticleTransformer(
-        train_data = loader_train,
-        val_data = loader_val,
-        test_data = loader_test,
-        train_data_pad_mask = loader_padding_train,
-        val_data_pad_mask = loader_padding_val,
-        test_data_pad_mask = loader_padding_test,
-        dim_features = subset.shape[0],
-        num_heads = 8,
-        num_encoder_layers = 2,
-        num_decoder_layers = 4,
-        num_units = 128,
-        num_classes = 34,
-        dropout = 0.1,
-        activation = nn.ReLU()
+        train_data=loader_train,
+        val_data=loader_val,
+        test_data=loader_test,
+        train_data_pad_mask=loader_padding_train,
+        val_data_pad_mask=loader_padding_val,
+        test_data_pad_mask=loader_padding_test,
+        dim_features=subset.shape[0],
+        num_heads=8,
+        num_encoder_layers=2,
+        num_decoder_layers=4,
+        num_units=128,
+        num_classes=34,
+        dropout=0.1,
+        activation=nn.ReLU(),
     )
 
 
 def train_and_save_model():
     transformer = build_model()
     transformer.to(device)
-    num_params = sum(p.numel() for p in transformer.parameters() if p.requires_grad)
+    num_params = sum(
+        p.numel() for p in transformer.parameters() if p.requires_grad
+    )
     print(f"Numero totale di parametri allenabili: {num_params}")
     print(f"Numero totali di parametri")
     print(sum(p.numel() for p in transformer.parameters()))
@@ -76,15 +78,15 @@ def train_and_save_model():
     optim = optimizer.Adam(
         transformer.parameters(), lr=learning_rate, weight_decay=1e-4
     )
-    ce = nn.CrossEntropyLoss(ignore_index = 0)
+    ce = nn.CrossEntropyLoss(ignore_index=0)
     train_loss, val_loss = transformer.train_val(
-        num_epochs=epochs, optim=optim, loss_func = ce
+        num_epochs=epochs, optim=optim, loss_func=ce
     )
 
     plot_losses(train_loss, val_loss)
 
-    torch.save(transformer.state_dict(), "transformer_model_alberto.pt")
-    logger.info("Modello salvato in transformer_model_alberto.pt")
+    torch.save(transformer.state_dict(), "transformer_model_100k.pt")
+    logger.info("Modello salvato in transformer_model_100k.pt")
 
 
 # def generate_outputs_and_save():
