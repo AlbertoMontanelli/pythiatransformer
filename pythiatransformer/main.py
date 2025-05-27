@@ -20,17 +20,17 @@ batch_size = 32
     subset,
     mean_final,
     std_final,
-) = load_and_prepare_data(filename="events_10k.root", batch_size=batch_size)
+) = load_and_prepare_data(filename="events_800k.root", batch_size=batch_size)
 
 os.environ["PYTORCH_CUDA_ALLOC_CONF"] = "expandable_segments:True"
-device = torch.device("cuda:2" if torch.cuda.is_available() else "cpu")
-epochs = 300
+device = torch.device("cuda:1" if torch.cuda.is_available() else "cpu")
+epochs = 100
 steps_per_epoch = len(loader_train)  # dataset_size // batch_size
 total_steps = epochs * steps_per_epoch
 
 
 def plot_losses(
-    train_loss, val_loss, filename="learning_curve_10k.pdf", dpi=1200
+    train_loss, val_loss, filename="learning_curve_800k.pdf", dpi=1200
 ):
     plt.figure()
     plt.plot(train_loss, label="Training Loss")
@@ -55,9 +55,9 @@ def build_model():
         test_data_pad_mask=loader_padding_test,
         dim_features=subset.shape[0],
         num_heads=8,
-        num_encoder_layers=2,
-        num_decoder_layers=4,
-        num_units=64,
+        num_encoder_layers=3,
+        num_decoder_layers=5,
+        num_units=128,
         num_classes=34,
         dropout=0.1,
         activation=nn.ReLU(),
@@ -85,8 +85,8 @@ def train_and_save_model():
 
     plot_losses(train_loss, val_loss)
 
-    torch.save(transformer.state_dict(), "transformer_model_10k.pt")
-    logger.info("Modello salvato in transformer_model_10k.pt")
+    torch.save(transformer.state_dict(), "transformer_model_800k.pt")
+    logger.info("Modello salvato in transformer_model_800k.pt")
 
 
 # def generate_outputs_and_save():

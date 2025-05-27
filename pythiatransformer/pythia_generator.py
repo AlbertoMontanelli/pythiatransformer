@@ -10,12 +10,12 @@ from loguru import logger
 from pythia8 import Pythia
 
 
-def setup_pythia() -> Pythia:
+def setup_pythia(seed: int = 10) -> Pythia:
     """Configure and return a Pythia instance."""
     try:
         pythia = Pythia()
         pythia.readString("Random:setSeed = on")
-        pythia.readString("Random:seed = 10")
+        pythia.readString(f"Random:seed = {seed}")
         pythia.readString("Beams:eCM = 13000.")
         pythia.readString("HardQCD:all = on")
         pythia.readString("PhaseSpace:pTHatMin = 100.")
@@ -89,7 +89,7 @@ def save_to_root(output_file: str, data_23: dict, data_final: dict):
         raise
 
 
-def generate_events(output_file: str, n_events: int):
+def generate_events(output_file: str, n_events: int, seed: int = 10):
     """Generate ttbar events using Pythia and save particle data to a
     ROOT file. Stores status==23 particles and final-state particles
     in two TTrees. Each event is represented by a list of particles
@@ -171,4 +171,7 @@ def generate_events(output_file: str, n_events: int):
 
 
 if __name__ == "__main__":
-    generate_events("events_100k.root", n_events=100000)
+    for i in range(10):
+        output = f"events_{i:02d}.root"
+        seed = 10 + i
+        generate_events(output, n_events=100000, seed=seed)
