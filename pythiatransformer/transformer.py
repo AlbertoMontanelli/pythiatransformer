@@ -537,10 +537,10 @@ class ParticleTransformer(nn.Module):
             padding_mask (BoolTensor): [B, T_max], 1 = padding.
         """
         self.eval()
-        eos_index = dict_ids[-999]
+        eos_index = 32
 
         # Project inputs
-        input_proj = self.input_projection(input)
+        input_proj = self.embedding(num_embeddings = self.num_classes, embedding_dim = self.num_units, padding_idx = 0)
         B = input.size(0)
         max_len = target_reference.size(1)
         outputs_list = []
@@ -553,9 +553,9 @@ class ParticleTransformer(nn.Module):
             # CONTROLLARE
             sos_vec = torch.zeros(1, 1, self.dim_features, device=device)
             sos_vec[0, 0, 0] = (
-                -999
+                33
             )  # primo canale = id, lo stesso usato per EOS
-            sos_proj = self.input_projection(sos_vec)
+            sos_proj = input_proj(sos_vec)
             target = sos_proj  # [1, 1, H]
             target = torch.zeros((1, 1, self.num_units), device=device)
             ############################################################
@@ -603,7 +603,7 @@ class ParticleTransformer(nn.Module):
                 projected = self.input_projection(next_token)
                 target = torch.cat([target, projected], dim=1)
             if not found_eos:
-                print(f"⚠️  [Evento {i}] EOS NON trovato dopo {max_len} step!")
+                print(f"[Evento {i}] EOS NON trovato dopo {max_len} step!")
             else:
                 print(f"[Evento {i}] EOS trovato dopo {step+1} step")
 

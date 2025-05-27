@@ -1,15 +1,24 @@
 import torch
 import torch.nn as nn
-from data_processing import (
-    dict_ids,
-    loader_padding_train,
-    loader_train,
-    subset,
-)
+from data_processing import load_and_prepare_data
 from transformer import ParticleTransformer
 
 # Imposta il dispositivo
-device = torch.device("cuda:1" if torch.cuda.is_available() else "cpu")
+device = torch.device("cuda:2" if torch.cuda.is_available() else "cpu")
+
+batch_size = 32
+(
+    loader_train,
+    loader_val,
+    loader_test,
+    loader_padding_train,
+    loader_padding_val,
+    loader_padding_test,
+    subset,
+    mean_final,
+    std_final,
+) = load_and_prepare_data(filename="events_10k.root", batch_size=batch_size)
+
 
 # Costruisci il modello e carica i pesi
 model = ParticleTransformer(
@@ -22,13 +31,14 @@ model = ParticleTransformer(
     dim_features=subset.shape[0],
     num_heads=8,
     num_encoder_layers=2,
-    num_decoder_layers=2,
+    num_decoder_layers=4,
     num_units=64,
+    num_classes = 34,
     dropout=0.1,
     activation=nn.ReLU(),
 )
 model.load_state_dict(
-    torch.load("transformer_model_sos.pt", map_location=device)
+    torch.load("transformer_model_10k.pt", map_location=device)
 )
 model.to(device)
 model.eval()
@@ -53,19 +63,11 @@ decoder_input_mask_list = []
 
 # Per ogni evento nel batch
 for event in range(targets_clean.shape[0]):
-    # Trova l'indice dell'EOS → ultima particella valida prima del padding
-    eos_idx = (~targets_pad_mask[event]).sum().item() - 1
-    # Rimuovi l'EOS dal target: [0:eos_idx] + [eos_idx+1:]
     event_target = targets_clean[event]
     event_mask = targets_pad_mask[event]
 
-    event_input = torch.cat(
-        [event_target[:eos_idx], event_target[eos_idx + 1 :]],
-        dim=0,
-    )
-    event_input_mask = torch.cat(
-        [event_mask[:eos_idx], event_mask[eos_idx + 1 :]], dim=0
-    )
+    event_input = event_target[:-1]
+    event_input_mask = event_mask[:-1]
 
     decoder_input_list.append(event_input)
     decoder_input_mask_list.append(event_input_mask)
@@ -89,12 +91,12 @@ with torch.no_grad():
         attention_mask,
     )
 
-# ====== INFERENZA AUTOREGRESSIVA EVENTO PER EVENTO ======
-print("Inizio inferenza autoregressiva")
-with torch.no_grad():
-    output_gen, output_gen_mask = model.generate_target(
-        inputs, inputs_mask, targets
-    )
+# # ====== INFERENZA AUTOREGRESSIVA EVENTO PER EVENTO ======
+# print("Inizio inferenza autoregressiva")
+# with torch.no_grad():
+#     output_gen, output_gen_mask = model.generate_target(
+#         inputs, inputs_mask, targets
+#     )
 
 # ====== STAMPA DI CONFRONTO ======
 evento_idx = 0
@@ -105,23 +107,23 @@ for i in range(10):
     )
 
     # --- Target reale
-    print("🎯 Target reale (vero):")
+    print("Target reale (vero):")
     print(target_4_loss[evento_idx, i].cpu().numpy())
 
     # --- Output generato durante il training (forward diretto)
-    print("\n📘 Predizione diretta (forward training):")
+    print("\n Predizione diretta (forward training):")
     print(output_direct[evento_idx, i].cpu().numpy())
 
-    # --- Output generato via inferenza autoregressiva
-    if i < output_gen.size(1):
-        print("\n🤖 Inferenza autoregressiva:")
-        print(output_gen[evento_idx, i].cpu().numpy())
-    else:
-        print("\n🤖 Inferenza autoregressiva: [n/a - sequenza più corta]")
+    # # --- Output generato via inferenza autoregressiva
+    # if i < output_gen.size(1):
+    #     print("\n Inferenza autoregressiva:")
+    #     print(output_gen[evento_idx, i].cpu().numpy())
+    # else:
+    #     print("\n Inferenza autoregressiva: [n/a - sequenza più corta]")
 
 # ====== Altre info utili ======
 print("\nShape output training (forward):", output_direct.shape)
-print("Shape output generato:", output_gen.shape)
+# print("Shape output generato:", output_gen.shape)
 
 
 # # Stampa esempio
