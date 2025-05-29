@@ -3,6 +3,7 @@ import numpy as np
 import torch
 import uproot
 from torch.utils.data import DataLoader, TensorDataset
+from torch.nn.utils.rnn import pad_sequence
 
 #######################################
 #           UTILITY FUNCTIONS         #
@@ -47,9 +48,7 @@ def awkward_to_padded_targets(data, features, eos_token=61, sos_token=62):
     """
     event_particles = ak.num(data[features[0]], axis=1)
     max_particles = ak.max(event_particles)
-    batch_size = len(event_particles)
     num_features = len(features)
-    new_max_len = max_particles + 2
 
     padded_events = {
         f: ak.fill_none(ak.pad_none(data[f], target=max_particles, axis=1), 0)
@@ -67,14 +66,23 @@ def awkward_to_padded_targets(data, features, eos_token=61, sos_token=62):
         index=indices.unsqueeze(-1).expand(-1, -1, num_features),
     )
 
-    padded_tensor = torch.zeros((batch_size, new_max_len, num_features))
-    padding_mask = torch.ones((batch_size, new_max_len), dtype=torch.bool)
+    threshold = 1 # GeV
+    mask = base_tensor_sorted[:,:,-1] >= threshold
+    event_list = [base_tensor_sorted[i][mask[i]] for i in range(base_tensor_sorted.size(0))]
+    '''for i in range(len(event_list)):
+        print(f"numero di particelle per evento: {event_list[i].shape}")
+        if i == 100:
+            break'''
+    padded_tensor = pad_sequence(event_list, batch_first = True)
+    #print(f"numero di particelle: {padded_tensor.shape}")
+    padding_mask = torch.ones((len(event_particles), padded_tensor.shape[1]), dtype=torch.bool)
+    padded_tensor_sos_eos = torch.zeros((len(event_particles), padded_tensor.shape[1] + 2, num_features))
 
-    for i, true_particles in enumerate(event_particles):
-        n = true_particles.item()
-        padded_tensor[i, 0, 0] = sos_token
-        padded_tensor[i, 1 : n + 1] = base_tensor_sorted[i, :n]
-        padded_tensor[i, n + 1, 0] = eos_token
+    for i, true_particles in enumerate(event_list):
+        n = true_particles.shape[0]
+        padded_tensor_sos_eos[i, 0, 0] = sos_token
+        padded_tensor_sos_eos[i, 1 : n + 1] = padded_tensor[i, :n]
+        padded_tensor_sos_eos[i, n + 1, 0] = eos_token
         padding_mask[i, : n + 2] = 0
 
     return padded_tensor, padding_mask
