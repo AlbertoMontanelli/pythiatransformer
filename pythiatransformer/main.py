@@ -20,7 +20,7 @@ batch_size = 32
     subset,
     mean_final,
     std_final,
-) = load_and_prepare_data(filename="events_10k.root", batch_size=batch_size)
+) = load_and_prepare_data(filename="events_1M.root", batch_size=batch_size)
 
 os.environ["PYTORCH_CUDA_ALLOC_CONF"] = "expandable_segments:True"
 device = torch.device("cuda:2" if torch.cuda.is_available() else "cpu")

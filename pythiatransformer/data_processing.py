@@ -75,7 +75,7 @@ def awkward_to_padded_targets(data, features, eos_token=61, sos_token=62):
             break'''
     padded_tensor = pad_sequence(event_list, batch_first = True)
     #print(f"numero di particelle: {padded_tensor.shape}")
-    padding_mask = torch.ones((len(event_particles), padded_tensor.shape[1]), dtype=torch.bool)
+    padding_mask = torch.ones((len(event_particles), padded_tensor.shape[1] + 2), dtype=torch.bool)
     padded_tensor_sos_eos = torch.zeros((len(event_particles), padded_tensor.shape[1] + 2, num_features))
 
     for i, true_particles in enumerate(event_list):
@@ -85,7 +85,7 @@ def awkward_to_padded_targets(data, features, eos_token=61, sos_token=62):
         padded_tensor_sos_eos[i, n + 1, 0] = eos_token
         padding_mask[i, : n + 2] = 0
 
-    return padded_tensor, padding_mask
+    return padded_tensor_sos_eos, padding_mask
 
 
 def awkward_to_padded_inputs(data, features):
@@ -227,10 +227,11 @@ def load_and_prepare_data(filename, batch_size):
 
     data_23 = compute_pt(data_23, "px_23", "py_23", "pT_23")
     data_final = compute_pt(data_final, "px_final", "py_final", "pT_final")
-
+    id_all = np.unique(np.concatenate([ak.flatten(data_23["id_23"]), ak.flatten(data_final["id_final"])]))
+    print(f"tutti gli id: {id_all}")
     padded_tensor_23, padding_mask_23 = awkward_to_padded_inputs(data_23, ["id_23", "px_23", "py_23", "pz_23", "pT_23"])
     padded_tensor_final, padding_mask_final = awkward_to_padded_targets(data_final, ["id_final", "px_final", "py_final", "pz_final", "pT_final"])
-
+    
     # drop_pt = lambda t: t[:, :, :-1]
     # padded_tensor_23 = drop_pt(padded_tensor_23)
     # padded_tensor_final = drop_pt(padded_tensor_final)
