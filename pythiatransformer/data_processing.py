@@ -2,12 +2,14 @@ import awkward as ak
 import numpy as np
 import torch
 import uproot
-from torch.utils.data import DataLoader, TensorDataset
+from loguru import logger
 from torch.nn.utils.rnn import pad_sequence
+from torch.utils.data import DataLoader, TensorDataset
 
 #######################################
 #           UTILITY FUNCTIONS         #
 #######################################
+
 
 def standardize_features(data, features):
     """Standardize features (mean=0, std=1) directly on Awkward Arrays.
@@ -66,17 +68,24 @@ def awkward_to_padded_targets(data, features, eos_token=61, sos_token=62):
         index=indices.unsqueeze(-1).expand(-1, -1, num_features),
     )
 
-    threshold = 1 # GeV
-    mask = base_tensor_sorted[:,:,-1] >= threshold
-    event_list = [base_tensor_sorted[i][mask[i]] for i in range(base_tensor_sorted.size(0))]
-    '''for i in range(len(event_list)):
+    threshold = 1  # GeV
+    mask = base_tensor_sorted[:, :, -1] >= threshold
+    event_list = [
+        base_tensor_sorted[i][mask[i]]
+        for i in range(base_tensor_sorted.size(0))
+    ]
+    """for i in range(len(event_list)):
         print(f"numero di particelle per evento: {event_list[i].shape}")
         if i == 100:
-            break'''
-    padded_tensor = pad_sequence(event_list, batch_first = True)
-    #print(f"numero di particelle: {padded_tensor.shape}")
-    padding_mask = torch.ones((len(event_particles), padded_tensor.shape[1] + 2), dtype=torch.bool)
-    padded_tensor_sos_eos = torch.zeros((len(event_particles), padded_tensor.shape[1] + 2, num_features))
+            break"""
+    padded_tensor = pad_sequence(event_list, batch_first=True)
+    # print(f"numero di particelle: {padded_tensor.shape}")
+    padding_mask = torch.ones(
+        (len(event_particles), padded_tensor.shape[1] + 2), dtype=torch.bool
+    )
+    padded_tensor_sos_eos = torch.zeros(
+        (len(event_particles), padded_tensor.shape[1] + 2, num_features)
+    )
 
     for i, true_particles in enumerate(event_list):
         n = true_particles.shape[0]
@@ -126,12 +135,9 @@ def awkward_to_padded_inputs(data, features):
 
 
 def batching(input, target, batch_size, shuffle=True):
-    """Create a DataLoader for batching and shuffling input/target pairs.
-    """
+    """Create a DataLoader for batching and shuffling input/target pairs."""
     if not isinstance(batch_size, int):
-        raise TypeError(
-            f"Batch size must be int, got {type(batch_size)}"
-        )
+        raise TypeError(f"Batch size must be int, got {type(batch_size)}")
     if not (batch_size <= input.shape[0]):
         raise ValueError(
             f"Batch size must be smaller than the input dataset size."
@@ -148,7 +154,9 @@ def batching(input, target, batch_size, shuffle=True):
     return loader
 
 
-def train_val_test_split(tensor, train_perc=0.8, val_perc=0.19, test_perc=0.01):
+def train_val_test_split(
+    tensor, train_perc=0.8, val_perc=0.19, test_perc=0.01
+):
     """Split a tensor into training, validation, and test sets.
 
     Args:
@@ -176,64 +184,85 @@ def train_val_test_split(tensor, train_perc=0.8, val_perc=0.19, test_perc=0.01):
     i2 = i1 + int(val_perc * n)
     return tensor[:i1], tensor[i1:i2], tensor[i2:]
 
+
 def pdg_to_index(tensor, padding_mask):
     dict_ids = {
-        21: 30, # gluon
-        22: 31, # photon
-        -12: 32, # antineutrino e 
-        12: 33, # neutrino e
-        -14: 34, # antineutrino mu
-        14: 35, # neutrino mu
-        -16: 36, # antineutrino tau
-        16: 37, # neutrino tau
-        -11: 38, # positron
-        11: 39, # electron
-        -2: 40, # antiup
-        2: 41, # up
-        -1: 42, # antidown
-        1: 43, # down
-        -3: 44, # antistrange
-        3: 45, # strange
-        -13: 46, # antimu
-        13: 47, # mu
-        -211: 48, # pi-
-        211: 49, # pi +
-        -321: 50, # K-
-        321: 51, # K+
-        130: 52, # K0 long
-        -2212: 53, # antiproton
-        2212: 54, # proton
-        -2112: 55, # antineutron
-        2112: 56, # neutron
-        -4: 57, # anticharm
-        4: 58, # charm
-        -5: 59, # antibottom
-        5: 60 # bottom
+        21: 30,  # gluon
+        22: 31,  # photon
+        -12: 32,  # antineutrino e
+        12: 33,  # neutrino e
+        -14: 34,  # antineutrino mu
+        14: 35,  # neutrino mu
+        -16: 36,  # antineutrino tau
+        16: 37,  # neutrino tau
+        -11: 38,  # positron
+        11: 39,  # electron
+        -2: 40,  # antiup
+        2: 41,  # up
+        -1: 42,  # antidown
+        1: 43,  # down
+        -3: 44,  # antistrange
+        3: 45,  # strange
+        -13: 46,  # antimu
+        13: 47,  # mu
+        -211: 48,  # pi-
+        211: 49,  # pi +
+        -321: 50,  # K-
+        321: 51,  # K+
+        130: 52,  # K0 long
+        -2212: 53,  # antiproton
+        2212: 54,  # proton
+        -2112: 55,  # antineutron
+        2112: 56,  # neutron
+        -4: 57,  # anticharm
+        4: 58,  # charm
+        -5: 59,  # antibottom
+        5: 60,  # bottom
     }
     for pdg_id, index in dict_ids.items():
         mask = tensor[:, :, 0] == pdg_id
         tensor[:, :, 0][mask] = index
-    tensor[~padding_mask] = tensor[~padding_mask] - 29 
+    tensor[~padding_mask] = tensor[~padding_mask] - 29
     tensor = tensor.long()
     return tensor
+
 
 def load_and_save_tensor(filename):
     with uproot.open(filename) as file:
         data_23 = file["tree_23"].arrays(library="ak")
         data_final = file["tree_final"].arrays(library="ak")
 
-    data_23, mean_23, std_23 = standardize_features(data_23, ["px_23", "py_23", "pz_23"])
-    data_final, mean_final, std_final = standardize_features(data_final, ["px_final", "py_final", "pz_final"])
+    logger.info("Opening of root file trees with uproot terminated")
+
+    data_23, mean_23, std_23 = standardize_features(
+        data_23, ["px_23", "py_23", "pz_23"]
+    )
+    data_final, mean_final, std_final = standardize_features(
+        data_final, ["px_final", "py_final", "pz_final"]
+    )
     stats = np.array([mean_final, std_final])
     np.savetxt("mean_std.txt", stats)
 
+    logger.info("Standardization and saving mean, std terminated")
+
     data_23 = compute_pt(data_23, "px_23", "py_23", "pT_23")
     data_final = compute_pt(data_final, "px_final", "py_final", "pT_final")
-    id_all = np.unique(np.concatenate([ak.flatten(data_23["id_23"]), ak.flatten(data_final["id_final"])]))
+    # id_all = np.unique(
+    #     np.concatenate(
+    #         [ak.flatten(data_23["id_23"]), ak.flatten(data_final["id_final"])]
+    #     )
+    # )
+    logger.info("Computation of pT terminated")
 
-    padded_tensor_23, padding_mask_23 = awkward_to_padded_inputs(data_23, ["id_23", "px_23", "py_23", "pz_23", "pT_23"])
-    padded_tensor_final, padding_mask_final = awkward_to_padded_targets(data_final, ["id_final", "px_final", "py_final", "pz_final", "pT_final"])
-    
+    padded_tensor_23, padding_mask_23 = awkward_to_padded_inputs(
+        data_23, ["id_23", "px_23", "py_23", "pz_23", "pT_23"]
+    )
+    padded_tensor_final, padding_mask_final = awkward_to_padded_targets(
+        data_final,
+        ["id_final", "px_final", "py_final", "pz_final", "pT_final"],
+    )
+
+    logger.info("Padded tensors created")
     # drop_pt = lambda t: t[:, :, :-1]
     # padded_tensor_23 = drop_pt(padded_tensor_23)
     # padded_tensor_final = drop_pt(padded_tensor_final)
@@ -242,34 +271,57 @@ def load_and_save_tensor(filename):
     padded_tensor_23 = drop_p(padded_tensor_23)
     padded_tensor_final = drop_p(padded_tensor_final)
 
+    logger.info("Dropping p in tensor terminated")
+
     # print("evento 0 per il 23 prima del pdg_to_index:\n", padded_tensor_23[0, :, :])
     # print("evento 0 per il finale prima del pdg_to_index:\n", padded_tensor_final[0, :, :])
 
     padded_tensor_23 = pdg_to_index(padded_tensor_23, padding_mask_23)
     padded_tensor_final = pdg_to_index(padded_tensor_final, padding_mask_final)
 
+    logger.info("Mapping PID into classes indices terminated")
+
     # print("evento 0 per il 23 dopo il pdg_to_index:\n", padded_tensor_23[0, :, :])
     # print("evento 0 per il finale dopo il pdg_to_index:\n", padded_tensor_final[0, :, :])
 
     train_23, val_23, test_23 = train_val_test_split(padded_tensor_23)
-    train_final, val_final, test_final = train_val_test_split(padded_tensor_final)
-    mask_train_23, mask_val_23, mask_test_23 = train_val_test_split(padding_mask_23)
-    mask_train_final, mask_val_final, mask_test_final = train_val_test_split(padding_mask_final)
+    train_final, val_final, test_final = train_val_test_split(
+        padded_tensor_final
+    )
+    mask_train_23, mask_val_23, mask_test_23 = train_val_test_split(
+        padding_mask_23
+    )
+    mask_train_final, mask_val_final, mask_test_final = train_val_test_split(
+        padding_mask_final
+    )
+
+    logger.info("Train/Val/Test splitting terminated")
 
     # Salvataggio dei tensori per ripristino futuro
-    torch.save(train_23, "train_23.pt")
-    torch.save(train_final, "train_final.pt")
-    torch.save(val_23, "val_23.pt")
-    torch.save(val_final, "val_final.pt")
-    torch.save(test_23, "test_23.pt")
-    torch.save(test_final, "test_final.pt")
-    torch.save(mask_train_23, "mask_train_23.pt")
-    torch.save(mask_train_final, "mask_train_final.pt")
-    torch.save(mask_val_23, "mask_val_23.pt")
-    torch.save(mask_val_final, "mask_val_final.pt")
-    torch.save(mask_test_23, "mask_test_23.pt")
-    torch.save(mask_test_final, "mask_test_final.pt")
-
+    torch.save(train_23, "train_23_1M.pt")
+    logger.info("Tensor train_23 saved")
+    torch.save(train_final, "train_final_1M.pt")
+    logger.info("Tensor train_final saved")
+    torch.save(val_23, "val_23_1M.pt")
+    logger.info("Tensor val_23 saved")
+    torch.save(val_final, "val_final_1M.pt")
+    logger.info("Tensor val_final saved")
+    torch.save(test_23, "test_23_1M.pt")
+    logger.info("Tensor test_23 saved")
+    torch.save(test_final, "test_final_1M.pt")
+    logger.info("Tensor test_final saved")
+    torch.save(mask_train_23, "mask_train_23_1M.pt")
+    logger.info("Tensor mask_train_23 saved")
+    torch.save(mask_train_final, "mask_train_final_1M.pt")
+    logger.info("Tensor mask_train_final saved")
+    torch.save(mask_val_23, "mask_val_23_1M.pt")
+    logger.info("Tensor mask_val_23 saved")
+    torch.save(mask_val_final, "mask_val_final_1M.pt")
+    logger.info("Tensor mask_val_final saved")
+    torch.save(mask_test_23, "mask_test_23_1M.pt")
+    logger.info("Tensor mask_test_23 saved")
+    torch.save(mask_test_final, "mask_test_final_1M.pt")
+    logger.info("Tensor mask_test_final saved")
 
     # loader_train = batching(train_23, train_final, batch_size)
     # loader_val = batching(val_23, val_final, batch_size)
@@ -280,30 +332,33 @@ def load_and_save_tensor(filename):
 
     subset = train_23[0, 0, :]
 
+
 def load_saved_dataloaders(batch_size):
     """Load tensors salvati da file .pt e ricrea i DataLoader."""
 
     # Caricamento tensori da file .pt
-    train_23 = torch.load("train_23.pt")
-    train_final = torch.load("train_final.pt")
-    val_23 = torch.load("val_23.pt")
-    val_final = torch.load("val_final.pt")
-    test_23 = torch.load("test_23.pt")
-    test_final = torch.load("test_final.pt")
+    train_23 = torch.load("train_23_1M.pt")
+    train_final = torch.load("train_final_1M.pt")
+    val_23 = torch.load("val_23_1M.pt")
+    val_final = torch.load("val_final_1M.pt")
+    test_23 = torch.load("test_23_1M.pt")
+    test_final = torch.load("test_final_1M.pt")
 
-    mask_train_23 = torch.load("mask_train_23.pt")
-    mask_train_final = torch.load("mask_train_final.pt")
-    mask_val_23 = torch.load("mask_val_23.pt")
-    mask_val_final = torch.load("mask_val_final.pt")
-    mask_test_23 = torch.load("mask_test_23.pt")
-    mask_test_final = torch.load("mask_test_final.pt")
+    mask_train_23 = torch.load("mask_train_23_1M.pt")
+    mask_train_final = torch.load("mask_train_final_1M.pt")
+    mask_val_23 = torch.load("mask_val_23_1M.pt")
+    mask_val_final = torch.load("mask_val_final_1M.pt")
+    mask_test_23 = torch.load("mask_test_23_1M.pt")
+    mask_test_final = torch.load("mask_test_final_1M.pt")
 
     # Ricostruzione dei DataLoader
     loader_train = batching(train_23, train_final, batch_size)
     loader_val = batching(val_23, val_final, batch_size)
     loader_test = batching(test_23, test_final, batch_size)
 
-    loader_padding_train = batching(mask_train_23, mask_train_final, batch_size)
+    loader_padding_train = batching(
+        mask_train_23, mask_train_final, batch_size
+    )
     loader_padding_val = batching(mask_val_23, mask_val_final, batch_size)
     loader_padding_test = batching(mask_test_23, mask_test_final, batch_size)
 
@@ -317,12 +372,12 @@ def load_saved_dataloaders(batch_size):
         loader_padding_train,
         loader_padding_val,
         loader_padding_test,
-        subset
+        subset,
     )
 
 
 if __name__ == "__main__":
-    load_and_save_tensor("events_100k.root")
+    load_and_save_tensor("events.root")
 
     # ===================== DEBUG: verifica EOS nei dati batchati ===============
     # inputs, targets = next(iter(loader_train))
@@ -342,11 +397,6 @@ if __name__ == "__main__":
     #     last_ids == eos_index
     # ), "Alcuni target batchati non terminano con EOS!"
     # print("Tutti i target nel batch terminano con EOS")
-    
-
-
-
-
 
 
 # ====================================================================================
