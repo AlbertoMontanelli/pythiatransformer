@@ -24,7 +24,7 @@ batch_size = 32
 
 os.environ["PYTORCH_CUDA_ALLOC_CONF"] = "expandable_segments:True"
 device = torch.device("cuda:2" if torch.cuda.is_available() else "cpu")
-epochs = 300
+epochs = 500
 steps_per_epoch = len(loader_train)  # dataset_size // batch_size
 total_steps = epochs * steps_per_epoch
 
@@ -54,7 +54,7 @@ def build_model():
         val_data_pad_mask=loader_padding_val,
         test_data_pad_mask=loader_padding_test,
         dim_features=subset.shape[0],
-        num_heads=8,
+        num_heads=16,
         num_encoder_layers=2,
         num_decoder_layers=4,
         num_units=64,

@@ -401,7 +401,7 @@ class ParticleTransformer(nn.Module):
         optim,
         loss_func,
         val=True,
-        patient_smooth=99,
+        patient_smooth=499,
         patient_early=10,
     ):
         """This function trains and validates the model for the given
