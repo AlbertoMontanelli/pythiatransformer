@@ -217,18 +217,20 @@ def pdg_to_index(tensor, padding_mask):
     tensor = tensor.long()
     return tensor
 
-def load_and_prepare_data(filename, batch_size):
+def load_and_save_tensor(filename):
     with uproot.open(filename) as file:
         data_23 = file["tree_23"].arrays(library="ak")
         data_final = file["tree_final"].arrays(library="ak")
 
     data_23, mean_23, std_23 = standardize_features(data_23, ["px_23", "py_23", "pz_23"])
     data_final, mean_final, std_final = standardize_features(data_final, ["px_final", "py_final", "pz_final"])
+    stats = np.array([mean_final, std_final])
+    np.savetxt("mean_std.txt", stats)
 
     data_23 = compute_pt(data_23, "px_23", "py_23", "pT_23")
     data_final = compute_pt(data_final, "px_final", "py_final", "pT_final")
     id_all = np.unique(np.concatenate([ak.flatten(data_23["id_23"]), ak.flatten(data_final["id_final"])]))
-    print(f"tutti gli id: {id_all}")
+
     padded_tensor_23, padding_mask_23 = awkward_to_padded_inputs(data_23, ["id_23", "px_23", "py_23", "pz_23", "pT_23"])
     padded_tensor_final, padding_mask_final = awkward_to_padded_targets(data_final, ["id_final", "px_final", "py_final", "pz_final", "pT_final"])
     
@@ -240,28 +242,73 @@ def load_and_prepare_data(filename, batch_size):
     padded_tensor_23 = drop_p(padded_tensor_23)
     padded_tensor_final = drop_p(padded_tensor_final)
 
-    print("evento 0 per il 23 prima del pdg_to_index:\n", padded_tensor_23[0, :, :])
-    print("evento 0 per il finale prima del pdg_to_index:\n", padded_tensor_final[0, :, :])
+    # print("evento 0 per il 23 prima del pdg_to_index:\n", padded_tensor_23[0, :, :])
+    # print("evento 0 per il finale prima del pdg_to_index:\n", padded_tensor_final[0, :, :])
 
     padded_tensor_23 = pdg_to_index(padded_tensor_23, padding_mask_23)
     padded_tensor_final = pdg_to_index(padded_tensor_final, padding_mask_final)
 
-    print("evento 0 per il 23 dopo il pdg_to_index:\n", padded_tensor_23[0, :, :])
-    print("evento 0 per il finale dopo il pdg_to_index:\n", padded_tensor_final[0, :, :])
+    # print("evento 0 per il 23 dopo il pdg_to_index:\n", padded_tensor_23[0, :, :])
+    # print("evento 0 per il finale dopo il pdg_to_index:\n", padded_tensor_final[0, :, :])
 
     train_23, val_23, test_23 = train_val_test_split(padded_tensor_23)
     train_final, val_final, test_final = train_val_test_split(padded_tensor_final)
     mask_train_23, mask_val_23, mask_test_23 = train_val_test_split(padding_mask_23)
     mask_train_final, mask_val_final, mask_test_final = train_val_test_split(padding_mask_final)
 
+    # Salvataggio dei tensori per ripristino futuro
+    torch.save(train_23, "train_23.pt")
+    torch.save(train_final, "train_final.pt")
+    torch.save(val_23, "val_23.pt")
+    torch.save(val_final, "val_final.pt")
+    torch.save(test_23, "test_23.pt")
+    torch.save(test_final, "test_final.pt")
+    torch.save(mask_train_23, "mask_train_23.pt")
+    torch.save(mask_train_final, "mask_train_final.pt")
+    torch.save(mask_val_23, "mask_val_23.pt")
+    torch.save(mask_val_final, "mask_val_final.pt")
+    torch.save(mask_test_23, "mask_test_23.pt")
+    torch.save(mask_test_final, "mask_test_final.pt")
+
+
+    # loader_train = batching(train_23, train_final, batch_size)
+    # loader_val = batching(val_23, val_final, batch_size)
+    # loader_test = batching(test_23, test_final, batch_size)
+    # loader_padding_train = batching(mask_train_23, mask_train_final, batch_size)
+    # loader_padding_val = batching(mask_val_23, mask_val_final, batch_size)
+    # loader_padding_test = batching(mask_test_23, mask_test_final, batch_size)
+
+    subset = train_23[0, 0, :]
+
+def load_saved_dataloaders(batch_size):
+    """Load tensors salvati da file .pt e ricrea i DataLoader."""
+
+    # Caricamento tensori da file .pt
+    train_23 = torch.load("train_23.pt")
+    train_final = torch.load("train_final.pt")
+    val_23 = torch.load("val_23.pt")
+    val_final = torch.load("val_final.pt")
+    test_23 = torch.load("test_23.pt")
+    test_final = torch.load("test_final.pt")
+
+    mask_train_23 = torch.load("mask_train_23.pt")
+    mask_train_final = torch.load("mask_train_final.pt")
+    mask_val_23 = torch.load("mask_val_23.pt")
+    mask_val_final = torch.load("mask_val_final.pt")
+    mask_test_23 = torch.load("mask_test_23.pt")
+    mask_test_final = torch.load("mask_test_final.pt")
+
+    # Ricostruzione dei DataLoader
     loader_train = batching(train_23, train_final, batch_size)
     loader_val = batching(val_23, val_final, batch_size)
     loader_test = batching(test_23, test_final, batch_size)
+
     loader_padding_train = batching(mask_train_23, mask_train_final, batch_size)
     loader_padding_val = batching(mask_val_23, mask_val_final, batch_size)
     loader_padding_test = batching(mask_test_23, mask_test_final, batch_size)
 
-    subset = train_23[0, 0, :]
+    # Informazioni extra
+    subset = train_23[0, 0, :]  # esempio primo vettore features
 
     return (
         loader_train,
@@ -270,13 +317,12 @@ def load_and_prepare_data(filename, batch_size):
         loader_padding_train,
         loader_padding_val,
         loader_padding_test,
-        subset,
-        mean_final,
-        std_final,
+        subset
     )
 
 
-# if __name__ == "__main__":
+if __name__ == "__main__":
+    load_and_save_tensor("events_100k.root")
 
     # ===================== DEBUG: verifica EOS nei dati batchati ===============
     # inputs, targets = next(iter(loader_train))

@@ -401,7 +401,6 @@ class ParticleTransformer(nn.Module):
         optim,
         loss_func,
         val=True,
-        patient_smooth=499,
         patient_early=10,
     ):
         """This function trains and validates the model for the given
@@ -419,15 +418,6 @@ class ParticleTransformer(nn.Module):
             raise TypeError(
                 f"The number of epoch must be int, got {type(num_epochs)}"
             )
-        if not isinstance(patient_smooth, int):
-            raise TypeError(
-                f"The patien must be int, got {type(patient_smooth)}"
-            )
-        if not (patient_smooth < num_epochs):
-            raise ValueError(
-                f"Patient must be smaller than the number of epochs."
-            )
-
         if not isinstance(patient_early, int):
             raise TypeError(
                 f"The patien must be int, got {type(patient_early)}"
@@ -440,9 +430,6 @@ class ParticleTransformer(nn.Module):
         train_loss = []
         val_loss = []
 
-        # smoothness initialization
-        counter_smooth = 0
-        best_loss = 0
         # early_stop initialization
         counter_earlystop = 0
 
@@ -455,16 +442,6 @@ class ParticleTransformer(nn.Module):
             val_loss.append(val_loss_epoch)
 
             if epoch >= int(num_epochs / 100):
-                # smoothness check
-                stop_smooth, best_loss = self.smoothness(
-                    val_loss_epoch, num_epochs, epoch, best_loss
-                )
-                logger.info(f"stop smooth: {stop_smooth}")
-                if stop_smooth:
-                    counter_smooth += 1
-                if counter_smooth >= patient_smooth:
-                    logger.warning(f"Stop at epoch {epoch + 1}.")
-                    break
                 # early_stopping check
                 stop_early = self.early_stopping(val_loss, epoch)
                 if stop_early:
@@ -485,27 +462,6 @@ class ParticleTransformer(nn.Module):
         logger.info("Training completed!")
         return train_loss, val_loss
 
-    def smoothness(self, val_loss, num_epochs, current_epoch, best_loss):
-        """
-        Args:
-            val_loss (float):
-            num_spochs (int):
-            current_epoch (int):
-            best_loss (float):
-        Returns:
-            stop (bool):
-            best_loss (float)
-        """
-        stop = False
-        if current_epoch == int(num_epochs / 100):
-            best_loss = val_loss
-        else:
-            if val_loss <= best_loss:
-                best_loss = val_loss
-            else:
-                stop = True
-        return stop, best_loss
-
     def early_stopping(self, val_losses, current_epoch):
         """
         Args:
@@ -523,106 +479,106 @@ class ParticleTransformer(nn.Module):
     ########################################################################
     # Questa ha degli errori va risistemata
     ########################################################################
-    def generate_target(self, input, input_mask, target_reference):
-        """
-        Autoregressive generation of targets, one event at a time.
+    # def generate_target(self, input, input_mask, target_reference):
+    #     """
+    #     Autoregressive generation of targets, one event at a time.
 
-        Args:
-            input (Tensor): Input tensor [B, N_in, F].
-            input_mask (BoolTensor): Padding mask [B, N_in].
-            target_reference (Tensor): Used to infer max_len per batch.
+    #     Args:
+    #         input (Tensor): Input tensor [B, N_in, F].
+    #         input_mask (BoolTensor): Padding mask [B, N_in].
+    #         target_reference (Tensor): Used to infer max_len per batch.
 
-        Returns:
-            padded_outputs (Tensor): [B, T_max, F] with padding.
-            padding_mask (BoolTensor): [B, T_max], 1 = padding.
-        """
-        self.eval()
-        eos_index = 32
+    #     Returns:
+    #         padded_outputs (Tensor): [B, T_max, F] with padding.
+    #         padding_mask (BoolTensor): [B, T_max], 1 = padding.
+    #     """
+    #     self.eval()
+    #     eos_index = 32
 
-        # Project inputs
-        input_proj = self.embedding(num_embeddings = self.num_classes, embedding_dim = self.num_units, padding_idx = 0)
-        B = input.size(0)
-        max_len = target_reference.size(1)
-        outputs_list = []
-        device = input.device
+    #     # Project inputs
+    #     input_proj = self.embedding(num_embeddings = self.num_classes, embedding_dim = self.num_units, padding_idx = 0)
+    #     B = input.size(0)
+    #     max_len = target_reference.size(1)
+    #     outputs_list = []
+    #     device = input.device
 
-        for i in range(B):
-            single_input = input_proj[i, :, :].unsqueeze(0)  # [1, N, F]
-            single_mask = input_mask[i, :].unsqueeze(0)  # [1, N]
-            ############################################################
-            # CONTROLLARE
-            sos_vec = torch.zeros(1, 1, self.dim_features, device=device)
-            sos_vec[0, 0, 0] = (
-                33
-            )  # primo canale = id, lo stesso usato per EOS
-            sos_proj = input_proj(sos_vec)
-            target = sos_proj  # [1, 1, H]
-            target = torch.zeros((1, 1, self.num_units), device=device)
-            ############################################################
-            generated = []
+    #     for i in range(B):
+    #         single_input = input_proj[i, :, :].unsqueeze(0)  # [1, N, F]
+    #         single_mask = input_mask[i, :].unsqueeze(0)  # [1, N]
+    #         ############################################################
+    #         # CONTROLLARE
+    #         sos_vec = torch.zeros(1, 1, self.dim_features, device=device)
+    #         sos_vec[0, 0, 0] = (
+    #             33
+    #         )  # primo canale = id, lo stesso usato per EOS
+    #         sos_proj = input_proj(sos_vec)
+    #         target = sos_proj  # [1, 1, H]
+    #         target = torch.zeros((1, 1, self.num_units), device=device)
+    #         ############################################################
+    #         generated = []
 
-            found_eos = False
-            for step in range(max_len):
-                tgt_mask = nn.Transformer.generate_square_subsequent_mask(
-                    target.size(1)
-                ).to(device)
-                output = self.transformer(
-                    src=single_input,
-                    tgt=target,
-                    tgt_mask=tgt_mask,
-                    src_key_padding_mask=single_mask,
-                )
-                next_token = self.output_projection(
-                    output[:, -1:, :]
-                )  # shape [1, 1, F]
+    #         found_eos = False
+    #         for step in range(max_len):
+    #             tgt_mask = nn.Transformer.generate_square_subsequent_mask(
+    #                 target.size(1)
+    #             ).to(device)
+    #             output = self.transformer(
+    #                 src=single_input,
+    #                 tgt=target,
+    #                 tgt_mask=tgt_mask,
+    #                 src_key_padding_mask=single_mask,
+    #             )
+    #             next_token = self.output_projection(
+    #                 output[:, -1:, :]
+    #             )  # shape [1, 1, F]
 
-                # # === DEBUG: controllo EOS e distribuzione ID ===
-                # logits = next_token[0, 0, :len(dict_ids)]
-                # pred_id = torch.argmax(logits).item()
+    #             # # === DEBUG: controllo EOS e distribuzione ID ===
+    #             # logits = next_token[0, 0, :len(dict_ids)]
+    #             # pred_id = torch.argmax(logits).item()
 
-                # # Softmax opzionale per vedere se EOS è mai favorito
-                # probs = torch.softmax(logits, dim=0)
+    #             # # Softmax opzionale per vedere se EOS è mai favorito
+    #             # probs = torch.softmax(logits, dim=0)
 
-                # print(f"[Evento {i} | Step {step+1}] pred_id = {pred_id} "
-                #     f"(eos_index = {eos_index}) | prob_eos = {probs[eos_index]:.4f} | "
-                #     f"max_prob = {probs[pred_id]:.4f}")
-                # # ================================================
+    #             # print(f"[Evento {i} | Step {step+1}] pred_id = {pred_id} "
+    #             #     f"(eos_index = {eos_index}) | prob_eos = {probs[eos_index]:.4f} | "
+    #             #     f"max_prob = {probs[pred_id]:.4f}")
+    #             # # ================================================
 
-                generated.append(next_token.squeeze(1))  # [1, F]
+    #             generated.append(next_token.squeeze(1))  # [1, F]
 
-                # Controlla EOS
-                pred_id = torch.argmax(
-                    next_token[0, 0, : len(dict_ids)]
-                ).item()
-                print(f"[Evento {i} | Step {step+1}] pred_id = {pred_id}")
-                if pred_id == eos_index:
-                    found_eos = True
-                    break
+    #             # Controlla EOS
+    #             pred_id = torch.argmax(
+    #                 next_token[0, 0, : len(dict_ids)]
+    #             ).item()
+    #             print(f"[Evento {i} | Step {step+1}] pred_id = {pred_id}")
+    #             if pred_id == eos_index:
+    #                 found_eos = True
+    #                 break
 
-                # Aggiungi token come input
-                projected = self.input_projection(next_token)
-                target = torch.cat([target, projected], dim=1)
-            if not found_eos:
-                print(f"[Evento {i}] EOS NON trovato dopo {max_len} step!")
-            else:
-                print(f"[Evento {i}] EOS trovato dopo {step+1} step")
+    #             # Aggiungi token come input
+    #             projected = self.input_projection(next_token)
+    #             target = torch.cat([target, projected], dim=1)
+    #         if not found_eos:
+    #             print(f"[Evento {i}] EOS NON trovato dopo {max_len} step!")
+    #         else:
+    #             print(f"[Evento {i}] EOS trovato dopo {step+1} step")
 
-            sequence = torch.cat(generated, dim=0)  # [Tᵢ, F]
-            outputs_list.append(sequence)
+    #         sequence = torch.cat(generated, dim=0)  # [Tᵢ, F]
+    #         outputs_list.append(sequence)
 
-        # Pad le sequenze a lunghezza massima
-        padded_outputs = pad_sequence(
-            outputs_list, batch_first=True
-        )  # [B, T_max, F]
+    #     # Pad le sequenze a lunghezza massima
+    #     padded_outputs = pad_sequence(
+    #         outputs_list, batch_first=True
+    #     )  # [B, T_max, F]
 
-        # Padding mask per gli outputs
-        lengths = [seq.size(0) for seq in outputs_list]
-        T_max = padded_outputs.size(1)
-        padding_mask = torch.tensor(
-            [[0] * l + [1] * (T_max - l) for l in lengths], dtype=torch.bool
-        )
+    #     # Padding mask per gli outputs
+    #     lengths = [seq.size(0) for seq in outputs_list]
+    #     T_max = padded_outputs.size(1)
+    #     padding_mask = torch.tensor(
+    #         [[0] * l + [1] * (T_max - l) for l in lengths], dtype=torch.bool
+    #     )
 
-        return padded_outputs, padding_mask
+    #     return padded_outputs, padding_mask
 
 
 # ÷÷÷÷÷÷÷÷÷÷÷÷÷÷÷÷÷÷÷÷÷÷÷÷÷÷÷÷÷÷÷÷÷÷÷÷÷÷÷÷÷÷÷÷÷÷÷÷÷÷÷÷÷÷÷÷÷÷÷÷÷÷÷÷÷÷÷÷÷÷÷÷÷÷÷÷÷÷÷÷÷÷÷÷÷÷÷÷÷÷÷÷

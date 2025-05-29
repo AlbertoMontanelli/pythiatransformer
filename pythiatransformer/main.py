@@ -6,10 +6,9 @@ import torch.nn as nn
 import torch.optim as optimizer
 from loguru import logger
 
-from data_processing import load_and_prepare_data
+from data_processing import load_saved_dataloaders
 from transformer import ParticleTransformer
 
-batch_size = 32
 (
     loader_train,
     loader_val,
@@ -17,17 +16,13 @@ batch_size = 32
     loader_padding_train,
     loader_padding_val,
     loader_padding_test,
-    subset,
-    mean_final,
-    std_final,
-) = load_and_prepare_data(filename="events_1M.root", batch_size=batch_size)
+    subset
+) = load_saved_dataloaders(batch_size=128)
+
 
 os.environ["PYTORCH_CUDA_ALLOC_CONF"] = "expandable_segments:True"
-device = torch.device("cuda:2" if torch.cuda.is_available() else "cpu")
-epochs = 500
-steps_per_epoch = len(loader_train)  # dataset_size // batch_size
-total_steps = epochs * steps_per_epoch
-
+device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
+epochs = 100
 
 def plot_losses(
     train_loss, val_loss, filename="learning_curve_800k.pdf", dpi=1200
