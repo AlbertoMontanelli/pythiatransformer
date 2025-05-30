@@ -228,6 +228,9 @@ def pdg_to_index(tensor, padding_mask):
 
 
 def load_and_save_tensor(filename):
+
+    logger.info("Beginning data_processing")
+
     with uproot.open(filename) as file:
         data_23 = file["tree_23"].arrays(library="ak")
         data_final = file["tree_final"].arrays(library="ak")
@@ -377,7 +380,7 @@ def load_saved_dataloaders(batch_size):
 
 
 if __name__ == "__main__":
-    load_and_save_tensor("events.root")
+    load_and_save_tensor("events_1M.root")
 
     # ===================== DEBUG: verifica EOS nei dati batchati ===============
     # inputs, targets = next(iter(loader_train))
