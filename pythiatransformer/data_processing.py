@@ -68,7 +68,7 @@ def awkward_to_padded_targets(data, features, eos_token=61, sos_token=62):
         index=indices.unsqueeze(-1).expand(-1, -1, num_features),
     )
 
-    threshold = 1  # GeV
+    threshold = 5  # GeV
     mask = base_tensor_sorted[:, :, -1] >= threshold
     event_list = [
         base_tensor_sorted[i][mask[i]]

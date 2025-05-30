@@ -57,7 +57,7 @@ class ParticleTransformer(nn.Module):
         num_units,
         num_classes,
         dropout,
-        activation
+        activation,
     ):
         """
         Args:
@@ -151,7 +151,11 @@ class ParticleTransformer(nn.Module):
         """
         # self.input_projection = nn.Linear(self.dim_features, self.num_units)
         self.output_projection = nn.Linear(self.num_units, self.num_classes)
-        self.embedding = nn.Embedding(num_embeddings = self.num_classes, embedding_dim = self.num_units, padding_idx = 0)
+        self.embedding = nn.Embedding(
+            num_embeddings=self.num_classes,
+            embedding_dim=self.num_units,
+            padding_idx=0,
+        )
         logger.info("Projection layers input/output created.")
 
     def initialize_transformer(self):
@@ -180,12 +184,12 @@ class ParticleTransformer(nn.Module):
             f"activation function: {self.activation}."
         )
 
-
     def de_padding(self, input, padding_mask):
-        """Function that eliminate extra padding for each batch
-        """
-        non_pad_mask = ~padding_mask # inverto la matrice di padding
-        num_particles = non_pad_mask.sum(dim=1) # tensore di lunghezza batch_size, con valori il numero di particelle vere
+        """Function that eliminate extra padding for each batch"""
+        non_pad_mask = ~padding_mask  # inverto la matrice di padding
+        num_particles = non_pad_mask.sum(
+            dim=1
+        )  # tensore di lunghezza batch_size, con valori il numero di particelle vere
         max_len_tensor = num_particles.max()
         max_len = max_len_tensor.item()
         input = input[:, :max_len, :]
@@ -255,12 +259,12 @@ class ParticleTransformer(nn.Module):
             decoder_input_list = []
             decoder_input_mask_list = []
 
-            # Per ogni evento nel batch, rimuoviamo l'ultimo elemento dall'input del 
+            # Per ogni evento nel batch, rimuoviamo l'ultimo elemento dall'input del
             # decoder e il primo dal target per la loss
             for event in range(target.shape[0]):
                 event_target = target[event]
                 event_mask = target_padding_mask[event]
-                
+
                 decoder_input_event = event_target[:-1]
                 decoder_input_event_mask = event_mask[:-1]
                 decoder_input_list.append(decoder_input_event)
@@ -286,19 +290,27 @@ class ParticleTransformer(nn.Module):
             )
 
             loss = loss_func(output.transpose(1, 2), target_4_loss.squeeze(-1))
-            
+
             if not torch.isfinite(loss):
                 raise ValueError(f"Loss is not finite at epoch {epoch + 1}")
             loss.backward()
             optim.step()
             loss_epoch += loss.item()
 
-            del input, target, input_padding_mask, target_padding_mask, output, loss, attention_mask
+            del (
+                input,
+                target,
+                input_padding_mask,
+                target_padding_mask,
+                output,
+                loss,
+                attention_mask,
+            )
             torch.cuda.empty_cache()
 
-        gc.collect() # forcing garbage collector
+        gc.collect()  # forcing garbage collector
         torch.cuda.empty_cache()
-        
+
         loss_epoch = loss_epoch / len(self.train_data)
         logger.debug(f"Training loss at epoch {epoch + 1}: {loss_epoch:.4f}")
         return loss_epoch
@@ -347,7 +359,7 @@ class ParticleTransformer(nn.Module):
                 for event in range(target.shape[0]):
                     event_target = target[event]
                     event_mask = target_padding_mask[event]
-                    
+
                     decoder_input_event = event_target[:-1]
                     decoder_input_event_mask = event_mask[:-1]
                     decoder_input_list.append(decoder_input_event)
@@ -373,14 +385,24 @@ class ParticleTransformer(nn.Module):
                     attention_mask,
                 )
 
-                loss = loss_func(output.transpose(1, 2), target_4_loss.squeeze(-1))
+                loss = loss_func(
+                    output.transpose(1, 2), target_4_loss.squeeze(-1)
+                )
                 if not torch.isfinite(loss):
                     raise ValueError(
                         f"Loss is not finite at epoch {epoch + 1}"
                     )
                 loss_epoch += loss.item()
 
-                del input, target, input_padding_mask, target_padding_mask, output, loss, attention_mask
+                del (
+                    input,
+                    target,
+                    input_padding_mask,
+                    target_padding_mask,
+                    output,
+                    loss,
+                    attention_mask,
+                )
                 torch.cuda.empty_cache()
 
         gc.collect()
@@ -585,57 +607,57 @@ class ParticleTransformer(nn.Module):
 
 # MIXED LOSS VECCHIA
 
-    # def mixed_loss(self, output, target, mask, alpha=1, beta=0):
-    #     """
-    #     Combina CrossEntropy per ID e MSE per px,py,pz, con:
-    #     - rinforzo EOS corretti (alpha),
-    #     - penalità EOS predetti in posizioni sbagliate (beta).
-    #     """
-    #     device = output.device
+# def mixed_loss(self, output, target, mask, alpha=1, beta=0):
+#     """
+#     Combina CrossEntropy per ID e MSE per px,py,pz, con:
+#     - rinforzo EOS corretti (alpha),
+#     - penalità EOS predetti in posizioni sbagliate (beta).
+#     """
+#     device = output.device
 
-    #     # Separazione componenti
-    #     output_id = output[:, :, : len(dict_ids)]
-    #     target_id = target[:, :, : len(dict_ids)]
-    #     output_p = output[:, :, len(dict_ids) :]
-    #     target_p = target[:, :, len(dict_ids) :]
+#     # Separazione componenti
+#     output_id = output[:, :, : len(dict_ids)]
+#     target_id = target[:, :, : len(dict_ids)]
+#     output_p = output[:, :, len(dict_ids) :]
+#     target_p = target[:, :, len(dict_ids) :]
 
-    #     # Indici
-    #     target_index = torch.argmax(target_id, dim=-1)
-    #     pred_index = torch.argmax(output_id, dim=-1)
+#     # Indici
+#     target_index = torch.argmax(target_id, dim=-1)
+#     pred_index = torch.argmax(output_id, dim=-1)
 
-    #     ce = nn.CrossEntropyLoss(reduction="none")
-    #     ce_loss = ce(output_id.transpose(1, 2), target_index)
+#     ce = nn.CrossEntropyLoss(reduction="none")
+#     ce_loss = ce(output_id.transpose(1, 2), target_index)
 
-    #     mask = mask.to(device)
-    #     target_index = target_index.to(device)
-    #     pred_index = pred_index.to(device)
+#     mask = mask.to(device)
+#     target_index = target_index.to(device)
+#     pred_index = pred_index.to(device)
 
-    #     eos_index = dict_ids[-999]
-    #     eos_true_mask = target_index == eos_index
-    #     eos_pred_mask = pred_index == eos_index
-    #     valid_mask = (~mask) & (~eos_true_mask)
+#     eos_index = dict_ids[-999]
+#     eos_true_mask = target_index == eos_index
+#     eos_pred_mask = pred_index == eos_index
+#     valid_mask = (~mask) & (~eos_true_mask)
 
-    #     # MSE + CE standard
-    #     mse_loss = nn.functional.mse_loss(
-    #         output_p[valid_mask], target_p[valid_mask]
-    #     )
-    #     loss_ce_valid = ce_loss[valid_mask].mean()
-    #     total_loss = loss_ce_valid + mse_loss
+#     # MSE + CE standard
+#     mse_loss = nn.functional.mse_loss(
+#         output_p[valid_mask], target_p[valid_mask]
+#     )
+#     loss_ce_valid = ce_loss[valid_mask].mean()
+#     total_loss = loss_ce_valid + mse_loss
 
-    #     # Default valori a 0.0 per sicurezza
-    #     eos_loss = torch.tensor(0.0, device=device)
-    #     extra_eos_penalty = torch.tensor(0.0, device=device)
+#     # Default valori a 0.0 per sicurezza
+#     eos_loss = torch.tensor(0.0, device=device)
+#     extra_eos_penalty = torch.tensor(0.0, device=device)
 
-    #     # Rinforzo EOS corretti
-    #     eos_correct_mask = eos_true_mask & eos_pred_mask & (~mask)
-    #     if eos_correct_mask.any():
-    #         eos_loss = ce_loss[eos_correct_mask].mean()
-    #         total_loss += alpha * eos_loss
+#     # Rinforzo EOS corretti
+#     eos_correct_mask = eos_true_mask & eos_pred_mask & (~mask)
+#     if eos_correct_mask.any():
+#         eos_loss = ce_loss[eos_correct_mask].mean()
+#         total_loss += alpha * eos_loss
 
-    #     # Penalità EOS sbagliati
-    #     eos_wrong_mask = eos_pred_mask & (~eos_true_mask) & (~mask)
-    #     if eos_wrong_mask.any():
-    #         extra_eos_penalty = ce_loss[eos_wrong_mask].mean()
-    #         total_loss += beta * extra_eos_penalty
+#     # Penalità EOS sbagliati
+#     eos_wrong_mask = eos_pred_mask & (~eos_true_mask) & (~mask)
+#     if eos_wrong_mask.any():
+#         extra_eos_penalty = ce_loss[eos_wrong_mask].mean()
+#         total_loss += beta * extra_eos_penalty
 
-    #     return total_loss, eos_loss.item()
+#     return total_loss, eos_loss.item()
