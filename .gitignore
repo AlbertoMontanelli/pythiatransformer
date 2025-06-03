@@ -3,6 +3,5 @@ tests/__pycache__
 CMEPDA_project.egg-info/
 .ipynb_checkpoints/
 .vscode/
-events.root
-events_100k.root
-output_pythia_100k.log
+
+
