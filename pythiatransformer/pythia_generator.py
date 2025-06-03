@@ -117,7 +117,8 @@ def generate_events(output_file: str, n_events: int, seed: int = 10):
     data_23 = initialize_data(features, "_23")
     data_final = initialize_data(features, "_final")
 
-    for event in range(n_events):
+    event = 0
+    while event < n_events:
         try:
             if not pythia.next():
                 logger.warning(f"Event {event} failed to generate.")
@@ -136,29 +137,29 @@ def generate_events(output_file: str, n_events: int, seed: int = 10):
                     found_23 = True
                     counter_23 += 1
                     record_particle(particle, features, data_23, "_23")
-                if found_23 and particle.isFinal():
+                if found_23 and particle.isFinal() and (particle.pT()>10):
                     found_final = True
                     counter_final += 1
                     record_particle(particle, features, data_final, "_final")
 
-            try:
-                if found_final:
-                    logger.info(
-                        f"Found {counter_23} 23-status particles and"
-                        f" {counter_final} final particles for event"
-                        f" {event+1}.\n"
-                    )
-                else:
-                    raise ValueError(
-                        f"Event {event} discarded: no status-23 or final"
-                        f" particles found."
-                    )
-
-            except ValueError as e:
+            """
+            if found_final:
+                logger.info(
+                    f"Found {counter_23} 23-status particles and"
+                    f" {counter_final} final particles for event"
+                    f" {event+1}.\n"
+                )
+            """
+            if found_final:
+                event += 1
+            else:
+                logger.info(
+                    f"Event {event} discarded: no status-23 or final"
+                    f" particles found."
+                )
                 cleanup_event(data_23, features, "_23")
                 cleanup_event(data_final, features, "_final")
-                logger.warning(str(e))
-                raise  # Re-raise the exception to halt the program.
+
 
         except Exception as e:
             logger.exception(f"Unexpected error during event {event+1}: {e}")
@@ -171,7 +172,10 @@ def generate_events(output_file: str, n_events: int, seed: int = 10):
 
 
 if __name__ == "__main__":
+    generate_events("prova.root", n_events=1000)
+"""
     for i in range(10):
         output = f"events_{i:02d}.root"
         seed = 10 + i
         generate_events(output, n_events=100000, seed=seed)
+"""
