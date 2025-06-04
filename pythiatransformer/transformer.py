@@ -408,7 +408,7 @@ class ParticleTransformer(nn.Module):
         gc.collect()
         torch.cuda.empty_cache()
 
-        loss_epoch = loss_epoch / len(self.val_data)
+        loss_epoch = loss_epoch / len(data_loader)
         if val:
             logger.debug(
                 f"Validation loss at epoch {epoch + 1}: {loss_epoch:.4f}"
