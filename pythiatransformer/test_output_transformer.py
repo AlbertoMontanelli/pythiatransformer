@@ -1,12 +1,12 @@
 import torch
 import torch.nn as nn
-from data_processing import load_and_prepare_data
+
+from data_processing import load_saved_dataloaders
 from transformer import ParticleTransformer
 
 # Imposta il dispositivo
-device = torch.device("cuda:2" if torch.cuda.is_available() else "cpu")
+device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
 
-batch_size = 32
 (
     loader_train,
     loader_val,
@@ -15,9 +15,7 @@ batch_size = 32
     loader_padding_val,
     loader_padding_test,
     subset,
-    mean_final,
-    std_final,
-) = load_and_prepare_data(filename="events_10k.root", batch_size=batch_size)
+) = load_saved_dataloaders(batch_size=128)
 
 
 # Costruisci il modello e carica i pesi
@@ -33,7 +31,7 @@ model = ParticleTransformer(
     num_encoder_layers=2,
     num_decoder_layers=4,
     num_units=64,
-    num_classes = 34,
+    num_classes=34,
     dropout=0.1,
     activation=nn.ReLU(),
 )
