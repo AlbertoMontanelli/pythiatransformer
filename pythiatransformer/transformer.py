@@ -210,20 +210,51 @@ class ParticleTransformer(nn.Module):
                                    through the model.
         """
         batch_size = input.size(0)
-        input = self.input_projection(input)
-        memory = self.transformer.encoder(src_emb) # ??
-        decoder_input = self.sos_token.repeat(batch_size, 1, 1).to(device)
+        encoder_input = self.input_projection(input)
+        encoder_output = self.transformer.encoder(encoder_input) # called also memory
+        decoder_input = self.sos_token.repeat(batch_size, 1, 1).to(device) # it is the sequence generated so far
         outputs_vals = []
         outputs_eos = []
 
-        if teacher_forcing and (target is not None):
-            max_iter = target.size(1)
+        if teacher_forcing and (tgt_vals is not None):
+            max_iter = tgt_vals.size(1)
         else:
             max_iter = max_len
         
         for t in range(max_iter):
-            output = self.transformer.decoder(decoder_input, memory)
-            
+            output = self.transformer.decoder(decoder_input, encoder_output)
+            # for each time step t, we are only interested in the last token
+            # being generated: 'last' is the embedding vector of the final 
+            # token of 'decoder_input'. It is from this that we calculate 
+            # the new, interesting predictions. All the previous ones are not
+            # interesting, since they are relative to already generated tokens.
+            last = output[:, -1, :]  # [batch, d_model]
+
+            # particle_head predices the value of the next token, while eos_head
+            # predices the probability (the logits) of the EOS token being 
+            # in the current position.
+            # unsqueeze() is needed in order to add a dimension, useful
+            # to concatenate in the temporal dimension t.
+            pred_val = self.particle_head(last).unsqueeze(1)   # [batch,1,1]
+            pred_eos = self.eos_head(last).unsqueeze(1)   # [batch,1,1]
+
+            outputs_vals.append(pred_val)
+            outputs_eos.append(pred_eos)
+
+            if teacher_forcing and (tgt_vals is not None):
+                true_val = tgt_vals[:, t, :].unsqueeze(-1)    # [batch,1,1]
+                emb = self.input_projection(true_val)               # [batch,1,d_model]
+                decoder_input = torch.cat([decoder_input, emb], dim=1)
+            else:
+                eos_prob = torch.sigmoid(pred_eos)            # [batch,1,1]
+                if (eos_prob > 0.5).all():
+                    break
+                emb = self.input_projection(pred_val)                # [batch,1,d_model]
+                decoder_input = torch.cat([decoder_input, emb], dim=1)
+        
+        pred_vals = torch.cat(outputs_vals, dim=1)       # [batch, T_pred,1]
+        pred_eos_logits = torch.cat(outputs_eos, dim=1)  # [batch, T_pred,1]
+        return pred_vals, pred_eos_logits
 
         target = self.embedding(target)
         input = input.squeeze(-2)
