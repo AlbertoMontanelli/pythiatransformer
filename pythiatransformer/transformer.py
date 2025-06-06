@@ -149,13 +149,10 @@ class ParticleTransformer(nn.Module):
         of input features. Subsequently, a linear trasformation is
         applied to restore the data to its original dimensions.
         """
-        # self.input_projection = nn.Linear(self.dim_features, self.num_units)
-        self.output_projection = nn.Linear(self.num_units, self.num_classes)
-        self.embedding = nn.Embedding(
-            num_embeddings=self.num_classes,
-            embedding_dim=self.num_units,
-            padding_idx=0,
-        )
+        self.input_projection = nn.Linear(self.dim_features, self.num_units)
+        self.sos_token = nn.Parameter(torch.randn(1, 1, self.num_units)) # 1 sta per gli eventi, poi diventa lungo tanto quanto è il batch size
+        self.particle_head = nn.Linear(self.num_units, self.dim_features)
+        self.eos_head = nn.Linear(self.num_units, self.dim_features)
         logger.info("Projection layers input/output created.")
 
     def initialize_transformer(self):
@@ -196,7 +193,7 @@ class ParticleTransformer(nn.Module):
         padding_mask = padding_mask[:, :max_len]
         return input, padding_mask
 
-    def forward(self, input, target, input_mask, target_mask, attention_mask):
+    def forward(self, input, input_mask, attention_mask, tgt_vals=None, target_mask = None, teacher_forcing=False, max_len=10):
         """The aim of this function is computed the output of the model by
         projecting the input and the target into an hidden
         representation space, processing them through a Transformer,
@@ -212,7 +209,22 @@ class ParticleTransformer(nn.Module):
             output (torch.Tensor): The output tensor after processing
                                    through the model.
         """
-        input = self.embedding(input)
+        batch_size = input.size(0)
+        input = self.input_projection(input)
+        memory = self.transformer.encoder(src_emb) # ??
+        decoder_input = self.sos_token.repeat(batch_size, 1, 1).to(device)
+        outputs_vals = []
+        outputs_eos = []
+
+        if teacher_forcing and (target is not None):
+            max_iter = target.size(1)
+        else:
+            max_iter = max_len
+        
+        for t in range(max_iter):
+            output = self.transformer.decoder(decoder_input, memory)
+            
+
         target = self.embedding(target)
         input = input.squeeze(-2)
         target = target.squeeze(-2)
