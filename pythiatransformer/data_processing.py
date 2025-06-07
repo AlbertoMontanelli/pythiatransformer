@@ -11,31 +11,25 @@ from torch.utils.data import DataLoader, TensorDataset
 #######################################
 
 
-def standardize_features(data, features):
-    """Standardize features (mean=0, std=1) directly on Awkward Arrays.
+# def standardize_features(data, features):
+#     """Standardize features (mean=0, std=1) directly on Awkward Arrays.
 
-    Args:
-        data (ak.Array): Input Awkward Array.
-        features (list): List of features to standardize.
+#     Args:
+#         data (ak.Array): Input Awkward Array.
+#         features (list): List of features to standardize.
 
-    Returns:
-        tuple: (standardized data, list of means, list of stds)
-    """
-    means, stds = [], []
-    for feature in features:
-        mean = ak.mean(data[feature])
-        std = ak.std(data[feature])
-        data[feature] = (data[feature] - mean) / std
-        means.append(mean)
-        stds.append(std)
-    return data, means, stds
-
-
-def compute_pt(data, px_key, py_key, new_key):
-    """Compute transverse momentum and add it as a new column."""
-    data[new_key] = np.sqrt(data[px_key] ** 2 + data[py_key] ** 2)
-    return data
-
+#     Returns:
+#         tuple: (standardized data, list of means, list of stds)
+#     """
+#     means, stds = [], []
+#     for feature in features:
+#         mean = ak.mean(data[feature])
+#         std = ak.std(data[feature])
+#         data[feature] = (data[feature] - mean) / std
+#         means.append(mean)
+#         stds.append(std)
+#     print(f"means: {means}, stds: {stds}")
+#     return data, means, stds
 
 def awkward_to_padded_targets(data, features, eos_token=61, sos_token=62):
     """Convert Awkward Array to padded torch.Tensor and insert EOS.
@@ -79,8 +73,6 @@ def awkward_to_padded_targets(data, features, eos_token=61, sos_token=62):
         padded_tensor[i, 1 : n + 1] = base_tensor_sorted[i, :n]
         padded_tensor[i, n + 1, 0] = eos_token
         padding_mask[i, : n + 2] = 0
-        # if i>998:
-        #     print(f"nr particelle per evento {i}: {n}")
 
     return padded_tensor, padding_mask
 
@@ -173,46 +165,46 @@ def train_val_test_split(
     return tensor[:i1], tensor[i1:i2], tensor[i2:]
 
 
-def pdg_to_index(tensor, padding_mask):
-    dict_ids = {
-        21: 30,  # gluon
-        22: 31,  # photon
-        -12: 32,  # antineutrino e
-        12: 33,  # neutrino e
-        -14: 34,  # antineutrino mu
-        14: 35,  # neutrino mu
-        -16: 36,  # antineutrino tau
-        16: 37,  # neutrino tau
-        -11: 38,  # positron
-        11: 39,  # electron
-        -2: 40,  # antiup
-        2: 41,  # up
-        -1: 42,  # antidown
-        1: 43,  # down
-        -3: 44,  # antistrange
-        3: 45,  # strange
-        -13: 46,  # antimu
-        13: 47,  # mu
-        -211: 48,  # pi-
-        211: 49,  # pi +
-        -321: 50,  # K-
-        321: 51,  # K+
-        130: 52,  # K0 long
-        -2212: 53,  # antiproton
-        2212: 54,  # proton
-        -2112: 55,  # antineutron
-        2112: 56,  # neutron
-        -4: 57,  # anticharm
-        4: 58,  # charm
-        -5: 59,  # antibottom
-        5: 60,  # bottom
-    }
-    for pdg_id, index in dict_ids.items():
-        mask = tensor[:, :, 0] == pdg_id
-        tensor[:, :, 0][mask] = index
-    tensor[~padding_mask] = tensor[~padding_mask] - 29
-    tensor = tensor.long()
-    return tensor
+# def pdg_to_index(tensor, padding_mask):
+#     dict_ids = {
+#         21: 30,  # gluon
+#         22: 31,  # photon
+#         -12: 32,  # antineutrino e
+#         12: 33,  # neutrino e
+#         -14: 34,  # antineutrino mu
+#         14: 35,  # neutrino mu
+#         -16: 36,  # antineutrino tau
+#         16: 37,  # neutrino tau
+#         -11: 38,  # positron
+#         11: 39,  # electron
+#         -2: 40,  # antiup
+#         2: 41,  # up
+#         -1: 42,  # antidown
+#         1: 43,  # down
+#         -3: 44,  # antistrange
+#         3: 45,  # strange
+#         -13: 46,  # antimu
+#         13: 47,  # mu
+#         -211: 48,  # pi-
+#         211: 49,  # pi +
+#         -321: 50,  # K-
+#         321: 51,  # K+
+#         130: 52,  # K0 long
+#         -2212: 53,  # antiproton
+#         2212: 54,  # proton
+#         -2112: 55,  # antineutron
+#         2112: 56,  # neutron
+#         -4: 57,  # anticharm
+#         4: 58,  # charm
+#         -5: 59,  # antibottom
+#         5: 60,  # bottom
+#     }
+#     for pdg_id, index in dict_ids.items():
+#         mask = tensor[:, :, 0] == pdg_id
+#         tensor[:, :, 0][mask] = index
+#     tensor[~padding_mask] = tensor[~padding_mask] - 29
+#     tensor = tensor.long()
+#     return tensor
 
 
 def load_and_save_tensor(filename):
@@ -225,55 +217,46 @@ def load_and_save_tensor(filename):
 
     logger.info("Opening of root file trees with uproot terminated")
 
-    data_23, mean_23, std_23 = standardize_features(
-        data_23, ["px_23", "py_23", "pz_23"]
-    )
-    data_final, mean_final, std_final = standardize_features(
-        data_final, ["px_final", "py_final", "pz_final"]
-    )
-    stats = np.array([mean_final, std_final])
-    np.savetxt("mean_std.txt", stats)
+    # data_23, mean_23, std_23 = standardize_features(
+    #     data_23, ["e_23"]
+    # )
+    # data_final, mean_final, std_final = standardize_features(
+    #     data_final, ["e_final"]
+    # )
+    # stats = np.array([mean_final, std_final])
+    # np.savetxt("mean_std.txt", stats)
 
-    logger.info("Standardization and saving mean, std terminated")
-
-    # data_23 = compute_pt(data_23, "px_23", "py_23", "pT_23")
-    # data_final = compute_pt(data_final, "px_final", "py_final", "pT_final")
-    # # id_all = np.unique(
-    # #     np.concatenate(
-    # #         [ak.flatten(data_23["id_23"]), ak.flatten(data_final["id_final"])]
-    # #     )
-    # # )
-    # logger.info("Computation of pT terminated")
+    # logger.info("Standardization and saving mean, std terminated")
 
     padded_tensor_23, padding_mask_23 = awkward_to_padded_inputs(
-        data_23, ["id_23", "px_23", "py_23", "pz_23", "pT_23"]
+        data_23, ["pT_23"]
     )
     padded_tensor_final, padding_mask_final = awkward_to_padded_targets(
         data_final,
-        ["id_final", "px_final", "py_final", "pz_final", "pT_final"],
+        ["pT_final"],
     )
 
     logger.info("Padded tensors created")
-    # drop_pt = lambda t: t[:, :, :-1]
-    # padded_tensor_23 = drop_pt(padded_tensor_23)
-    # padded_tensor_final = drop_pt(padded_tensor_final)
 
-    drop_p = lambda t: t[:, :, :-4]
-    padded_tensor_23 = drop_p(padded_tensor_23)
-    padded_tensor_final = drop_p(padded_tensor_final)
+    # drop_p_id = lambda t: t[:, :, :-2] # droppa pt e id
+    # padded_tensor_23 = drop_p_id(padded_tensor_23)
+    # padded_tensor_final = drop_p_id(padded_tensor_final)
 
-    logger.info("Dropping p in tensor terminated")
+    # logger.info("Dropping pT and id in tensor terminated")
 
-    # print("evento 0 per il 23 prima del pdg_to_index:\n", padded_tensor_23[0, :, :])
-    # print("evento 0 per il finale prima del pdg_to_index:\n", padded_tensor_final[0, :, :])
+    # print("evento 0 per il 23:\n", padded_tensor_23[0, :, :])
+    # print("evento 0 per il finale:\n", padded_tensor_final[0, :, :])
 
-    padded_tensor_23 = pdg_to_index(padded_tensor_23, padding_mask_23)
-    padded_tensor_final = pdg_to_index(padded_tensor_final, padding_mask_final)
+    for i in range(10):
+        sum_23 = padded_tensor_23[i].sum()
+        sum_final = padded_tensor_final[i].sum() - 62 - 61
+        # print(f"23: {sum_23}, final: {sum_final}")
+        print(f"final/23: {sum_final/sum_23}")
 
-    logger.info("Mapping PID into classes indices terminated")
+    # padded_tensor_23 = pdg_to_index(padded_tensor_23, padding_mask_23)
+    # padded_tensor_final = pdg_to_index(padded_tensor_final, padding_mask_final)
 
-    # print("evento 0 per il 23 dopo il pdg_to_index:\n", padded_tensor_23[0, :, :])
-    # print("evento 0 per il finale dopo il pdg_to_index:\n", padded_tensor_final[0, :, :])
+    # logger.info("Mapping PID into classes indices terminated")
 
     train_23, val_23, test_23 = train_val_test_split(padded_tensor_23)
     train_final, val_final, test_final = train_val_test_split(
@@ -288,41 +271,31 @@ def load_and_save_tensor(filename):
 
     logger.info("Train/Val/Test splitting terminated")
 
-    # Salvataggio dei tensori per ripristino futuro
-    torch.save(train_23, "train_23_1M_7Gev.pt")
-    logger.info("Tensor train_23 saved")
-    torch.save(train_final, "train_final_1M_7Gev.pt")
-    logger.info("Tensor train_final saved")
-    torch.save(val_23, "val_23_1M_7Gev.pt")
-    logger.info("Tensor val_23 saved")
-    torch.save(val_final, "val_final_1M_7Gev.pt")
-    logger.info("Tensor val_final saved")
-    torch.save(test_23, "test_23_1M_7Gev.pt")
-    logger.info("Tensor test_23 saved")
-    torch.save(test_final, "test_final_1M_7Gev.pt")
-    logger.info("Tensor test_final saved")
-    torch.save(mask_train_23, "mask_train_23_1M_7Gev.pt")
-    logger.info("Tensor mask_train_23 saved")
-    torch.save(mask_train_final, "mask_train_final_1M_7Gev.pt")
-    logger.info("Tensor mask_train_final saved")
-    torch.save(mask_val_23, "mask_val_23_1M_7Gev.pt")
-    logger.info("Tensor mask_val_23 saved")
-    torch.save(mask_val_final, "mask_val_final_1M_7Gev.pt")
-    logger.info("Tensor mask_val_final saved")
-    torch.save(mask_test_23, "mask_test_23_1M_7Gev.pt")
-    logger.info("Tensor mask_test_23 saved")
-    torch.save(mask_test_final, "mask_test_final_1M_7Gev.pt")
-    logger.info("Tensor mask_test_final saved")
-
-    # loader_train = batching(train_23, train_final, batch_size)
-    # loader_val = batching(val_23, val_final, batch_size)
-    # loader_test = batching(test_23, test_final, batch_size)
-    # loader_padding_train = batching(mask_train_23, mask_train_final, batch_size)
-    # loader_padding_val = batching(mask_val_23, mask_val_final, batch_size)
-    # loader_padding_test = batching(mask_test_23, mask_test_final, batch_size)
-
-    subset = train_23[0, 0, :]
-
+    # # Salvataggio dei tensori per ripristino futuro
+    # torch.save(train_23, "train_23_1M_7Gev.pt")
+    # logger.info("Tensor train_23 saved")
+    # torch.save(train_final, "train_final_1M_7Gev.pt")
+    # logger.info("Tensor train_final saved")
+    # torch.save(val_23, "val_23_1M_7Gev.pt")
+    # logger.info("Tensor val_23 saved")
+    # torch.save(val_final, "val_final_1M_7Gev.pt")
+    # logger.info("Tensor val_final saved")
+    # torch.save(test_23, "test_23_1M_7Gev.pt")
+    # logger.info("Tensor test_23 saved")
+    # torch.save(test_final, "test_final_1M_7Gev.pt")
+    # logger.info("Tensor test_final saved")
+    # torch.save(mask_train_23, "mask_train_23_1M_7Gev.pt")
+    # logger.info("Tensor mask_train_23 saved")
+    # torch.save(mask_train_final, "mask_train_final_1M_7Gev.pt")
+    # logger.info("Tensor mask_train_final saved")
+    # torch.save(mask_val_23, "mask_val_23_1M_7Gev.pt")
+    # logger.info("Tensor mask_val_23 saved")
+    # torch.save(mask_val_final, "mask_val_final_1M_7Gev.pt")
+    # logger.info("Tensor mask_val_final saved")
+    # torch.save(mask_test_23, "mask_test_23_1M_7Gev.pt")
+    # logger.info("Tensor mask_test_23 saved")
+    # torch.save(mask_test_final, "mask_test_final_1M_7Gev.pt")
+    # logger.info("Tensor mask_test_final saved")
 
 def load_saved_dataloaders(batch_size):
     """Load tensors salvati da file .pt e ricrea i DataLoader."""
@@ -368,7 +341,7 @@ def load_saved_dataloaders(batch_size):
 
 
 if __name__ == "__main__":
-    load_and_save_tensor("events_1M_7GeV.root")
+    load_and_save_tensor("events_1M_7Gev.root")
 
     # ===================== DEBUG: verifica EOS nei dati batchati ===============
     # inputs, targets = next(iter(loader_train))
