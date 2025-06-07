@@ -31,53 +31,8 @@ from torch.utils.data import DataLoader, TensorDataset
 #     print(f"means: {means}, stds: {stds}")
 #     return data, means, stds
 
-def awkward_to_padded_targets(data, features, eos_token=61, sos_token=62):
-    """Convert Awkward Array to padded torch.Tensor and insert EOS.
 
-    Args:
-        data (ak.Array): Input Awkward array.
-        features (list): List of feature keys.
-        eos_token (int): Token used to represent EOS.
-
-    Returns:
-        tuple: (padded_tensor, padding_mask)
-    """
-    event_particles = ak.num(data[features[0]], axis=1)
-    max_particles = ak.max(event_particles)
-    batch_size = len(event_particles)
-    num_features = len(features)
-    new_max_len = max_particles + 2
-
-    padded_events = {
-        f: ak.fill_none(ak.pad_none(data[f], target=max_particles, axis=1), 0)
-        for f in features
-    }
-    base_tensor = torch.tensor(
-        np.stack([ak.to_numpy(padded_events[f]) for f in features], axis=-1),
-        dtype=torch.float32,
-    )
-
-    indices = torch.argsort(base_tensor[:, :, -1], dim=1, descending=True)
-    base_tensor_sorted = torch.gather(
-        base_tensor,
-        dim=1,
-        index=indices.unsqueeze(-1).expand(-1, -1, num_features),
-    )
-
-    padded_tensor = torch.zeros((batch_size, new_max_len, num_features))
-    padding_mask = torch.ones((batch_size, new_max_len), dtype=torch.bool)
-
-    for i, true_particles in enumerate(event_particles):
-        n = true_particles.item()
-        padded_tensor[i, 0, 0] = sos_token
-        padded_tensor[i, 1 : n + 1] = base_tensor_sorted[i, :n]
-        padded_tensor[i, n + 1, 0] = eos_token
-        padding_mask[i, : n + 2] = 0
-
-    return padded_tensor, padding_mask
-
-
-def awkward_to_padded_inputs(data, features):
+def awkward_to_padded_tensor(data, features, truncate_energy = False, list_energy = None, eos_token=61, sos_token=62):
     """Convert Awkward Array to padded tensor (no EOS).
 
     Args:
@@ -106,13 +61,42 @@ def awkward_to_padded_inputs(data, features):
         dim=1,
         index=indices.unsqueeze(-1).expand(-1, -1, num_features),
     )
+    if truncate_energy:
+        # tronchiamo in modo che la somma delle energie sia il 50% di quella delle 23
+        batch_size = len(event_particles)
 
-    padding_mask = torch.tensor(
-        [[0] * n + [1] * (max_particles - n) for n in event_particles],
-        dtype=torch.bool,
-    )
-    return padded_tensor, padding_mask
+        threshold = 0.5 * list_energy
+        cum_energy = torch.cumsum(padded_tensor.squeeze(-1), dim=1)  # somma cumulativa dei pT
+        # per ogni evento trovo indice fino a dove somma cumulativa < soglia
+        keep_lengths = (cum_energy < threshold.unsqueeze(1)).sum(dim=1) + 1 # +1 per includere la particella che supera 50%
 
+        new_max_len = keep_lengths.max().item() + 2  # +2 per sos e eos token
+        print(f"max len: {new_max_len}")
+
+        padded_tensor_trunc = torch.zeros((batch_size, new_max_len, num_features))
+        padding_mask = torch.ones((batch_size, new_max_len), dtype=torch.bool)
+
+        for i in range(batch_size):
+            k = keep_lengths[i].item() # l'indice della particella dopo la quale tronchiamo
+            if i < 100:
+                print(f"k: {k}")
+            padded_tensor_trunc[i, 0, 0] = sos_token
+            padded_tensor_trunc[i, 1 : k + 1, :] = padded_tensor[i, :k, :]
+            padded_tensor_trunc[i, k + 1, 0] = eos_token
+            padding_mask[i, : k + 2] = 0
+
+    else:
+        padding_mask = torch.tensor(
+            [[0] * n + [1] * (max_particles - n) for n in event_particles],
+            dtype=torch.bool,
+        )
+
+        total_energy = padded_tensor.sum(dim=1).squeeze(-1)
+    
+    if truncate_energy:
+        return padded_tensor_trunc, padding_mask
+    else:
+        return padded_tensor, padding_mask, total_energy
 
 def batching(input, target, batch_size, shuffle=True):
     """Create a DataLoader for batching and shuffling input/target pairs."""
@@ -228,12 +212,15 @@ def load_and_save_tensor(filename):
 
     # logger.info("Standardization and saving mean, std terminated")
 
-    padded_tensor_23, padding_mask_23 = awkward_to_padded_inputs(
-        data_23, ["pT_23"]
+    padded_tensor_23, padding_mask_23, energy_23 = awkward_to_padded_tensor(
+        data_23, 
+        ["pT_23"]
     )
-    padded_tensor_final, padding_mask_final = awkward_to_padded_targets(
+    padded_tensor_final, padding_mask_final = awkward_to_padded_tensor(
         data_final,
         ["pT_final"],
+        truncate_energy = True,
+        list_energy = energy_23
     )
 
     logger.info("Padded tensors created")
@@ -244,10 +231,10 @@ def load_and_save_tensor(filename):
 
     # logger.info("Dropping pT and id in tensor terminated")
 
-    # print("evento 0 per il 23:\n", padded_tensor_23[0, :, :])
-    # print("evento 0 per il finale:\n", padded_tensor_final[0, :, :])
+    print("evento 0 per il 23:\n", padded_tensor_23[0, :, :])
+    print("evento 0 per il finale:\n", padded_tensor_final[0, :, :])
 
-    for i in range(10):
+    for i in range(100):
         sum_23 = padded_tensor_23[i].sum()
         sum_final = padded_tensor_final[i].sum() - 62 - 61
         # print(f"23: {sum_23}, final: {sum_final}")
@@ -271,31 +258,31 @@ def load_and_save_tensor(filename):
 
     logger.info("Train/Val/Test splitting terminated")
 
-    # # Salvataggio dei tensori per ripristino futuro
-    # torch.save(train_23, "train_23_1M_7Gev.pt")
-    # logger.info("Tensor train_23 saved")
-    # torch.save(train_final, "train_final_1M_7Gev.pt")
-    # logger.info("Tensor train_final saved")
-    # torch.save(val_23, "val_23_1M_7Gev.pt")
-    # logger.info("Tensor val_23 saved")
-    # torch.save(val_final, "val_final_1M_7Gev.pt")
-    # logger.info("Tensor val_final saved")
-    # torch.save(test_23, "test_23_1M_7Gev.pt")
-    # logger.info("Tensor test_23 saved")
-    # torch.save(test_final, "test_final_1M_7Gev.pt")
-    # logger.info("Tensor test_final saved")
-    # torch.save(mask_train_23, "mask_train_23_1M_7Gev.pt")
-    # logger.info("Tensor mask_train_23 saved")
-    # torch.save(mask_train_final, "mask_train_final_1M_7Gev.pt")
-    # logger.info("Tensor mask_train_final saved")
-    # torch.save(mask_val_23, "mask_val_23_1M_7Gev.pt")
-    # logger.info("Tensor mask_val_23 saved")
-    # torch.save(mask_val_final, "mask_val_final_1M_7Gev.pt")
-    # logger.info("Tensor mask_val_final saved")
-    # torch.save(mask_test_23, "mask_test_23_1M_7Gev.pt")
-    # logger.info("Tensor mask_test_23 saved")
-    # torch.save(mask_test_final, "mask_test_final_1M_7Gev.pt")
-    # logger.info("Tensor mask_test_final saved")
+    # Salvataggio dei tensori per ripristino futuro
+    torch.save(train_23, "train_23_1M_7Gev.pt")
+    logger.info("Tensor train_23 saved")
+    torch.save(train_final, "train_final_1M_7Gev.pt")
+    logger.info("Tensor train_final saved")
+    torch.save(val_23, "val_23_1M_7Gev.pt")
+    logger.info("Tensor val_23 saved")
+    torch.save(val_final, "val_final_1M_7Gev.pt")
+    logger.info("Tensor val_final saved")
+    torch.save(test_23, "test_23_1M_7Gev.pt")
+    logger.info("Tensor test_23 saved")
+    torch.save(test_final, "test_final_1M_7Gev.pt")
+    logger.info("Tensor test_final saved")
+    torch.save(mask_train_23, "mask_train_23_1M_7Gev.pt")
+    logger.info("Tensor mask_train_23 saved")
+    torch.save(mask_train_final, "mask_train_final_1M_7Gev.pt")
+    logger.info("Tensor mask_train_final saved")
+    torch.save(mask_val_23, "mask_val_23_1M_7Gev.pt")
+    logger.info("Tensor mask_val_23 saved")
+    torch.save(mask_val_final, "mask_val_final_1M_7Gev.pt")
+    logger.info("Tensor mask_val_final saved")
+    torch.save(mask_test_23, "mask_test_23_1M_7Gev.pt")
+    logger.info("Tensor mask_test_23 saved")
+    torch.save(mask_test_final, "mask_test_final_1M_7Gev.pt")
+    logger.info("Tensor mask_test_final saved")
 
 def load_saved_dataloaders(batch_size):
     """Load tensors salvati da file .pt e ricrea i DataLoader."""
@@ -341,7 +328,7 @@ def load_saved_dataloaders(batch_size):
 
 
 if __name__ == "__main__":
-    load_and_save_tensor("events_1M_7Gev.root")
+    load_and_save_tensor("events_1M.root")
 
     # ===================== DEBUG: verifica EOS nei dati batchati ===============
     # inputs, targets = next(iter(loader_train))
