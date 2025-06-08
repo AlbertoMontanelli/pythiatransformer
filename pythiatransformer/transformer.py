@@ -193,7 +193,7 @@ class ParticleTransformer(nn.Module):
         padding_mask = padding_mask[:, :max_len]
         return input, padding_mask
 
-    def forward(self, input, input_mask, attention_mask, tgt_vals=None, target_mask = None, teacher_forcing=False, max_len=10):
+    def forward(self, input, input_mask, tgt_vals=None, target_mask = None, teacher_forcing=False, max_len=10):
         """The aim of this function is computed the output of the model by
         projecting the input and the target into an hidden
         representation space, processing them through a Transformer,
@@ -255,7 +255,8 @@ class ParticleTransformer(nn.Module):
         pred_vals = torch.cat(outputs_vals, dim=1)       # [batch, T_pred,1]
         pred_eos_logits = torch.cat(outputs_eos, dim=1)  # [batch, T_pred,1]
         return pred_vals, pred_eos_logits
-
+'''
+# old transformer 
         target = self.embedding(target)
         input = input.squeeze(-2)
         target = target.squeeze(-2)
@@ -268,6 +269,7 @@ class ParticleTransformer(nn.Module):
         )
         output = self.output_projection(output)
         return output
+'''
 
     def train_one_epoch(self, epoch, optim, loss_func):
         """This function trains the model for one epoch. It iterates
