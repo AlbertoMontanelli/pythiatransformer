@@ -140,6 +140,8 @@ class ParticleTransformer(nn.Module):
         self.build_projection_layer()
         self.initialize_transformer()
 
+        self.device = next(self.parameters()).device
+
     def build_projection_layer(self):
         """This function transforms input and output data into a
         representation more suitable for a Transformers. It utilizes an
@@ -150,8 +152,13 @@ class ParticleTransformer(nn.Module):
         applied to restore the data to its original dimensions.
         """
         self.input_projection = nn.Linear(self.dim_features, self.num_units)
-        self.sos_token = nn.Parameter(torch.randn(1, 1, self.num_units)) # 1 sta per gli eventi, poi diventa lungo tanto quanto è il batch size
+
+        # 1 sta per gli eventi, poi diventa lungo tanto quanto è il batch size
+        self.sos_token = nn.Parameter(torch.randn(1, 1, self.num_units))
+
         self.particle_head = nn.Linear(self.num_units, self.dim_features)
+
+        # se poi ho più di una features ho tante teste di eos quante le features?
         self.eos_head = nn.Linear(self.num_units, self.dim_features)
         logger.info("Projection layers input/output created.")
 
@@ -193,7 +200,7 @@ class ParticleTransformer(nn.Module):
         padding_mask = padding_mask[:, :max_len]
         return input, padding_mask
 
-    def forward(self, input, input_mask, tgt_vals=None, target_mask = None, teacher_forcing=False, max_len=10):
+    def forward(self, input, target, enc_input_mask, dec_input_mask):
         """The aim of this function is computed the output of the model by
         projecting the input and the target into an hidden
         representation space, processing them through a Transformer,
@@ -210,66 +217,31 @@ class ParticleTransformer(nn.Module):
                                    through the model.
         """
         batch_size = input.size(0)
-        encoder_input = self.input_projection(input)
-        encoder_output = self.transformer.encoder(encoder_input) # called also memory
-        decoder_input = self.sos_token.repeat(batch_size, 1, 1).to(device) # it is the sequence generated so far
-        outputs_vals = []
-        outputs_eos = []
-
-        if teacher_forcing and (tgt_vals is not None):
-            max_iter = tgt_vals.size(1)
-        else:
-            max_iter = max_len
-        
-        for t in range(max_iter):
-            output = self.transformer.decoder(decoder_input, encoder_output)
-            # for each time step t, we are only interested in the last token
-            # being generated: 'last' is the embedding vector of the final 
-            # token of 'decoder_input'. It is from this that we calculate 
-            # the new, interesting predictions. All the previous ones are not
-            # interesting, since they are relative to already generated tokens.
-            last = output[:, -1, :]  # [batch, d_model]
-
-            # particle_head predices the value of the next token, while eos_head
-            # predices the probability (the logits) of the EOS token being 
-            # in the current position.
-            # unsqueeze() is needed in order to add a dimension, useful
-            # to concatenate in the temporal dimension t.
-            pred_val = self.particle_head(last).unsqueeze(1)   # [batch,1,1]
-            pred_eos = self.eos_head(last).unsqueeze(1)   # [batch,1,1]
-
-            outputs_vals.append(pred_val)
-            outputs_eos.append(pred_eos)
-
-            if teacher_forcing and (tgt_vals is not None):
-                true_val = tgt_vals[:, t, :].unsqueeze(-1)    # [batch,1,1]
-                emb = self.input_projection(true_val)               # [batch,1,d_model]
-                decoder_input = torch.cat([decoder_input, emb], dim=1)
-            else:
-                eos_prob = torch.sigmoid(pred_eos)            # [batch,1,1]
-                if (eos_prob > 0.5).all():
-                    break
-                emb = self.input_projection(pred_val)                # [batch,1,d_model]
-                decoder_input = torch.cat([decoder_input, emb], dim=1)
-        
-        pred_vals = torch.cat(outputs_vals, dim=1)       # [batch, T_pred,1]
-        pred_eos_logits = torch.cat(outputs_eos, dim=1)  # [batch, T_pred,1]
-        return pred_vals, pred_eos_logits
-'''
-# old transformer 
-        target = self.embedding(target)
-        input = input.squeeze(-2)
-        target = target.squeeze(-2)
+        print(f"shape encoder input non proiettato {input.shape}")
+        enc_input = self.input_projection(input)
+        print(f"shape encoder input proiettato {enc_input.shape}")
+        sos = self.sos_token.expand(batch_size, -1, -1)
+        print(f"sos shape proiettata {sos.shape}")
+        dec_input = self.input_projection(target)
+        print(f"decoder input senza sos {dec_input.shape}")
+        dec_input = torch.cat([sos, target], dim=1)
+        print(f"decoder input con sos {dec_input.shape}")
+        attention_mask = nn.Transformer.generate_square_subsequent_mask(
+            dec_input.size(1)
+        ).to(self.device)
+        # input = input.squeeze(-2)
+        # target = target.squeeze(-2)
         output = self.transformer(
-            src=input,
-            tgt=target,
+            src=enc_input,
+            tgt=dec_input,
             tgt_mask=attention_mask,
-            src_key_padding_mask=input_mask,
-            tgt_key_padding_mask=target_mask,
+            src_key_padding_mask=enc_input_mask,
+            tgt_key_padding_mask=dec_input_mask,
         )
-        output = self.output_projection(output)
-        return output
-'''
+        output = self.particle_head(output).squeeze(-1)
+        eos_head = self.eos_head(output).squeeze(-1)
+        print(f"shape")
+        return output, eos_head
 
     def train_one_epoch(self, epoch, optim, loss_func):
         """This function trains the model for one epoch. It iterates
@@ -291,11 +263,11 @@ class ParticleTransformer(nn.Module):
         for (input, target), (input_padding_mask, target_padding_mask) in zip(
             self.train_data, self.train_data_pad_mask
         ):
-            device = next(self.parameters()).device
-            input = input.to(device)
-            target = target.to(device)
-            input_padding_mask = input_padding_mask.to(device)
-            target_padding_mask = target_padding_mask.to(device)
+
+            input = input.to(self.device)
+            target = target.to(self.device)
+            input_padding_mask = input_padding_mask.to(self.device)
+            target_padding_mask = target_padding_mask.to(self.device)
             target, target_padding_mask = self.de_padding(
                 target, target_padding_mask
             )
@@ -321,9 +293,6 @@ class ParticleTransformer(nn.Module):
             )
 
             target_4_loss = target[:, 1:, :]
-            attention_mask = nn.Transformer.generate_square_subsequent_mask(
-                decoder_input.size(1)
-            ).to(device)
 
             optim.zero_grad()
             output = self.forward(
@@ -331,7 +300,6 @@ class ParticleTransformer(nn.Module):
                 decoder_input,
                 input_padding_mask,
                 decoder_input_padding_mask,
-                attention_mask,
             )
 
             loss = loss_func(output.transpose(1, 2), target_4_loss.squeeze(-1))
@@ -349,7 +317,6 @@ class ParticleTransformer(nn.Module):
                 target_padding_mask,
                 output,
                 loss,
-                attention_mask,
             )
             torch.cuda.empty_cache()
 
@@ -386,11 +353,10 @@ class ParticleTransformer(nn.Module):
                 target_padding_mask,
             ) in zip(data_loader, mask_loader):
 
-                device = next(self.parameters()).device
-                input = input.to(device)
-                target = target.to(device)
-                input_padding_mask = input_padding_mask.to(device)
-                target_padding_mask = target_padding_mask.to(device)
+                input = input.to(self.device)
+                target = target.to(self.device)
+                input_padding_mask = input_padding_mask.to(self.device)
+                target_padding_mask = target_padding_mask.to(self.device)
 
                 target, target_padding_mask = self.de_padding(
                     target, target_padding_mask
@@ -416,18 +382,12 @@ class ParticleTransformer(nn.Module):
                 )
 
                 target_4_loss = target[:, 1:, :]
-                attention_mask = (
-                    nn.Transformer.generate_square_subsequent_mask(
-                        decoder_input.size(1)
-                    ).to(device)
-                )
 
                 output = self.forward(
                     input,
                     decoder_input,
                     input_padding_mask,
                     decoder_input_padding_mask,
-                    attention_mask,
                 )
 
                 loss = loss_func(
@@ -446,7 +406,6 @@ class ParticleTransformer(nn.Module):
                     target_padding_mask,
                     output,
                     loss,
-                    attention_mask,
                 )
                 torch.cuda.empty_cache()
 
