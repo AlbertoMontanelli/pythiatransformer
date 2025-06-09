@@ -284,7 +284,7 @@ def load_saved_dataloaders(batch_size):
     # Caricamento tensori da file .pt
     train_23 = torch.load("train_23_1M.pt")
     train_final = torch.load("train_final_1M.pt")
-    val_23 = torch.load("val_23_1M_7Gev.pt")
+    val_23 = torch.load("val_23_1M.pt")
     val_final = torch.load("val_final_1M.pt")
     test_23 = torch.load("test_23_1M.pt")
     test_final = torch.load("test_final_1M.pt")

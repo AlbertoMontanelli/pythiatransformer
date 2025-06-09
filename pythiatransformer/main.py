@@ -63,6 +63,7 @@ def build_model():
 def train_and_save_model():
     transformer = build_model()
     transformer.to(device)
+    transformer.device = device
     num_params = sum(
         p.numel() for p in transformer.parameters() if p.requires_grad
     )
