@@ -74,9 +74,8 @@ def train_and_save_model():
     optim = optimizer.Adam(
         transformer.parameters(), lr=learning_rate, weight_decay=1e-4
     )
-    ce = nn.CrossEntropyLoss(ignore_index=0)
     train_loss, val_loss = transformer.train_val(
-        num_epochs=epochs, optim=optim, loss_func=ce
+        num_epochs=epochs, optim=optim
     )
 
     plot_losses(train_loss, val_loss)
