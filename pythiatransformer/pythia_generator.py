@@ -137,7 +137,7 @@ def generate_events(output_file: str, n_events: int, seed: int = 10):
                     found_23 = True
                     counter_23 += 1
                     record_particle(particle, features, data_23, "_23")
-                if found_23 and particle.isFinal() and (particle.pT() > 5):
+                if found_23 and particle.isFinal():
                     found_final = True
                     counter_final += 1
                     record_particle(particle, features, data_final, "_final")
@@ -160,7 +160,6 @@ def generate_events(output_file: str, n_events: int, seed: int = 10):
                 cleanup_event(data_23, features, "_23")
                 cleanup_event(data_final, features, "_final")
 
-
         except Exception as e:
             logger.exception(f"Unexpected error during event {event+1}: {e}")
 
@@ -173,6 +172,6 @@ def generate_events(output_file: str, n_events: int, seed: int = 10):
 
 if __name__ == "__main__":
     for i in range(10):
-        output = f"events_{i:02d}_5GeV.root"
+        output = f"events_{i:02d}.root"
         seed = 10 + i
         generate_events(output, n_events=100000, seed=seed)

@@ -57,7 +57,7 @@ class ParticleTransformer(nn.Module):
         num_units,
         num_classes,
         dropout,
-        activation
+        activation,
     ):
         """
         Args:
@@ -231,7 +231,7 @@ class ParticleTransformer(nn.Module):
         dec_input = torch.cat([sos, dec_input], dim=1)
         # print(f"decoder input con sos {dec_input.shape}")
         sos_mask = torch.zeros(batch_size, 1).to(self.device)
-        dec_input_mask = torch.cat([sos_mask, dec_input_mask], dim = 1)
+        dec_input_mask = torch.cat([sos_mask, dec_input_mask], dim=1)
         # print(f"encoder input mask {enc_input_mask.shape}")
         # print(f"decoder input mask con sos {dec_input_mask.shape}")
         attention_mask = nn.Transformer.generate_square_subsequent_mask(
@@ -270,19 +270,20 @@ class ParticleTransformer(nn.Module):
         self.train()
         loss_epoch = 0
 
-        for (enc_input, dec_input), (enc_input_padding_mask, dec_input_padding_mask) in zip(
-            self.train_data, self.train_data_pad_mask
-        ):
+        for (enc_input, dec_input), (
+            enc_input_padding_mask,
+            dec_input_padding_mask,
+        ) in zip(self.train_data, self.train_data_pad_mask):
 
             enc_input = enc_input.to(self.device)
             dec_input = dec_input.to(self.device)
             enc_input_padding_mask = enc_input_padding_mask.to(self.device)
             dec_input_padding_mask = dec_input_padding_mask.to(self.device)
-            '''target, target_padding_mask = self.de_padding(
+            """target, target_padding_mask = self.de_padding(
                 target, target_padding_mask
-            )'''
+            )"""
 
-            '''
+            """
             # Lista per decoder_input e mask
             decoder_input_list = []
             decoder_input_mask_list = []
@@ -304,14 +305,16 @@ class ParticleTransformer(nn.Module):
             )
 
             target_4_loss = target[:, 1:, :]
-            '''
+            """
             inverse_dec_input_padding_mask = ~dec_input_padding_mask
 
-            eos_tensor = torch.zeros(dec_input.size(0), dec_input.size(1)+1, dec_input.size(2)).to(self.device)
+            eos_tensor = torch.zeros(
+                dec_input.size(0), dec_input.size(1) + 1, dec_input.size(2)
+            ).to(self.device)
             for event in range(dec_input.size(0)):
                 len_event = inverse_dec_input_padding_mask[event].sum()
                 eos_tensor[event, len_event] = 1
-            
+
             optim.zero_grad()
             output, eos_prob_vector = self.forward(
                 enc_input,
@@ -320,7 +323,10 @@ class ParticleTransformer(nn.Module):
                 dec_input_padding_mask,
             )
             # print(f"output shape: {output[:, 1:].shape}, mask {inverse_dec_input_padding_mask.float().shape}, dec input {dec_input.shape}")
-            mse = self.mse_loss(output[:, 1:] * inverse_dec_input_padding_mask.float(), dec_input.squeeze(-1))
+            mse = self.mse_loss(
+                output[:, 1:] * inverse_dec_input_padding_mask.float(),
+                dec_input.squeeze(-1),
+            )
 
             # print(f"eos_prob {eos_prob_vector.shape}, eos_tensor: {eos_tensor.shape}")
             bce = self.bce_loss(eos_prob_vector, eos_tensor.squeeze(-1))
@@ -343,7 +349,7 @@ class ParticleTransformer(nn.Module):
                 loss,
                 mse,
                 bce,
-                inverse_dec_input_padding_mask
+                inverse_dec_input_padding_mask,
             )
             torch.cuda.empty_cache()
 
@@ -353,7 +359,6 @@ class ParticleTransformer(nn.Module):
         loss_epoch = loss_epoch / len(self.train_data)
         logger.debug(f"Training loss at epoch {epoch + 1}: {loss_epoch:.4f}")
         return loss_epoch
-
 
     def val_one_epoch(self, epoch, val):
         """This function validates the model for one epoch. It iterates
@@ -377,9 +382,10 @@ class ParticleTransformer(nn.Module):
         self.eval()
         loss_epoch = 0
         with torch.no_grad():
-            for (enc_input, dec_input), (enc_input_padding_mask, dec_input_padding_mask) in zip(
-                data_loader, mask_loader
-            ):
+            for (enc_input, dec_input), (
+                enc_input_padding_mask,
+                dec_input_padding_mask,
+            ) in zip(data_loader, mask_loader):
 
                 enc_input = enc_input.to(self.device)
                 dec_input = dec_input.to(self.device)
@@ -388,11 +394,13 @@ class ParticleTransformer(nn.Module):
 
                 inverse_dec_input_padding_mask = ~dec_input_padding_mask
 
-                eos_tensor = torch.zeros(dec_input.size(0), dec_input.size(1)+1, dec_input.size(2)).to(self.device)
+                eos_tensor = torch.zeros(
+                    dec_input.size(0), dec_input.size(1) + 1, dec_input.size(2)
+                ).to(self.device)
                 for event in range(dec_input.size(0)):
                     len_event = inverse_dec_input_padding_mask[event].sum()
                     eos_tensor[event, len_event] = 1
-                
+
                 output, eos_prob_vector = self.forward(
                     enc_input,
                     dec_input,
@@ -400,12 +408,17 @@ class ParticleTransformer(nn.Module):
                     dec_input_padding_mask,
                 )
 
-                mse = self.mse(output[:, 1:] * inverse_dec_input_padding_mask.float(), dec_input.squeeze(-1))
+                mse = self.mse_loss(
+                    output[:, 1:] * inverse_dec_input_padding_mask.float(),
+                    dec_input.squeeze(-1),
+                )
                 bce = self.bce_loss(eos_prob_vector, eos_tensor.squeeze(-1))
                 loss = mse + bce
 
                 if not torch.isfinite(loss):
-                    raise ValueError(f"Loss is not finite at epoch {epoch + 1}")
+                    raise ValueError(
+                        f"Loss is not finite at epoch {epoch + 1}"
+                    )
                 loss_epoch += loss.item()
 
                 del (
@@ -419,7 +432,7 @@ class ParticleTransformer(nn.Module):
                     loss,
                     mse,
                     bce,
-                    inverse_dec_input_padding_mask
+                    inverse_dec_input_padding_mask,
                 )
                 torch.cuda.empty_cache()
 
@@ -434,7 +447,6 @@ class ParticleTransformer(nn.Module):
         else:
             logger.debug(f"Test loss at epoch {epoch + 1}: {loss_epoch:.4f}")
         return loss_epoch
-
 
     def train_val(
         self,
@@ -515,4 +527,34 @@ class ParticleTransformer(nn.Module):
         else:
             stop = False
         return stop
-        
+
+    def generate_targets(self, input, stop_threshold=0.5):
+        """ """
+        batch_size = input.size(0)
+        # print(f"shape encoder input non proiettato {input.shape}")
+        enc_input = self.input_projection(input)
+        print(f"shape encoder input proiettato {enc_input.shape}")
+        dec_input = self.sos_token.expand(batch_size, 1, self.num_units)
+        print(f"shape dec input con sos iniziale e basta: {dec_input.shape}")
+        generated = []
+        for t in range(batch_size):
+            attention_mask = nn.Transformer.generate_square_subsequent_mask(
+                t + 1
+            ).to(self.device)
+            output = self.transformer(
+                src=enc_input, tgt=dec_input, tgt_mask=attention_mask
+            )
+            last_token = output[:, -1, :]
+            print(f"last token shape: {last_token.shape}")
+            proj_token = self.particle_head(last_token).squeeze(-1)
+            print(f"proj_token shape: {proj_token.shape}")
+            eos = torch.sigmoid(self.eos_head(last_token)).squeeze(-1)
+            generated.append(proj_token)
+            next_input = self.input_projection(
+                proj_token.unsqueeze(-1)
+            ).unsqueeze(1)
+            dec_input = torch.cat([dec_input, next_input], dim=1)
+            if (eos > stop_threshold).all():
+                break
+        generated_sequence = torch.stack(generated, dim=1)
+        return generated_sequence
