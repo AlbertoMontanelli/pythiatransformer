@@ -57,7 +57,7 @@ targets_mask = targets_mask.to(device)
 # ====== INFERENZA AUTOREGRESSIVA EVENTO PER EVENTO ======
 print("Inizio inferenza autoregressiva")
 with torch.no_grad():
-    output_gen = model.generate_targets(inputs)
+    output_gen = model.generate_targets(inputs, targets.shape(1))
 
 # ====== STAMPA DI CONFRONTO ======
 evento_idx = 0
