@@ -62,19 +62,17 @@ with torch.no_grad():
 # ====== STAMPA DI CONFRONTO ======
 evento_idx = 0
 
-for i in range(10):
-    print(
-        f"\n================ Evento {evento_idx}, Particella {i} ================\n"
-    )
+for evento_idx in range(10):
+    print(f"\n================ Evento {evento_idx}================\n")
 
     print("Input:")
-    print(inputs[evento_idx, i].cpu().numpy())
+    print(inputs[evento_idx].cpu().numpy().tolist())
 
-    print("\n Target reale:")
-    print(targets[evento_idx, i].cpu().numpy())
+    # print("\n Target reale:")
+    # print(targets[evento_idx].cpu().numpy().tolist())
 
     print("\n Target predetto:")
-    print(output_gen[evento_idx, i].cpu().numpy())
+    print(output_gen[evento_idx].cpu().numpy())
 
 
 # ====== INFERENZA DURANTE IL TRAINING (forward diretto) ======

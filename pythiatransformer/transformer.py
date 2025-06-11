@@ -531,16 +531,21 @@ class ParticleTransformer(nn.Module):
     def generate_targets(self, input, stop_threshold=0.5):
         """ """
         batch_size = input.size(0)
+        max_len = input.size(1)
         # print(f"shape encoder input non proiettato {input.shape}")
         enc_input = self.input_projection(input)
         print(f"shape encoder input proiettato {enc_input.shape}")
         dec_input = self.sos_token.expand(batch_size, 1, self.num_units)
         print(f"shape dec input con sos iniziale e basta: {dec_input.shape}")
         generated = []
-        for t in range(batch_size):
+        for t in range(max_len):
+            print(f"particella {t}")
             attention_mask = nn.Transformer.generate_square_subsequent_mask(
                 t + 1
             ).to(self.device)
+            print(
+                f"attention mask shape al passo t={t}: {attention_mask.shape}"
+            )
             output = self.transformer(
                 src=enc_input, tgt=dec_input, tgt_mask=attention_mask
             )
@@ -549,11 +554,14 @@ class ParticleTransformer(nn.Module):
             proj_token = self.particle_head(last_token).squeeze(-1)
             print(f"proj_token shape: {proj_token.shape}")
             eos = torch.sigmoid(self.eos_head(last_token)).squeeze(-1)
+            print(f"eos shape: {eos.shape}")
             generated.append(proj_token)
             next_input = self.input_projection(
                 proj_token.unsqueeze(-1)
             ).unsqueeze(1)
+            print(f"next input shape: {next_input.shape}")
             dec_input = torch.cat([dec_input, next_input], dim=1)
+            print(f"dec input shape al passo t={t}: {dec_input.shape}")
             if (eos > stop_threshold).all():
                 break
         generated_sequence = torch.stack(generated, dim=1)

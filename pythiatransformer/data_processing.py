@@ -265,29 +265,29 @@ def load_and_save_tensor(filename):
     logger.info("Train/Val/Test splitting terminated")
 
     # Salvataggio dei tensori per ripristino futuro
-    torch.save(train_23, "train_23_1M_7GeV.pt")
+    torch.save(train_23, "train_23_1M.pt")
     logger.info("Tensor train_23 saved")
-    torch.save(train_final, "train_final_1M_7GeV.pt")
+    torch.save(train_final, "train_final_1M.pt")
     logger.info("Tensor train_final saved")
-    torch.save(val_23, "val_23_1M_7GeV.pt")
+    torch.save(val_23, "val_23_1M.pt")
     logger.info("Tensor val_23 saved")
-    torch.save(val_final, "val_final_1M_7GeV.pt")
+    torch.save(val_final, "val_final_1M.pt")
     logger.info("Tensor val_final saved")
-    torch.save(test_23, "test_23_1M_7GeV.pt")
+    torch.save(test_23, "test_23_1M.pt")
     logger.info("Tensor test_23 saved")
-    torch.save(test_final, "test_final_1M_7GeV.pt")
+    torch.save(test_final, "test_final_1M.pt")
     logger.info("Tensor test_final saved")
-    torch.save(mask_train_23, "mask_train_23_1M_7GeV.pt")
+    torch.save(mask_train_23, "mask_train_23_1M.pt")
     logger.info("Tensor mask_train_23 saved")
-    torch.save(mask_train_final, "mask_train_final_1M_7GeV.pt")
+    torch.save(mask_train_final, "mask_train_final_1M.pt")
     logger.info("Tensor mask_train_final saved")
-    torch.save(mask_val_23, "mask_val_23_1M_7GeV.pt")
+    torch.save(mask_val_23, "mask_val_23_1M.pt")
     logger.info("Tensor mask_val_23 saved")
-    torch.save(mask_val_final, "mask_val_final_1M_7GeV.pt")
+    torch.save(mask_val_final, "mask_val_final_1M.pt")
     logger.info("Tensor mask_val_final saved")
-    torch.save(mask_test_23, "mask_test_23_1M_7GeV.pt")
+    torch.save(mask_test_23, "mask_test_23_1M.pt")
     logger.info("Tensor mask_test_23 saved")
-    torch.save(mask_test_final, "mask_test_final_1M_7GeV.pt")
+    torch.save(mask_test_final, "mask_test_final_1M.pt")
     logger.info("Tensor mask_test_final saved")
 
 
@@ -295,19 +295,19 @@ def load_saved_dataloaders(batch_size):
     """Load tensors salvati da file .pt e ricrea i DataLoader."""
 
     # Caricamento tensori da file .pt
-    train_23 = torch.load("train_23_1M_7GeV.pt")
-    train_final = torch.load("train_final_1M_7GeV.pt")
-    val_23 = torch.load("val_23_1M_7GeV.pt")
-    val_final = torch.load("val_final_1M_7GeV.pt")
-    test_23 = torch.load("test_23_1M_7GeV.pt")
-    test_final = torch.load("test_final_1M_7GeV.pt")
+    train_23 = torch.load("train_23_1M.pt")
+    train_final = torch.load("train_final_1M.pt")
+    val_23 = torch.load("val_23_1M.pt")
+    val_final = torch.load("val_final_1M.pt")
+    test_23 = torch.load("test_23_1M.pt")
+    test_final = torch.load("test_final_1M.pt")
 
-    mask_train_23 = torch.load("mask_train_23_1M_7GeV.pt")
-    mask_train_final = torch.load("mask_train_final_1M_7GeV.pt")
-    mask_val_23 = torch.load("mask_val_23_1M_7GeV.pt")
-    mask_val_final = torch.load("mask_val_final_1M_7GeV.pt")
-    mask_test_23 = torch.load("mask_test_23_1M_7GeV.pt")
-    mask_test_final = torch.load("mask_test_final_1M_7GeV.pt")
+    mask_train_23 = torch.load("mask_train_23_1M.pt")
+    mask_train_final = torch.load("mask_train_final_1M.pt")
+    mask_val_23 = torch.load("mask_val_23_1M.pt")
+    mask_val_final = torch.load("mask_val_final_1M.pt")
+    mask_test_23 = torch.load("mask_test_23_1M.pt")
+    mask_test_final = torch.load("mask_test_final_1M.pt")
 
     # Ricostruzione dei DataLoader
     loader_train = batching(train_23, train_final, batch_size)
@@ -335,7 +335,7 @@ def load_saved_dataloaders(batch_size):
 
 
 if __name__ == "__main__":
-    load_and_save_tensor("events_1M_7GeV.root")
+    load_and_save_tensor("events_1M.root")
 
     # ===================== DEBUG: verifica EOS nei dati batchati ===============
     # inputs, targets = next(iter(loader_train))

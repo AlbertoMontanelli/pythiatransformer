@@ -101,6 +101,7 @@ class ToyTransformer(nn.Module):
         device = x.device
         B = x.size(0)
         src = self.in_proj(x.unsqueeze(-1)).unsqueeze(1)
+        print(f"src shape: {src.shape}")
         src_key_padding_mask = torch.zeros(
             B, 1, dtype=torch.bool, device=device
         )
