@@ -99,7 +99,9 @@ class ToyTransformer(nn.Module):
         if max_len is None:
             max_len = self.max_len
         device = x.device
+        print(f"x shape: {x.shape}")
         B = x.size(0)
+        print(f"in proj shape: {self.in_proj(x.unsqueeze(-1)).shape}")
         src = self.in_proj(x.unsqueeze(-1)).unsqueeze(1)
         print(f"src shape: {src.shape}")
         src_key_padding_mask = torch.zeros(
@@ -128,6 +130,7 @@ class ToyTransformer(nn.Module):
                 break
         # ritorna la sequenza raw senza alcuna normalizzazione
         y_seq = torch.stack(generated, dim=1)
+        # print(f"y_seq shape: {y_seq.shape}")
         return y_seq
 
 
@@ -136,7 +139,7 @@ if __name__ == "__main__":
     n_samples = 5000
     max_len = 10
     batch_size = 64
-    epochs = 20
+    epochs = 100
     lr = 1e-3
 
     dataset = ToyDataset(n_samples=n_samples, max_len=max_len)

@@ -24,10 +24,10 @@ device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
 # Costruisci il modello e carica i pesi
 model = ParticleTransformer(
     train_data=loader_train,
-    val_data=None,
+    val_data=loader_train,
     test_data=None,
     train_data_pad_mask=loader_padding_train,
-    val_data_pad_mask=None,
+    val_data_pad_mask=loader_padding_train,
     test_data_pad_mask=None,
     dim_features=subset.shape[0],
     num_heads=16,
@@ -53,11 +53,15 @@ targets = targets.to(device)
 inputs_mask = inputs_mask.to(device)
 targets_mask = targets_mask.to(device)
 
+# per vedere se il training funziona
+# loss = model.val_one_epoch(0, True)
+# print(f"loss: {loss}")
+
 
 # ====== INFERENZA AUTOREGRESSIVA EVENTO PER EVENTO ======
 print("Inizio inferenza autoregressiva")
 with torch.no_grad():
-    output_gen = model.generate_targets(inputs, targets.shape(1))
+    output_gen = model.generate_targets(inputs, targets.size(1))
 
 # ====== STAMPA DI CONFRONTO ======
 evento_idx = 0
@@ -68,8 +72,8 @@ for evento_idx in range(10):
     print("Input:")
     print(inputs[evento_idx].cpu().numpy().tolist())
 
-    # print("\n Target reale:")
-    # print(targets[evento_idx].cpu().numpy().tolist())
+    print("\n Target reale:")
+    print(targets[evento_idx].cpu().numpy().tolist())
 
     print("\n Target predetto:")
     print(output_gen[evento_idx].cpu().numpy())

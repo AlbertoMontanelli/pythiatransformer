@@ -415,6 +415,9 @@ class ParticleTransformer(nn.Module):
                 bce = self.bce_loss(eos_prob_vector, eos_tensor.squeeze(-1))
                 loss = mse + bce
 
+                # print(f"evento 0 output: {output[0, :]}")
+                # print(f"evento 0 target: {dec_input[0, :]}")
+
                 if not torch.isfinite(loss):
                     raise ValueError(
                         f"Loss is not finite at epoch {epoch + 1}"
@@ -532,45 +535,45 @@ class ParticleTransformer(nn.Module):
         """ """
         batch_size = input.size(0)
         # max_len = input.size(1)
-        print(f"shape encoder input non proiettato {input.shape}")
+        # print(f"shape encoder input non proiettato {input.shape}")
         enc_input = self.input_projection(input)
-        print(f"shape encoder input proiettato {enc_input.shape}")
+        # print(f"shape encoder input proiettato {enc_input.shape}")
         dec_input = [
             self.sos_token.clone().squeeze(0) for _ in range(batch_size)
         ]
         generated = torch.zeros(batch_size, max_len)
         for event in range(batch_size):
-            print(f"\n========== evento: {event} ==============")
+            # print(f"\n========== evento: {event} ==============")
             for t in range(max_len):
-                print(f"\nparticella {t}")
+                # print(f"\nparticella {t}")
                 attention_mask = (
                     nn.Transformer.generate_square_subsequent_mask(t + 1).to(
                         self.device
                     )
                 )
-                print(f"attention mask shape al passo t={t}: {attention_mask.shape}")
-                print(f"dec_input shape: {dec_input[event].shape}")
+                # print(f"attention mask shape al passo t={t}: {attention_mask.shape}")
+                # print(f"dec_input shape: {dec_input[event].shape}")
                 output = self.transformer(
                     src=enc_input[event],
                     tgt=dec_input[event],
                     tgt_mask=attention_mask,
                 )
-                print(f"output shape: {output.shape}")
+                # print(f"output shape: {output.shape}")
                 last_token = output[-1, :]
-                print(f"last token shape: {last_token.shape}")
+                # print(f"last token shape: {last_token.shape}")
                 proj_token = self.particle_head(last_token)
-                print(f"proj_token shape: {proj_token.shape}")
+                # print(f"proj_token shape: {proj_token.shape}")
                 eos = torch.sigmoid(self.eos_head(last_token))
-                print(f"eos shape: {eos.shape}")
+                # print(f"eos shape: {eos.shape}")
                 generated[event, t] = proj_token
-                print(f"token generati al passo {t}: {generated[event]}")
+                # print(f"token generati al passo {t}: {generated[event]}")
                 next_input = self.input_projection(proj_token).unsqueeze(0)
-                print(f"next input shape: {next_input.shape}")
-                print(f"dec input shape prima del cat: {dec_input[event].shape}")
+                # print(f"next input shape: {next_input.shape}")
+                # print(f"dec input shape prima del cat: {dec_input[event].shape}")
                 dec_input[event] = torch.cat(
                     [dec_input[event], next_input], dim=0
                 )
-                print(f"dec input shape al passo t={t}: {dec_input[event].shape}")
+                # print(f"dec input shape al passo t={t}: {dec_input[event].shape}")
                 if eos > stop_threshold:
                     break
         return generated
