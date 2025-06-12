@@ -17,16 +17,16 @@ from transformer import ParticleTransformer
     loader_padding_val,
     loader_padding_test,
     subset,
-) = load_saved_dataloaders(batch_size=128)
+) = load_saved_dataloaders(batch_size=1)
 
 
 os.environ["PYTORCH_CUDA_ALLOC_CONF"] = "expandable_segments:True"
-device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
+device = torch.device("cuda:1" if torch.cuda.is_available() else "cpu")
 epochs = 100
 
 
 def plot_losses(
-    train_loss, val_loss, filename="learning_curve_1M_5GeV.pdf", dpi=1200
+    train_loss, val_loss, filename="learning_curve_1M_1.pdf", dpi=1200
 ):
     plt.figure()
     plt.plot(train_loss, label="Training Loss")
@@ -81,8 +81,8 @@ def train_and_save_model():
 
     plot_losses(train_loss, val_loss)
 
-    torch.save(transformer.state_dict(), "transformer_model_1M_5GeV.pt")
-    logger.info("Modello salvato in transformer_model_1M_5GeV.pt")
+    torch.save(transformer.state_dict(), "transformer_model_1M_1.pt")
+    logger.info("Modello salvato in transformer_model_1M_1.pt")
 
 
 # def generate_outputs_and_save():

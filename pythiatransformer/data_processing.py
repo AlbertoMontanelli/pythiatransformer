@@ -79,8 +79,9 @@ def awkward_to_padded_tensor(
         # per ogni evento trovo indice fino a dove somma cumulativa < soglia
         keep_lengths = (cum_energy < threshold.unsqueeze(1)).sum(
             dim=1
-        ) + 1  # per includere la particella che supera 50%
-
+        ) + 1 # per includere la particella che supera 50%
+        keep_lengths = torch.clamp(keep_lengths, max=max_particles)
+        
         new_max_len = keep_lengths.max().item()
         print(f"max len: {new_max_len}")
 
@@ -241,10 +242,11 @@ def load_and_save_tensor(filename):
     # print("evento 0 per il 23:\n", padded_tensor_23[0, :, :])
     # print("evento 0 per il finale:\n", padded_tensor_final[0, :, :])
 
-    for i in range(1000):
+    for i in range(padded_tensor_23.size(0)):
         sum_23 = padded_tensor_23[i].sum()
         sum_final = padded_tensor_final[i].sum()
-        print(f"final/23: {sum_final/sum_23}")
+        if sum_final/sum_23 < 1:
+            print(f"final/23: {sum_final/sum_23}")
 
     # padded_tensor_23 = pdg_to_index(padded_tensor_23, padding_mask_23)
     # padded_tensor_final = pdg_to_index(padded_tensor_final, padding_mask_final)
@@ -265,29 +267,29 @@ def load_and_save_tensor(filename):
     logger.info("Train/Val/Test splitting terminated")
 
     # Salvataggio dei tensori per ripristino futuro
-    torch.save(train_23, "train_23_1M.pt")
+    torch.save(train_23, "1_train_23_1M.pt")
     logger.info("Tensor train_23 saved")
-    torch.save(train_final, "train_final_1M.pt")
+    torch.save(train_final, "1_train_final_1M.pt")
     logger.info("Tensor train_final saved")
-    torch.save(val_23, "val_23_1M.pt")
+    torch.save(val_23, "1_val_23_1M.pt")
     logger.info("Tensor val_23 saved")
-    torch.save(val_final, "val_final_1M.pt")
+    torch.save(val_final, "1_val_final_1M.pt")
     logger.info("Tensor val_final saved")
-    torch.save(test_23, "test_23_1M.pt")
+    torch.save(test_23, "1_test_23_1M.pt")
     logger.info("Tensor test_23 saved")
-    torch.save(test_final, "test_final_1M.pt")
+    torch.save(test_final, "1_test_final_1M.pt")
     logger.info("Tensor test_final saved")
-    torch.save(mask_train_23, "mask_train_23_1M.pt")
+    torch.save(mask_train_23, "1_mask_train_23_1M.pt")
     logger.info("Tensor mask_train_23 saved")
-    torch.save(mask_train_final, "mask_train_final_1M.pt")
+    torch.save(mask_train_final, "1_mask_train_final_1M.pt")
     logger.info("Tensor mask_train_final saved")
-    torch.save(mask_val_23, "mask_val_23_1M.pt")
+    torch.save(mask_val_23, "1_mask_val_23_1M.pt")
     logger.info("Tensor mask_val_23 saved")
-    torch.save(mask_val_final, "mask_val_final_1M.pt")
+    torch.save(mask_val_final, "1_mask_val_final_1M.pt")
     logger.info("Tensor mask_val_final saved")
-    torch.save(mask_test_23, "mask_test_23_1M.pt")
+    torch.save(mask_test_23, "1_mask_test_23_1M.pt")
     logger.info("Tensor mask_test_23 saved")
-    torch.save(mask_test_final, "mask_test_final_1M.pt")
+    torch.save(mask_test_final, "1_mask_test_final_1M.pt")
     logger.info("Tensor mask_test_final saved")
 
 
@@ -295,19 +297,19 @@ def load_saved_dataloaders(batch_size):
     """Load tensors salvati da file .pt e ricrea i DataLoader."""
 
     # Caricamento tensori da file .pt
-    train_23 = torch.load("train_23_1M.pt")
-    train_final = torch.load("train_final_1M.pt")
-    val_23 = torch.load("val_23_1M.pt")
-    val_final = torch.load("val_final_1M.pt")
-    test_23 = torch.load("test_23_1M.pt")
-    test_final = torch.load("test_final_1M.pt")
+    train_23 = torch.load("1_train_23_1M.pt")
+    train_final = torch.load("1_train_final_1M.pt")
+    val_23 = torch.load("1_val_23_1M.pt")
+    val_final = torch.load("1_val_final_1M.pt")
+    test_23 = torch.load("1_test_23_1M.pt")
+    test_final = torch.load("1_test_final_1M.pt")
 
-    mask_train_23 = torch.load("mask_train_23_1M.pt")
-    mask_train_final = torch.load("mask_train_final_1M.pt")
-    mask_val_23 = torch.load("mask_val_23_1M.pt")
-    mask_val_final = torch.load("mask_val_final_1M.pt")
-    mask_test_23 = torch.load("mask_test_23_1M.pt")
-    mask_test_final = torch.load("mask_test_final_1M.pt")
+    mask_train_23 = torch.load("1_mask_train_23_1M.pt")
+    mask_train_final = torch.load("1_mask_train_final_1M.pt")
+    mask_val_23 = torch.load("1_mask_val_23_1M.pt")
+    mask_val_final = torch.load("1_mask_val_final_1M.pt")
+    mask_test_23 = torch.load("1_mask_test_23_1M.pt")
+    mask_test_final = torch.load("1_mask_test_final_1M.pt")
 
     # Ricostruzione dei DataLoader
     loader_train = batching(train_23, train_final, batch_size)
