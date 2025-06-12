@@ -85,57 +85,5 @@ def train_and_save_model():
     logger.info("Modello salvato in transformer_model_1M_1.pt")
 
 
-# def generate_outputs_and_save():
-#     transformer = build_model()
-#     transformer.load_state_dict(torch.load("transformer_model_true.pt"))
-#     transformer.to(device)
-#     transformer.eval()
-
-#     output_file = "output_tensor_true.h5"
-#     logger.info("Prova generazione particelle con forward")
-
-#     with h5py.File(output_file, "w") as h5f:
-#         with torch.no_grad():
-#             for batch_idx, (
-#                 (inputs, targets),
-#                 (inputs_mask, targets_mask)
-#             ) in enumerate(zip(loader_train, loader_padding_train)):
-
-#                 targets, target_padding_mask, attention_mask = (
-#                     transformer.de_padding(targets, targets_mask)
-#                 )
-
-#                 inputs = inputs.to(device)
-#                 targets = targets.to(device)
-#                 inputs_mask = inputs_mask.to(device)
-#                 target_padding_mask = target_padding_mask.to(device)
-#                 attention_mask = attention_mask.to(device)
-
-#                 outputs = transformer.forward(
-#                     inputs,
-#                     targets,
-#                     inputs_mask,
-#                     target_padding_mask,
-#                     attention_mask
-#                 )
-
-#                 outputs_np = outputs.detach().cpu().numpy()
-
-#                 h5f.create_dataset(
-#                     f"batch_{batch_idx}",
-#                     data=outputs_np,
-#                     compression="gzip"
-#                 )
-#                 logger.info(f"Batch {batch_idx + 1} salvato in HDF5.")
-
-#                 del inputs, targets, outputs, outputs_np
-#                 del inputs_mask, target_padding_mask, attention_mask
-#                 torch.cuda.empty_cache()
-
-#     logger.info(
-#         f"Tutti i batch salvati in un unico file HDF5: {output_file}"
-#     )
-
-
 if __name__ == "__main__":
     train_and_save_model()

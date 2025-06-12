@@ -10,28 +10,6 @@ from torch.utils.data import DataLoader, TensorDataset
 #           UTILITY FUNCTIONS         #
 #######################################
 
-
-# def standardize_features(data, features):
-#     """Standardize features (mean=0, std=1) directly on Awkward Arrays.
-
-#     Args:
-#         data (ak.Array): Input Awkward Array.
-#         features (list): List of features to standardize.
-
-#     Returns:
-#         tuple: (standardized data, list of means, list of stds)
-#     """
-#     means, stds = [], []
-#     for feature in features:
-#         mean = ak.mean(data[feature])
-#         std = ak.std(data[feature])
-#         data[feature] = (data[feature] - mean) / std
-#         means.append(mean)
-#         stds.append(std)
-#     print(f"means: {means}, stds: {stds}")
-#     return data, means, stds
-
-
 def awkward_to_padded_tensor(
     data,
     features,
@@ -160,49 +138,6 @@ def train_val_test_split(
     i2 = i1 + int(val_perc * n)
     return tensor[:i1], tensor[i1:i2], tensor[i2:]
 
-
-# def pdg_to_index(tensor, padding_mask):
-#     dict_ids = {
-#         21: 30,  # gluon
-#         22: 31,  # photon
-#         -12: 32,  # antineutrino e
-#         12: 33,  # neutrino e
-#         -14: 34,  # antineutrino mu
-#         14: 35,  # neutrino mu
-#         -16: 36,  # antineutrino tau
-#         16: 37,  # neutrino tau
-#         -11: 38,  # positron
-#         11: 39,  # electron
-#         -2: 40,  # antiup
-#         2: 41,  # up
-#         -1: 42,  # antidown
-#         1: 43,  # down
-#         -3: 44,  # antistrange
-#         3: 45,  # strange
-#         -13: 46,  # antimu
-#         13: 47,  # mu
-#         -211: 48,  # pi-
-#         211: 49,  # pi +
-#         -321: 50,  # K-
-#         321: 51,  # K+
-#         130: 52,  # K0 long
-#         -2212: 53,  # antiproton
-#         2212: 54,  # proton
-#         -2112: 55,  # antineutron
-#         2112: 56,  # neutron
-#         -4: 57,  # anticharm
-#         4: 58,  # charm
-#         -5: 59,  # antibottom
-#         5: 60,  # bottom
-#     }
-#     for pdg_id, index in dict_ids.items():
-#         mask = tensor[:, :, 0] == pdg_id
-#         tensor[:, :, 0][mask] = index
-#     tensor[~padding_mask] = tensor[~padding_mask] - 29
-#     tensor = tensor.long()
-#     return tensor
-
-
 def load_and_save_tensor(filename):
 
     logger.info("Beginning data_processing")
@@ -213,17 +148,6 @@ def load_and_save_tensor(filename):
 
     logger.info("Opening of root file trees with uproot terminated")
 
-    # data_23, mean_23, std_23 = standardize_features(
-    #     data_23, ["e_23"]
-    # )
-    # data_final, mean_final, std_final = standardize_features(
-    #     data_final, ["e_final"]
-    # )
-    # stats = np.array([mean_final, std_final])
-    # np.savetxt("mean_std.txt", stats)
-
-    # logger.info("Standardization and saving mean, std terminated")
-
     padded_tensor_23, padding_mask_23, energy_23 = awkward_to_padded_tensor(
         data_23, ["pT_23"]
     )
@@ -233,25 +157,11 @@ def load_and_save_tensor(filename):
 
     logger.info("Padded tensors created")
 
-    # drop_p_id = lambda t: t[:, :, :-2] # droppa pt e id
-    # padded_tensor_23 = drop_p_id(padded_tensor_23)
-    # padded_tensor_final = drop_p_id(padded_tensor_final)
-
-    # logger.info("Dropping pT and id in tensor terminated")
-
-    # print("evento 0 per il 23:\n", padded_tensor_23[0, :, :])
-    # print("evento 0 per il finale:\n", padded_tensor_final[0, :, :])
-
     for i in range(padded_tensor_23.size(0)):
         sum_23 = padded_tensor_23[i].sum()
         sum_final = padded_tensor_final[i].sum()
         if sum_final/sum_23 < 1:
             print(f"final/23: {sum_final/sum_23}")
-
-    # padded_tensor_23 = pdg_to_index(padded_tensor_23, padding_mask_23)
-    # padded_tensor_final = pdg_to_index(padded_tensor_final, padding_mask_final)
-
-    # logger.info("Mapping PID into classes indices terminated")
 
     train_23, val_23, test_23 = train_val_test_split(padded_tensor_23)
     train_final, val_final, test_final = train_val_test_split(
@@ -338,65 +248,4 @@ def load_saved_dataloaders(batch_size):
 
 if __name__ == "__main__":
     load_and_save_tensor("events_1M.root")
-
-    # ===================== DEBUG: verifica EOS nei dati batchati ===============
-    # inputs, targets = next(iter(loader_train))
-    # _, targets_mask = next(iter(loader_padding_train))
-
-    # id_pred = torch.argmax(targets[:, :, : len(dict_ids)], dim=-1)
-    # eos_index = dict_ids[eos_token]
-    # valid_mask = ~targets_mask
-    # num_real = valid_mask.sum(dim=1)
-    # last_index = num_real - 1
-    # B = targets.size(0)
-    # last_ids = id_pred[torch.arange(B), last_index]
-
-    # num_eos = (last_ids == eos_index).sum().item()
-    # print(f"\n DEBUG BATCH: {num_eos}/{B} eventi terminano con EOS")
-    # assert torch.all(
-    #     last_ids == eos_index
-    # ), "Alcuni target batchati non terminano con EOS!"
-    # print("Tutti i target nel batch terminano con EOS")
-
-
-# ====================================================================================
-
-# ROBA PER LO ONE HOT INUTILE ADESSO
-
-
-#     def one_hot_encoding(tensor, dict_ids, num_classes, padding_token=0):
-#     """Apply one-hot encoding to IDs in a tensor, handling EOS and padding.
-
-#     Args:
-#         tensor (torch.Tensor): Input tensor.
-#         dict_ids (dict): Mapping of PDG IDs to one-hot indices.
-#         num_classes (int): Total number of classes.
-#         eos_token (int): EOS token.
-#         padding_token (int): Token to treat as padding.
-
-#     Returns:
-#         torch.Tensor: One-hot-encoded tensor.
-#     """
-#     ids = tensor[:, :, 0].long()
-#     one_hot = torch.zeros(tensor.size(0), tensor.size(1), num_classes)
-#     for pdg_id, index in dict_ids.items():
-#         one_hot[ids == pdg_id] = torch.nn.functional.one_hot(
-#             torch.tensor(index), num_classes=num_classes
-#         ).float()
-#     one_hot[ids == padding_token] = 0
-#     return one_hot
-
-
-#     eos_token = -999
-#     sos_token = -998
-#     id_all = np.unique(np.concatenate([ak.flatten(data_23["id_23"]), ak.flatten(data_final["id_final"])]))
-#     dict_ids = {int(pid): idx for idx, pid in enumerate(id_all)}
-#     dict_ids[sos_token] = len(dict_ids)
-#     dict_ids[eos_token] = len(dict_ids)
-#     num_classes = len(dict_ids)
-
-#     one_hot_23 = one_hot_encoding(padded_tensor_23, dict_ids, num_classes)
-#     one_hot_final = one_hot_encoding(padded_tensor_final, dict_ids, num_classes)
-
-#     padded_tensor_23 = torch.cat((one_hot_23, padded_tensor_23[:, :, 1:]), dim=-1)
-#     padded_tensor_final = torch.cat((one_hot_final, padded_tensor_final[:, :, 1:]), dim=-1)
+    
