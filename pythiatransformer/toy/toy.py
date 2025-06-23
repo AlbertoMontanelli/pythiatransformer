@@ -171,7 +171,7 @@ if __name__ == "__main__":
                 stop_target[i, L] = 1.0
             optim.zero_grad()
             y_hat, stop_logits = model.forward_teacher(x, y_pad, mask, length)
-            mse = mse_loss(y_hat[:, 1:] * mask.float(), y_pad)
+            mse = mse_loss(y_hat[:, :-1] * mask.float(), y_pad * mask.float())
             stop = bce_loss(stop_logits, stop_target)
             loss = mse + stop
             loss.backward()

@@ -17,16 +17,16 @@ from transformer import ParticleTransformer
     loader_padding_val,
     loader_padding_test,
     subset,
-) = load_saved_dataloaders(batch_size=1)
+) = load_saved_dataloaders(batch_size=256)
 
 
 os.environ["PYTORCH_CUDA_ALLOC_CONF"] = "expandable_segments:True"
-device = torch.device("cuda:1" if torch.cuda.is_available() else "cpu")
+device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
 epochs = 100
 
 
 def plot_losses(
-    train_loss, val_loss, filename="learning_curve_1M_1.pdf", dpi=1200
+    train_loss, val_loss, filename="learning_curve_1M.pdf", dpi=1200
 ):
     plt.figure()
     plt.plot(train_loss, label="Training Loss")
@@ -50,10 +50,10 @@ def build_model():
         val_data_pad_mask=loader_padding_val,
         test_data_pad_mask=loader_padding_test,
         dim_features=subset.shape[0],
-        num_heads=16,
+        num_heads=8,
         num_encoder_layers=2,
         num_decoder_layers=4,
-        num_units=64,
+        num_units=128,
         num_classes=34,
         dropout=0.1,
         activation=nn.ReLU(),
@@ -81,8 +81,8 @@ def train_and_save_model():
 
     plot_losses(train_loss, val_loss)
 
-    torch.save(transformer.state_dict(), "transformer_model_1M_1.pt")
-    logger.info("Modello salvato in transformer_model_1M_1.pt")
+    torch.save(transformer.state_dict(), "transformer_model_1M.pt")
+    logger.info("Modello salvato in transformer_model_1M.pt")
 
 
 if __name__ == "__main__":

@@ -324,8 +324,8 @@ class ParticleTransformer(nn.Module):
             )
             # print(f"output shape: {output[:, 1:].shape}, mask {inverse_dec_input_padding_mask.float().shape}, dec input {dec_input.shape}")
             mse = self.mse_loss(
-                output[:, 1:] * inverse_dec_input_padding_mask.float(),
-                dec_input.squeeze(-1),
+                output[:, :-1] * inverse_dec_input_padding_mask.float(),
+                dec_input.squeeze(-1) * inverse_dec_input_padding_mask.float(),
             )
 
             # print(f"eos_prob {eos_prob_vector.shape}, eos_tensor: {eos_tensor.shape}")
@@ -409,8 +409,9 @@ class ParticleTransformer(nn.Module):
                 )
 
                 mse = self.mse_loss(
-                    output[:, 1:] * inverse_dec_input_padding_mask.float(),
-                    dec_input.squeeze(-1),
+                    output[:, :-1] * inverse_dec_input_padding_mask.float(),
+                    dec_input.squeeze(-1)
+                    * inverse_dec_input_padding_mask.float(),
                 )
                 bce = self.bce_loss(eos_prob_vector, eos_tensor.squeeze(-1))
                 loss = mse + bce
