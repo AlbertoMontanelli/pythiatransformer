@@ -2,7 +2,6 @@ import os
 
 import torch
 import torch.nn as nn
-
 from data_processing import load_saved_dataloaders
 from transformer import ParticleTransformer
 
@@ -30,10 +29,10 @@ model = ParticleTransformer(
     val_data_pad_mask=loader_padding_train,
     test_data_pad_mask=None,
     dim_features=subset.shape[0],
-    num_heads=16,
+    num_heads=8,
     num_encoder_layers=2,
     num_decoder_layers=4,
-    num_units=64,
+    num_units=128,
     num_classes=34,
     dropout=0.1,
     activation=nn.ReLU(),
@@ -69,11 +68,17 @@ evento_idx = 0
 for evento_idx in range(10):
     print(f"\n================ Evento {evento_idx}================\n")
 
+    half_sum = inputs[evento_idx].sum().item() / 2  # <-- FIXED LINE
     print("Input:")
     print(inputs[evento_idx].cpu().numpy().tolist())
+    print(f"Metà somma degli input: {half_sum}")
 
     print("\n Target reale:")
+    real_sum = targets[evento_idx].sum().item()  # <-- FIXED LINE
+    print(f"Somma dei target reali: {real_sum}")
     print(targets[evento_idx].cpu().numpy().tolist())
 
+    pred_sum = output_gen[evento_idx].sum().item()  # <-- FIXED LINE
+    print(f"Somma dei target predetti: {pred_sum}")
     print("\n Target predetto:")
     print(output_gen[evento_idx].cpu().numpy())
