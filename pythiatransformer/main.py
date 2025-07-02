@@ -54,7 +54,6 @@ def build_model():
         num_encoder_layers=2,
         num_decoder_layers=4,
         num_units=128,
-        num_classes=34,
         dropout=0.1,
         activation=nn.ReLU(),
     )

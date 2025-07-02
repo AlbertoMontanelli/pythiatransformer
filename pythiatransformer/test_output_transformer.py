@@ -24,16 +24,15 @@ device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
 model = ParticleTransformer(
     train_data=loader_train,
     val_data=loader_train,
-    test_data=None,
+    test_data=loader_test,
     train_data_pad_mask=loader_padding_train,
     val_data_pad_mask=loader_padding_train,
-    test_data_pad_mask=None,
+    test_data_pad_mask=loader_padding_test,
     dim_features=subset.shape[0],
     num_heads=8,
     num_encoder_layers=2,
     num_decoder_layers=4,
     num_units=128,
-    num_classes=34,
     dropout=0.1,
     activation=nn.ReLU(),
 )
@@ -51,11 +50,6 @@ inputs = inputs.to(device)
 targets = targets.to(device)
 inputs_mask = inputs_mask.to(device)
 targets_mask = targets_mask.to(device)
-
-# per vedere se il training funziona
-# loss = model.val_one_epoch(0, True)
-# print(f"loss: {loss}")
-
 
 # ====== INFERENZA AUTOREGRESSIVA EVENTO PER EVENTO ======
 print("Inizio inferenza autoregressiva")

@@ -1,5 +1,6 @@
 """
-Transformer class.
+A custum transformer model designed to predict the final stable
+particles starting from the status 23 particles.
 """
 
 import gc
@@ -12,18 +13,18 @@ from torch.nn.utils.rnn import pad_sequence
 
 def log_peak_memory(epoch=None):
     """
-    Stampa il picco massimo di memoria GPU allocata durante l'epoca corrente
-    e resetta il contatore.
+    Print the maximum GPU memory allocated during the current epoch and
+    reset the counter.
     """
     peak_MB = torch.cuda.max_memory_allocated() / 1024**2
-    prefix = f"[Epoca {epoch + 1}] " if epoch is not None else ""
-    print(f"{prefix} Picco memoria allocata: {peak_MB:.2f} MB")
+    prefix = f"[Epoch: {epoch + 1}] " if epoch is not None else ""
+    print(f"{prefix} Max memory allocated: {peak_MB:.2f} MB")
     torch.cuda.reset_peak_memory_stats()
 
 
 def log_gpu_memory(epoch=None):
     """
-    Stampa un riepilogo chiaro della memoria GPU.
+    Print a clear summary of GPU memory usage.
     """
     alloc_MB = torch.cuda.memory_allocated() / 1024**2
     reserved_MB = torch.cuda.memory_reserved() / 1024**2
@@ -31,15 +32,18 @@ def log_gpu_memory(epoch=None):
     total_alloc_MB = stats["allocation.all.allocated"] / 1024**2
 
     prefix = f"[Epoca {epoch + 1}] " if epoch is not None else ""
-    print(f"{prefix}Memoria allocata:   {alloc_MB:.2f} MB")
-    print(f"{prefix}Memoria riservata:   {reserved_MB:.2f} MB")
-    print(f"{prefix}Totale allocata (storico): {total_alloc_MB:.2f} MB")
+    print(f"{prefix}Memory allocated: {alloc_MB:.2f} MB")
+    print(f"{prefix}Memory reserved: {reserved_MB:.2f} MB")
+    print(
+        f"{prefix}Total memory allocated througth epochs:"
+        f" {total_alloc_MB:.2f} MB"
+    )
 
 
 class ParticleTransformer(nn.Module):
     """Transformer taking in input particles having status 23
-    (i.e. outgoing particles of the hardest subprocess)
-    and as target the final particles of the event.
+    (i.e. outgoing particles of the hardest subprocess) and as target
+    the final particles of the event.
     """
 
     def __init__(
@@ -55,7 +59,6 @@ class ParticleTransformer(nn.Module):
         num_encoder_layers,
         num_decoder_layers,
         num_units,
-        num_classes,
         dropout,
         activation,
     ):
@@ -64,11 +67,10 @@ class ParticleTransformer(nn.Module):
             train_data (DataLoader):
             val_data (DataLoader):
             test_data (DataLoader):
-            attention_train_data (DataLoader):
-            attention_val_data (DataLoader):
-            attention_test_data (DataLoader):
-            dim_features (int): number of features of each particle
-                                (px, py, pz, E, M, ID).
+            train_data_pad_mask (DataLoader):
+            val_data_pad_mask (DataLoader):
+            test_data_pad_mask (DataLoader):
+            dim_features (int): number of features of each particle.
             num_heads (int): heads number of the attention system.
             num_encoder_layers (int): number of encoder layers.
             num_decoder_layers (int): number of decoder layers.
@@ -116,12 +118,6 @@ class ParticleTransformer(nn.Module):
         if not isinstance(num_units, int):
             raise TypeError(
                 f"The number of unit must be int, got {type(num_units)}"
-            )
-
-        self.num_classes = num_classes
-        if not isinstance(num_classes, int):
-            raise TypeError(
-                f"The number of unit must be int, got {type(num_classes)}"
             )
 
         self.dropout = dropout
@@ -360,7 +356,7 @@ class ParticleTransformer(nn.Module):
         logger.debug(f"Training loss at epoch {epoch + 1}: {loss_epoch:.4f}")
         return loss_epoch
 
-    def val_one_epoch(self, epoch, val):
+    def val_one_epoch(self, epoch):
         """This function validates the model for one epoch. It iterates
         through the validation data, computes the model's output and
         the loss.
@@ -372,20 +368,13 @@ class ParticleTransformer(nn.Module):
         Returns:
             loss_epoch (float):
         """
-        if val:
-            data_loader = self.val_data
-            mask_loader = self.val_data_pad_mask
-        else:
-            data_loader = self.test_data
-            mask_loader = self.test_data_pad_mask
-
         self.eval()
         loss_epoch = 0
         with torch.no_grad():
             for (enc_input, dec_input), (
                 enc_input_padding_mask,
                 dec_input_padding_mask,
-            ) in zip(data_loader, mask_loader):
+            ) in zip(self.val_data, self.val_data_pad_mask):
 
                 enc_input = enc_input.to(self.device)
                 dec_input = dec_input.to(self.device)
@@ -416,9 +405,6 @@ class ParticleTransformer(nn.Module):
                 bce = self.bce_loss(eos_prob_vector, eos_tensor.squeeze(-1))
                 loss = mse + bce
 
-                # print(f"evento 0 output: {output[0, :]}")
-                # print(f"evento 0 target: {dec_input[0, :]}")
-
                 if not torch.isfinite(loss):
                     raise ValueError(
                         f"Loss is not finite at epoch {epoch + 1}"
@@ -444,19 +430,16 @@ class ParticleTransformer(nn.Module):
         torch.cuda.empty_cache()
 
         loss_epoch = loss_epoch / len(self.train_data)
-        if val:
-            logger.debug(
-                f"Validation loss at epoch {epoch + 1}: {loss_epoch:.4f}"
-            )
-        else:
-            logger.debug(f"Test loss at epoch {epoch + 1}: {loss_epoch:.4f}")
+        
+        logger.debug(
+            f"Validation loss at epoch {epoch + 1}: {loss_epoch:.4f}"
+        )
         return loss_epoch
 
     def train_val(
         self,
         num_epochs,
         optim,
-        val=True,
         patient_early=10,
     ):
         """This function trains and validates the model for the given
@@ -493,7 +476,7 @@ class ParticleTransformer(nn.Module):
         for epoch in range(num_epochs):
             torch.cuda.reset_peak_memory_stats()
             train_loss_epoch = self.train_one_epoch(epoch, optim)
-            val_loss_epoch = self.val_one_epoch(epoch, val)
+            val_loss_epoch = self.val_one_epoch(epoch)
             train_loss.append(train_loss_epoch)
             val_loss.append(val_loss_epoch)
 
@@ -533,48 +516,35 @@ class ParticleTransformer(nn.Module):
         return stop
 
     def generate_targets(self, input, max_len, stop_threshold=0.5):
-        """ """
+        """ 
+
+        """
         batch_size = input.size(0)
-        # max_len = input.size(1)
-        # print(f"shape encoder input non proiettato {input.shape}")
         enc_input = self.input_projection(input)
-        # print(f"shape encoder input proiettato {enc_input.shape}")
         dec_input = [
             self.sos_token.clone().squeeze(0) for _ in range(batch_size)
         ]
         generated = torch.zeros(batch_size, max_len)
         for event in range(batch_size):
-            # print(f"\n========== evento: {event} ==============")
             for t in range(max_len):
-                # print(f"\nparticella {t}")
                 attention_mask = (
                     nn.Transformer.generate_square_subsequent_mask(t + 1).to(
                         self.device
                     )
                 )
-                # print(f"attention mask shape al passo t={t}: {attention_mask.shape}")
-                # print(f"dec_input shape: {dec_input[event].shape}")
                 output = self.transformer(
                     src=enc_input[event],
                     tgt=dec_input[event],
                     tgt_mask=attention_mask,
                 )
-                # print(f"output shape: {output.shape}")
                 last_token = output[-1, :]
-                # print(f"last token shape: {last_token.shape}")
                 proj_token = self.particle_head(last_token)
-                # print(f"proj_token shape: {proj_token.shape}")
                 eos = torch.sigmoid(self.eos_head(last_token))
-                # print(f"eos shape: {eos.shape}")
                 generated[event, t] = proj_token
-                # print(f"token generati al passo {t}: {generated[event]}")
                 next_input = self.input_projection(proj_token).unsqueeze(0)
-                # print(f"next input shape: {next_input.shape}")
-                # print(f"dec input shape prima del cat: {dec_input[event].shape}")
                 dec_input[event] = torch.cat(
                     [dec_input[event], next_input], dim=0
                 )
-                # print(f"dec input shape al passo t={t}: {dec_input[event].shape}")
                 if eos > stop_threshold:
                     break
         return generated
