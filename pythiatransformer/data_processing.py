@@ -1,3 +1,16 @@
+"""
+Processing the data from pythia_generator.py.
+This code implements: 
+i. the transformation of Awkward arrays into padded tensors,
+necessary for the transformer architecture;
+ii. the truncation of the final particles until the sum of their pT is
+50% of the sum of the status 23 particles pT: less particles make the
+data more palatable to the transformer;
+iii. the batching of the data;
+iv. the splitting of the data into training, validation and test sets;
+v. the saving of the tensors and the loaders.
+"""
+
 import awkward as ak
 import numpy as np
 import torch
@@ -7,26 +20,40 @@ from torch.nn.utils.rnn import pad_sequence
 from torch.utils.data import DataLoader, TensorDataset
 
 #######################################
-#           UTILITY FUNCTIONS         #
+#          UTILITY FUNCTIONS          #
 #######################################
 
 
 def awkward_to_padded_tensor(
     data,
     features,
-    truncate_energy=False,
-    list_energy=None,
-    eos_token=61,
-    sos_token=62,
+    truncate_pt=False,
+    list_pt=None
 ):
-    """Convert Awkward Array to padded tensor (no EOS).
+    """
+    Convert Awkward Array to padded tensor (no EOS).
 
     Args:
-        data (ak.Array): Input Awkward Array.
-        features (list): List of feature names to extract.
+        data (ak.Array): input Awkward array;
+        features (list): list of feature names to extract;
+        truncate_pt (bool): if True, truncates pT of the final
+                            particles to 50% of the pT of the
+                            status 23 particles. False by default;
+        list_pt (float): total pT of the event particles.
 
-    Returns:
-        tuple: (padded_tensor, padding_mask)
+    if truncate_pt=False:
+        Returns:
+            padded_tensor (Torch.tensor): padded tensor of data;
+            padding_mask (Torch.tensor): padding mask relative to
+                                         padded_tensor;
+            total_pt (float): total pT of the event particles.
+    if truncate_pt=True:
+        Returns:
+            padded_tensor_trunc (Torch.tensor): padded tensor of
+                                                truncated data;
+            padding_mask (Torch.tensor): padding mask relative to
+                                         padded_tensor_trunc.
+
     """
     event_particles = ak.num(data[features[0]], axis=1)
     max_particles = ak.max(event_particles)
@@ -47,16 +74,16 @@ def awkward_to_padded_tensor(
         dim=1,
         index=indices.unsqueeze(-1).expand(-1, -1, num_features),
     )
-    if truncate_energy:
+    if truncate_pt:
         # tronchiamo in modo che la somma delle energie sia il 50% di quella delle 23
         batch_size = len(event_particles)
 
-        threshold = 0.5 * list_energy
-        cum_energy = torch.cumsum(
+        threshold = 0.5 * list_pt
+        cum_pt = torch.cumsum(
             padded_tensor.squeeze(-1), dim=1
         )  # somma cumulativa dei pT
         # per ogni evento trovo indice fino a dove somma cumulativa < soglia
-        keep_lengths = (cum_energy < threshold.unsqueeze(1)).sum(
+        keep_lengths = (cum_pt < threshold.unsqueeze(1)).sum(
             dim=1
         ) + 1  # per includere la particella che supera 50%
         keep_lengths = torch.clamp(keep_lengths, max=max_particles)
@@ -81,12 +108,12 @@ def awkward_to_padded_tensor(
             [[0] * n + [1] * (max_particles - n) for n in event_particles],
             dtype=torch.bool,
         )
-        total_energy = padded_tensor.sum(dim=1).squeeze(-1)
+        total_pt = padded_tensor.sum(dim=1).squeeze(-1)
 
-    if truncate_energy:
+    if truncate_pt:
         return padded_tensor_trunc, padding_mask
     else:
-        return padded_tensor, padding_mask, total_energy
+        return padded_tensor, padding_mask, total_pt
 
 
 def batching(input, target, batch_size, shuffle=True):
@@ -150,11 +177,11 @@ def load_and_save_tensor(filename):
 
     logger.info("Opening of root file trees with uproot terminated")
 
-    padded_tensor_23, padding_mask_23, energy_23 = awkward_to_padded_tensor(
+    padded_tensor_23, padding_mask_23, pt_23 = awkward_to_padded_tensor(
         data_23, ["pT_23"]
     )
     padded_tensor_final, padding_mask_final = awkward_to_padded_tensor(
-        data_final, ["pT_final"], truncate_energy=True, list_energy=energy_23
+        data_final, ["pT_final"], truncate_pt=True, list_pt=pt_23
     )
 
     logger.info("Padded tensors created")
