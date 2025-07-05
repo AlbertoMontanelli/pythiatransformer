@@ -216,40 +216,43 @@ class ParticleTransformer(nn.Module):
         return input, padding_mask
 
     def forward(self, input, target, enc_input_mask, dec_input_mask):
-        """The aim of this function is computed the output of the model by
-        projecting the input and the target into an hidden
-        representation space, processing them through a Transformer,
-        and projecting the result back to the original feature space.
+        """Computes the output of the model by projecting both input
+        and target into an hidden representation space, processing them
+        through a Transformer, and projecting the result back to the
+        original feature space.
 
         Args:
             input (torch.Tensor): Input tensor representing status 23
                                   particles.
             target (torch.Tensor): Input tensor representing stable
                                    particles.
-
+            enc_input_mask (torch.Tensor): Padding mask corresponding
+                                           to input.
+            dec_input_mask (torch.Tensor): Padding mask corresponding
+                                           to input.
         Returns:
-            output (torch.Tensor): The output tensor after processing
-                                   through the model.
+            pred (torch.Tensor): The output tensor after processing
+                                 through the model.
+            eos_prob_vector (torch.Tensor): Tensor representing the
+                                            end-of-sequence probabilities
+                                            for each step. 
         """
         batch_size = input.size(0)
-        # print(f"shape encoder input non proiettato {input.shape}")
+        # Input projected
         enc_input = self.input_projection(input)
-        # print(f"shape encoder input proiettato {enc_input.shape}")
+        # SOS projected
         sos = self.sos_token.expand(batch_size, -1, -1)
-        # print(f"sos shape proiettata {sos.shape}")
+        # Decoder input without sos
         dec_input = self.input_projection(target)
-        # print(f"decoder input senza sos {dec_input.shape}")
+        # Decoder input with sos
         dec_input = torch.cat([sos, dec_input], dim=1)
-        # print(f"decoder input con sos {dec_input.shape}")
+        # Encoder and decoder input padding mask
         sos_mask = torch.zeros(batch_size, 1).to(self.device)
         dec_input_mask = torch.cat([sos_mask, dec_input_mask], dim=1)
-        # print(f"encoder input mask {enc_input_mask.shape}")
-        # print(f"decoder input mask con sos {dec_input_mask.shape}")
+
         attention_mask = nn.Transformer.generate_square_subsequent_mask(
             dec_input.size(1)
         ).to(self.device)
-        # input = input.squeeze(-2)
-        # target = target.squeeze(-2)
         output = self.transformer(
             src=enc_input,
             tgt=dec_input,
@@ -257,11 +260,8 @@ class ParticleTransformer(nn.Module):
             src_key_padding_mask=enc_input_mask,
             tgt_key_padding_mask=dec_input_mask,
         )
-        # print(f"output shape: {output.shape}")
         pred = self.particle_head(output).squeeze(-1)
-        # print(f"pred shape: {pred.shape}")
         eos_prob_vector = self.eos_head(output).squeeze(-1)
-        # print(f"shape eos {eos_prob_vector.shape}")
         return pred, eos_prob_vector
 
     def train_one_epoch(self, epoch, optim):
@@ -294,29 +294,6 @@ class ParticleTransformer(nn.Module):
                 target, target_padding_mask
             )"""
 
-            """
-            # Lista per decoder_input e mask
-            decoder_input_list = []
-            decoder_input_mask_list = []
-
-            # Per ogni evento nel batch, rimuoviamo l'ultimo elemento dall'input del
-            # decoder e il primo dal target per la loss
-            for event in range(target.shape[0]):
-                event_target = target[event]
-                event_mask = target_padding_mask[event]
-
-                decoder_input_event = event_target[:-1]
-                decoder_input_event_mask = event_mask[:-1]
-                decoder_input_list.append(decoder_input_event)
-                decoder_input_mask_list.append(decoder_input_event_mask)
-
-            decoder_input = torch.stack(decoder_input_list, dim=0)
-            decoder_input_padding_mask = torch.stack(
-                decoder_input_mask_list, dim=0
-            )
-
-            target_4_loss = target[:, 1:, :]
-            """
             inverse_dec_input_padding_mask = ~dec_input_padding_mask
 
             eos_tensor = torch.zeros(
@@ -333,13 +310,11 @@ class ParticleTransformer(nn.Module):
                 enc_input_padding_mask,
                 dec_input_padding_mask,
             )
-            # print(f"output shape: {output[:, 1:].shape}, mask {inverse_dec_input_padding_mask.float().shape}, dec input {dec_input.shape}")
             mse = self.mse_loss(
                 output[:, :-1] * inverse_dec_input_padding_mask.float(),
                 dec_input.squeeze(-1) * inverse_dec_input_padding_mask.float(),
             )
 
-            # print(f"eos_prob {eos_prob_vector.shape}, eos_tensor: {eos_tensor.shape}")
             bce = self.bce_loss(eos_prob_vector, eos_tensor.squeeze(-1))
             loss = mse + bce
 
@@ -575,7 +550,6 @@ class ParticleTransformer(nn.Module):
                     if eos > stop_threshold:
                         break
 
-            # ====== STAMPA DI CONFRONTO ======
             for event_idx in range(10):
                 print(f"\n================ Event {event_idx}================\n")
 
