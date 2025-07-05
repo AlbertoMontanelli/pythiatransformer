@@ -64,20 +64,34 @@ class ParticleTransformer(nn.Module):
     ):
         """
         Args:
-            train_data (DataLoader):
-            val_data (DataLoader):
-            test_data (DataLoader):
-            train_data_pad_mask (DataLoader):
-            val_data_pad_mask (DataLoader):
-            test_data_pad_mask (DataLoader):
-            dim_features (int): number of features of each particle.
-            num_heads (int): heads number of the attention system.
-            num_encoder_layers (int): number of encoder layers.
-            num_decoder_layers (int): number of decoder layers.
-            num_units (int): number of units of each hidden layer.
-            dropout (float): probability of each neuron to be
+            train_data (DataLoader): Dataloader containing the training
+                                     input-target pairs.
+            val_data (DataLoader): Dataloader containing the validation
+                                   input-target pairs.
+            test_data (DataLoader): Dataloader containing the test
+                                    input-target pairs.
+            train_data_pad_mask (DataLoader): Dataloader containing the
+                                              padding masks for the
+                                              training set used to mask
+                                              padded values during
+                                              attention computations.
+            val_data_pad_mask (DataLoader): Dataloader containing the
+                                            padding masks for the
+                                            validation set.
+            test_data_pad_mask (DataLoader): Dataloader containing the
+                                             padding masks for the test
+                                             set.
+            dim_features (int): Number of features of each particle.
+            num_heads (int): Heads number of the attention system.
+            num_encoder_layers (int): Number of encoder layers.
+            num_decoder_layers (int): Number of decoder layers.
+            num_units (int): Number of units of each hidden layer. 
+                             To obtain a more abstract representation
+                             of the data, this number is chosen to be
+                             greater than the number of input features.
+            dropout (float): Probability of each neuron to be
                              switched off.
-            activation (nn.function): activation function of encoder
+            activation (nn.function): Activation function of encoder
                                       and/or decoder layers.
         """
         super(ParticleTransformer, self).__init__()
@@ -91,48 +105,48 @@ class ParticleTransformer(nn.Module):
         self.dim_features = dim_features
         if not isinstance(dim_features, int):
             raise TypeError(
-                f"The number of features must be int, got {type(dim_features)}"
+                f"Number of features must be int, got {type(dim_features)}"
             )
 
         self.num_heads = num_heads
         if not isinstance(num_heads, int):
             raise TypeError(
-                f"The number of heads must be int, got {type(num_heads)}"
+                f"Number of heads must be int, got {type(num_heads)}"
             )
 
         self.num_encoder_layers = num_encoder_layers
         if not isinstance(num_encoder_layers, int):
             raise TypeError(
-                f"The number of encoder layers must be int, "
-                f"got {type(num_encoder_layers)}"
+                f"Number of encoder layers must be int, got "
+                f"{type(num_encoder_layers)}"
             )
 
         self.num_decoder_layers = num_decoder_layers
         if not isinstance(num_decoder_layers, int):
             raise TypeError(
-                f"The number of decoder layers must be int, "
-                f"got {type(num_decoder_layers)}"
+                f"Number of decoder layers must be int, got "
+                f"{type(num_decoder_layers)}"
             )
 
         self.num_units = num_units
         if not isinstance(num_units, int):
             raise TypeError(
-                f"The number of unit must be int, got {type(num_units)}"
+                f"Number of unit must be int, got {type(num_units)}"
             )
-
-        self.dropout = dropout
-        if not isinstance(dropout, float):
-            raise TypeError(f"dropout must be float, got {type(dropout)}")
-        if not (0.0 <= dropout <= 1.0):
-            raise ValueError("dropout must be between 0.0 and 1.0")
-
         if not (num_units % num_heads == 0):
             raise ValueError(
                 "Number of units must be a multiple of number of heads."
             )
 
+        self.dropout = dropout
+        if not isinstance(dropout, float):
+            raise TypeError(f"Dropout must be float, got {type(dropout)}")
+        if not (0.0 <= dropout <= 1.0):
+            raise ValueError("Dropout must be between 0.0 and 1.0")
+
         self.activation = activation
 
+        # Loss functions used during the training
         self.mse_loss = nn.MSELoss()
         self.bce_loss = nn.BCEWithLogitsLoss()
 
@@ -143,22 +157,14 @@ class ParticleTransformer(nn.Module):
         print(self.device)
 
     def build_projection_layer(self):
-        """This function transforms input and output data into a
-        representation more suitable for a Transformers. It utilizes an
-        nn.Linear layer, which applies a linear transformation.
-        To obtain a more abstract representation of the data, the
-        number of hidden units is chosen to be greater than the number
-        of input features. Subsequently, a linear trasformation is
-        applied to restore the data to its original dimensions.
+        """Initializes the layers responible for projecting input
+        features to the model's hidden dimentionality and outputs back
+        to the original feature space.
         """
         self.input_projection = nn.Linear(self.dim_features, self.num_units)
-
-        # 1 sta per gli eventi, poi diventa lungo tanto quanto è il batch size
         self.sos_token = nn.Parameter(torch.randn(1, 1, self.num_units))
-
         self.particle_head = nn.Linear(self.num_units, self.dim_features)
-
-        # se poi ho più di una features ho tante teste di eos quante le features?
+        # The EOS head returns one value per feature.
         self.eos_head = nn.Linear(self.num_units, self.dim_features)
         logger.info("Projection layers input/output created.")
 
@@ -167,14 +173,14 @@ class ParticleTransformer(nn.Module):
         configuration parameters.
         """
         self.transformer = nn.Transformer(
-            d_model=self.num_units,
-            nhead=self.num_heads,
-            num_encoder_layers=self.num_encoder_layers,
-            num_decoder_layers=self.num_decoder_layers,
-            dim_feedforward=4 * self.num_units,
-            dropout=self.dropout,
-            activation=self.activation,
-            batch_first=True,
+            d_model = self.num_units,
+            nhead = self.num_heads,
+            num_encoder_layers = self.num_encoder_layers,
+            num_decoder_layers = self.num_decoder_layers,
+            dim_feedforward = 4 * self.num_units,
+            dropout = self.dropout,
+            activation = self.activation,
+            batch_first = True,
         )
 
         logger.info(
@@ -189,11 +195,20 @@ class ParticleTransformer(nn.Module):
         )
 
     def de_padding(self, input, padding_mask):
-        """Function that eliminate extra padding for each batch"""
-        non_pad_mask = ~padding_mask  # inverto la matrice di padding
-        num_particles = non_pad_mask.sum(
-            dim=1
-        )  # tensore di lunghezza batch_size, con valori il numero di particelle vere
+        """Function that eliminate extra padding for each batch
+        Args:
+            input (torch.Tensor): Tensor representing a batch of data.
+            padding_mask (torch.Tensor): Padding mask refered to input.
+        Returns:
+            input (torch.Tensor): Truncated input tensor with reduced
+                                  sequence lenght.
+            padding_mask (torch.Tensor): Corresponding truncated
+                                         padding mask.
+        """
+        non_pad_mask = ~padding_mask
+        # A tensor of length batch_size, with values equal to the
+        # number of not padding particles.
+        num_particles = non_pad_mask.sum(dim=1)
         max_len_tensor = num_particles.max()
         max_len = max_len_tensor.item()
         input = input[:, :max_len, :]
@@ -515,36 +530,68 @@ class ParticleTransformer(nn.Module):
             stop = False
         return stop
 
-    def generate_targets(self, input, max_len, stop_threshold=0.5):
+    def generate_targets(self, stop_threshold=0.5):
         """ 
 
         """
-        batch_size = input.size(0)
-        enc_input = self.input_projection(input)
-        dec_input = [
-            self.sos_token.clone().squeeze(0) for _ in range(batch_size)
-        ]
-        generated = torch.zeros(batch_size, max_len)
-        for event in range(batch_size):
-            for t in range(max_len):
-                attention_mask = (
-                    nn.Transformer.generate_square_subsequent_mask(t + 1).to(
-                        self.device
+        for (input, target), (
+            input_padding_mask,
+            target_padding_mask,
+        ) in zip(self.test_data, self.test_data_pad_mask):
+
+            input = input.to(self.device)
+            target = target.to(self.device)
+            input_padding_mask = input_padding_mask.to(self.device)
+            target_padding_mask = target_padding_mask.to(self.device)
+            batch_size = input.size(0)
+            max_len = target.size(1)
+
+            enc_input = self.input_projection(input)
+            dec_input = [
+                self.sos_token.clone().squeeze(0) for _ in range(batch_size)
+            ]
+            generated = torch.zeros(batch_size, max_len)
+
+            for event in range(batch_size):
+                for t in range(max_len):
+                    attention_mask = (
+                        nn.Transformer.generate_square_subsequent_mask(t + 1).to(
+                            self.device
+                        )
                     )
-                )
-                output = self.transformer(
-                    src=enc_input[event],
-                    tgt=dec_input[event],
-                    tgt_mask=attention_mask,
-                )
-                last_token = output[-1, :]
-                proj_token = self.particle_head(last_token)
-                eos = torch.sigmoid(self.eos_head(last_token))
-                generated[event, t] = proj_token
-                next_input = self.input_projection(proj_token).unsqueeze(0)
-                dec_input[event] = torch.cat(
-                    [dec_input[event], next_input], dim=0
-                )
-                if eos > stop_threshold:
-                    break
+                    output = self.transformer(
+                        src=enc_input[event],
+                        tgt=dec_input[event],
+                        tgt_mask=attention_mask,
+                    )
+                    last_token = output[-1, :]
+                    proj_token = self.particle_head(last_token)
+                    eos = torch.sigmoid(self.eos_head(last_token))
+                    generated[event, t] = proj_token
+                    next_input = self.input_projection(proj_token).unsqueeze(0)
+                    dec_input[event] = torch.cat(
+                        [dec_input[event], next_input], dim=0
+                    )
+                    if eos > stop_threshold:
+                        break
+
+            # ====== STAMPA DI CONFRONTO ======
+            for event_idx in range(10):
+                print(f"\n================ Event {event_idx}================\n")
+
+                half_sum = input[event_idx].sum().item() / 2
+                print("Input:")
+                print(input[event_idx].cpu().numpy().tolist())
+                print(f"half inputs sum: {half_sum}")
+
+                print("\n Real target:")
+                real_sum = target[event_idx].sum().item()
+                print(f"real target sum: {real_sum}")
+                print(target[event_idx].cpu().numpy().tolist())
+
+                pred_sum = generated[event_idx].sum().item()
+                print(f"predicted target sum: {pred_sum}")
+                print("\n predicted target:")
+                print(generated[event_idx].cpu().numpy())
+            break # only one batch
         return generated

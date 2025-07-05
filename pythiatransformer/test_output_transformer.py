@@ -42,37 +42,8 @@ model.load_state_dict(
 model.to(device)
 model.device = device
 
-# Prendi un batch di dati
-inputs, targets = next(iter(loader_train))
-inputs_mask, targets_mask = next(iter(loader_padding_train))
-
-inputs = inputs.to(device)
-targets = targets.to(device)
-inputs_mask = inputs_mask.to(device)
-targets_mask = targets_mask.to(device)
 
 # ====== INFERENZA AUTOREGRESSIVA EVENTO PER EVENTO ======
 print("Inizio inferenza autoregressiva")
 with torch.no_grad():
-    output_gen = model.generate_targets(inputs, targets.size(1))
-
-# ====== STAMPA DI CONFRONTO ======
-evento_idx = 0
-
-for evento_idx in range(10):
-    print(f"\n================ Evento {evento_idx}================\n")
-
-    half_sum = inputs[evento_idx].sum().item() / 2  # <-- FIXED LINE
-    print("Input:")
-    print(inputs[evento_idx].cpu().numpy().tolist())
-    print(f"Metà somma degli input: {half_sum}")
-
-    print("\n Target reale:")
-    real_sum = targets[evento_idx].sum().item()  # <-- FIXED LINE
-    print(f"Somma dei target reali: {real_sum}")
-    print(targets[evento_idx].cpu().numpy().tolist())
-
-    pred_sum = output_gen[evento_idx].sum().item()  # <-- FIXED LINE
-    print(f"Somma dei target predetti: {pred_sum}")
-    print("\n Target predetto:")
-    print(output_gen[evento_idx].cpu().numpy())
+    output_gen = model.generate_targets()
