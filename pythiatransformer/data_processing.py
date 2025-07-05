@@ -27,8 +27,8 @@ from torch.utils.data import DataLoader, TensorDataset
 def awkward_to_padded_tensor(
     data,
     features,
-    truncate_pt=False,
-    list_pt=None
+    list_pt=None,
+    truncate_pt = False
 ):
     """
     Convert Awkward Array to padded tensor (no EOS).
@@ -36,10 +36,10 @@ def awkward_to_padded_tensor(
     Args:
         data (ak.Array): input Awkward array;
         features (list): list of feature names to extract;
-        truncate_pt (bool): if True, truncates pT of the final
-                            particles to 50% of the pT of the
-                            status 23 particles. False by default;
-        list_pt (float): total pT of the event particles.
+        list_pt (list): total pT of the event particles;
+        truncate_pt (bool): if True, truncates the dataset to 
+                            when the sum of pT is 50% of list_pt
+                            for the event. False by default.
 
     if truncate_pt=False:
         Returns:
@@ -55,10 +55,31 @@ def awkward_to_padded_tensor(
                                          padded_tensor_trunc.
 
     """
+    # Loading of the data, defining salient variables.
+    if not isinstance(data, ak.Array):
+        raise TypeError(
+            "Parameter 'data' must be of type 'ak.Array', "
+            f"got '{type(data)}' instead."
+        )
+    if not isinstance(features, list):
+        raise TypeError(
+            "Parameter 'features' must be of type 'list', "
+            f"got '{type(features)}' instead."
+        )
+    if not all(isinstance(f, str) for f in features):
+        raise TypeError(
+            f"Parameter 'features' must be a list of strings."
+        )
+    missing_features = [f for f in features if f not in data.fields]
+    if missing_features:
+        raise KeyError(
+            f"{missing_features} are not features present in 'data'."
+        )
     event_particles = ak.num(data[features[0]], axis=1)
     max_particles = ak.max(event_particles)
     num_features = len(features)
 
+    # Creation of tensors.
     padded_events = {
         f: ak.fill_none(ak.pad_none(data[f], target=max_particles, axis=1), 0)
         for f in features
@@ -67,25 +88,35 @@ def awkward_to_padded_tensor(
         np.stack([ak.to_numpy(padded_events[f]) for f in features], axis=-1),
         dtype=torch.float32,
     )
-
     indices = torch.argsort(base_tensor[:, :, -1], dim=1, descending=True)
     padded_tensor = torch.gather(
         base_tensor,
         dim=1,
         index=indices.unsqueeze(-1).expand(-1, -1, num_features),
     )
+
     if truncate_pt:
-        # tronchiamo in modo che la somma delle energie sia il 50% di quella delle 23
+        if list_pt is None:
+            raise ValueError(
+                f"Unspecified parameter 'list_pt', necessary for truncation."
+            )
+        if not isinstance(list_pt, list):
+            raise TypeError(
+                "Parameter 'list_pt' must be of type 'list', "
+                f"got '{type(list_pt)}' instead."
+            )
+        # This part of the function is used for the data processing of
+        # the final particles.
         batch_size = len(event_particles)
 
-        threshold = 0.5 * list_pt
+        threshold = 0.5 * list_pt #0.5 is arbitrary.
         cum_pt = torch.cumsum(
             padded_tensor.squeeze(-1), dim=1
-        )  # somma cumulativa dei pT
-        # per ogni evento trovo indice fino a dove somma cumulativa < soglia
+        )  # cumulative sum of pT.
+        # The index s.t. cum_pt < threshold is found for each event.
         keep_lengths = (cum_pt < threshold.unsqueeze(1)).sum(
             dim=1
-        ) + 1  # per includere la particella che supera 50%
+        ) + 1  # + 1 in order to consider the particle above 50%.
         keep_lengths = torch.clamp(keep_lengths, max=max_particles)
 
         new_max_len = keep_lengths.max().item()
@@ -99,11 +130,13 @@ def awkward_to_padded_tensor(
         for i in range(batch_size):
             k = keep_lengths[
                 i
-            ].item()  # l'indice della particella dopo la quale tronchiamo
+            ].item()  # the index for which the batch is truncated.
             padded_tensor_trunc[i, :k, :] = padded_tensor[i, :k, :]
             padding_mask[i, :k] = 0
 
     else:
+        # This part of the function is used for the data processing of
+        # status 23 particles, for which no truncation is necessary.
         padding_mask = torch.tensor(
             [[0] * n + [1] * (max_particles - n) for n in event_particles],
             dtype=torch.bool,
@@ -117,12 +150,30 @@ def awkward_to_padded_tensor(
 
 
 def batching(input, target, batch_size, shuffle=True):
-    """Create a DataLoader for batching and shuffling input/target pairs."""
+    """
+    Create a DataLoader for batching and shuffling input/target pairs.
+
+    Args:
+        input (Torch.tensor): input dataset;
+        target (Torch.tensor): target dataset;
+        batch_size (int): size of the mini batches;
+        shuffle (bool): if True, performs shuffling of the data.
+                        True by default.
+    
+    Returns:
+        loader ( torch.utils.data.DataLoader): DataLoader object with
+                                               batched and shuffled
+                                               input and target.
+    """
     if not isinstance(batch_size, int):
-        raise TypeError(f"Batch size must be int, got {type(batch_size)}")
+        raise TypeError(
+            "Parameter 'batch_size' must be of type 'int', "
+            f"got '{type(batch_size)}' instead."
+        )
     if not (batch_size <= input.shape[0]):
         raise ValueError(
-            f"Batch size must be smaller than the input dataset size."
+            "Parameter 'batch_size' must be smaller than or equal "
+            f"to the input dataset size."
         )
     generator = torch.Generator().manual_seed(1)
     loader = DataLoader(
@@ -181,7 +232,7 @@ def load_and_save_tensor(filename):
         data_23, ["pT_23"]
     )
     padded_tensor_final, padding_mask_final = awkward_to_padded_tensor(
-        data_final, ["pT_final"], truncate_pt=True, list_pt=pt_23
+        data_final, ["pT_final"], list_pt=pt_23, truncate_pt=True
     )
 
     logger.info("Padded tensors created")
