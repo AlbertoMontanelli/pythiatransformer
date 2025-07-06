@@ -12,6 +12,7 @@ v. the saving of the tensors and the loaders.
 """
 
 import awkward as ak
+import math
 import numpy as np
 import torch
 import uproot
@@ -28,14 +29,17 @@ def awkward_to_padded_tensor(
     data,
     features,
     list_pt=None,
-    truncate_pt = False
+    truncate_pt=False
 ):
     """
-    Convert Awkward Array to padded tensor (no EOS).
+    Convert Awkward Array to padded Pytorch tensor.
+    Optionally, truncate each event based on cumulative transverse
+    momentum (pT).
 
     Args:
-        data (ak.Array): input Awkward array;
-        features (list): list of feature names to extract;
+        data (ak.Array): input Awkward Array;
+        features (list): list of feature names to extract.
+                         The last feature is assumed to be pT;
         list_pt (list): total pT of the event particles;
         truncate_pt (bool): if True, truncates the dataset to 
                             when the sum of pT is 50% of list_pt
@@ -43,15 +47,17 @@ def awkward_to_padded_tensor(
 
     if truncate_pt=False:
         Returns:
-            padded_tensor (Torch.tensor): padded tensor of data;
-            padding_mask (Torch.tensor): padding mask relative to
-                                         padded_tensor;
-            total_pt (float): total pT of the event particles.
+            padded_tensor (torch.Tensor): padded tensor of data;
+            padding_mask (torch.Tensor): padding mask relative to
+                                         padded_tensor, where 0 marks
+                                         real particles and 1 marks
+                                         padding;
+            total_pt (torch.Tensor): total pT of each event.
     if truncate_pt=True:
         Returns:
-            padded_tensor_trunc (Torch.tensor): padded tensor of
+            padded_tensor_trunc (torch.Tensor): padded tensor of
                                                 truncated data;
-            padding_mask (Torch.tensor): padding mask relative to
+            padding_mask (torch.Tensor): padding mask relative to
                                          padded_tensor_trunc.
 
     """
@@ -98,18 +104,27 @@ def awkward_to_padded_tensor(
     if truncate_pt:
         if list_pt is None:
             raise ValueError(
-                f"Unspecified parameter 'list_pt', necessary for truncation."
+                f"Parameter 'list_pt' is required when 'truncate_pT=True'."
+            )
+        if len(list_pt)==0:
+            raise ValueError(
+                f"Parameter 'list_pt' can not be an empty list."
             )
         if not isinstance(list_pt, list):
             raise TypeError(
                 "Parameter 'list_pt' must be of type 'list', "
                 f"got '{type(list_pt)}' instead."
             )
+        if len(list_pt) != len(data):
+            raise ValueError(
+                f"'list_pt' must have length equal to number of events " 
+                f"({len(data)}), got {len(list_pt)} instead."
+            )
         # This part of the function is used for the data processing of
         # the final particles.
         batch_size = len(event_particles)
 
-        threshold = 0.5 * list_pt #0.5 is arbitrary.
+        threshold = 0.5 * list_pt # 0.5 is arbitrary.
         cum_pt = torch.cumsum(
             padded_tensor.squeeze(-1), dim=1
         )  # cumulative sum of pT.
@@ -120,7 +135,6 @@ def awkward_to_padded_tensor(
         keep_lengths = torch.clamp(keep_lengths, max=max_particles)
 
         new_max_len = keep_lengths.max().item()
-        print(f"max len: {new_max_len}")
 
         padded_tensor_trunc = torch.zeros(
             (batch_size, new_max_len, num_features)
@@ -151,11 +165,12 @@ def awkward_to_padded_tensor(
 
 def batching(input, target, batch_size, shuffle=True):
     """
-    Create a DataLoader for batching and shuffling input/target pairs.
+    Create a Pytorch DataLoader for batching and optionally shuffling
+    input/target pairs.
 
     Args:
-        input (Torch.tensor): input dataset;
-        target (Torch.tensor): target dataset;
+        input (torch.Tensor): input dataset;
+        target (torch.Tensor): target dataset;
         batch_size (int): size of the mini batches;
         shuffle (bool): if True, performs shuffling of the data.
                         True by default.
@@ -165,6 +180,21 @@ def batching(input, target, batch_size, shuffle=True):
                                                batched and shuffled
                                                input and target.
     """
+    if not isinstance(input, torch.Tensor):
+        raise TypeError(
+            "Parameter 'input' must be a torch.Tensor, "
+            f"got '{type(input)}' instead."
+        )
+    if not isinstance(target, torch.Tensor):
+        raise TypeError(
+            "Parameter 'target' must be a torch.Tensor, "
+            f"got '{type(target)}' instead."
+        )
+    if input.shape[0] != target.shape[0]:
+        raise ValueError(
+            f"Parameters 'input' and 'target' must have the same number of "
+            f"samples. Got {input.shape[0]} and {target.shape[0]} respectively."
+        )
     if not isinstance(batch_size, int):
         raise TypeError(
             "Parameter 'batch_size' must be of type 'int', "
@@ -173,7 +203,13 @@ def batching(input, target, batch_size, shuffle=True):
     if not (batch_size <= input.shape[0]):
         raise ValueError(
             "Parameter 'batch_size' must be smaller than or equal "
-            f"to the input dataset size."
+            f"to the input dataset size {len(input.shape[0])}, "
+            f"got {batch_size} instead."
+        )
+    if batch_size < 1:
+        raise ValueError(
+            "Parameter 'batch_size' must be at least 1, "
+            f"got {batch_size} instead."
         )
     generator = torch.Generator().manual_seed(1)
     loader = DataLoader(
@@ -188,45 +224,67 @@ def batching(input, target, batch_size, shuffle=True):
 
 
 def train_val_test_split(
-    tensor, train_perc=0.8, val_perc=0.19, test_perc=0.01
+    tensor, train_perc=0.8, val_perc=0.19, test_perc=0.01, min_size=1
 ):
-    """Split a tensor into training, validation, and test sets.
+    """
+    Split a tensor into training, validation, and test sets.
 
     Args:
-        tensor (torch.Tensor): Tensor to split.
-        train_perc (float): Percentage for training set.
-        val_perc (float): Percentage for validation set.
-        test_perc (float): Percentage for test set.
+        tensor (torch.Tensor): tensor to split;
+        train_perc (float): fraction for training set;
+        val_perc (float): fraction for validation set;
+        test_perc (float): fraction for test set;
+        min_size (int): minimum acceptable size of the sets.
 
     Returns:
         tuple: (train_tensor, val_tensor, test_tensor)
     """
-    if not (train_perc + val_perc + test_perc == 1):
+    if not isinstance(tensor, torch.Tensor):
+        raise TypeError(
+            "Parameter 'tensor' must be of type torch.Tensor, "
+            f"got '{type(tensor)}' instead."
+        )
+    if not math.isclose(train_perc + val_perc + test_perc == 1, rel_tol=1e-6):
         raise ValueError(
             "Invalid values for split percentages. Must sum to 1."
         )
     if not (0 <= train_perc <= 1):
-        raise ValueError(f"Invalid train_perc={train_perc}. Must be in [0,1].")
+        raise ValueError(
+            f"Invalid train_perc={train_perc}. Must be in [0,1]."
+        )
     if not (0 <= val_perc <= 1):
-        raise ValueError(f"Invalid val_perc={val_perc}. Must be in [0,1].")
+        raise ValueError(
+            f"Invalid val_perc={val_perc}. Must be in [0,1]."
+        )
     if not (0 <= test_perc <= 1):
-        raise ValueError(f"Invalid test_perc={test_perc}. Must be in [0,1].")
+        raise ValueError(
+            f"Invalid test_perc={test_perc}. Must be in [0,1]."
+        )
 
     n = len(tensor)
     i1 = int(train_perc * n)
     i2 = i1 + int(val_perc * n)
+
+    n_train = i1
+    n_val = i2 - i1
+    n_test = n -i2
+    if any(split < min_size for split in (n_train, n_val, n_test)):
+        raise ValueError(
+            f"Each split must have at least {min_size} elements. "
+            f"Got train={n_train}, val={n_val}, test={n_test}."
+        )
     return tensor[:i1], tensor[i1:i2], tensor[i2:]
 
 
 def load_and_save_tensor(filename):
 
-    logger.info("Beginning data_processing")
+    logger.info("Beginning data_processing.")
 
     with uproot.open(filename) as file:
         data_23 = file["tree_23"].arrays(library="ak")
         data_final = file["tree_final"].arrays(library="ak")
 
-    logger.info("Opening of root file trees with uproot terminated")
+    logger.info("Opening of root file trees with uproot terminated.")
 
     padded_tensor_23, padding_mask_23, pt_23 = awkward_to_padded_tensor(
         data_23, ["pT_23"]
@@ -235,13 +293,13 @@ def load_and_save_tensor(filename):
         data_final, ["pT_final"], list_pt=pt_23, truncate_pt=True
     )
 
-    logger.info("Padded tensors created")
+    logger.info("Padded tensors created.")
 
     for i in range(padded_tensor_23.size(0)):
         sum_23 = padded_tensor_23[i].sum()
         sum_final = padded_tensor_final[i].sum()
         if sum_final / sum_23 < 1:
-            print(f"final/23: {sum_final/sum_23}")
+            print(f"pT_final/pT_23: {sum_final/sum_23}")
 
     train_23, val_23, test_23 = train_val_test_split(padded_tensor_23)
     train_final, val_final, test_final = train_val_test_split(
@@ -254,7 +312,7 @@ def load_and_save_tensor(filename):
         padding_mask_final
     )
 
-    logger.info("Train/Val/Test splitting terminated")
+    logger.info("Train/Val/Test splitting terminated.")
 
     # Salvataggio dei tensori per ripristino futuro
     torch.save(train_23, "train_23_1M.pt")
