@@ -5,9 +5,9 @@ particles starting from the status 23 particles.
 
 import gc
 
+from loguru import logger
 import torch
 import torch.nn as nn
-from loguru import logger
 from torch.nn.utils.rnn import pad_sequence
 
 
@@ -194,27 +194,6 @@ class ParticleTransformer(nn.Module):
             f"activation function: {self.activation}."
         )
 
-    def de_padding(self, input, padding_mask):
-        """Function that eliminate extra padding for each batch
-        Args:
-            input (torch.Tensor): Tensor representing a batch of data.
-            padding_mask (torch.Tensor): Padding mask refered to input.
-        Returns:
-            input (torch.Tensor): Truncated input tensor with reduced
-                                  sequence lenght.
-            padding_mask (torch.Tensor): Corresponding truncated
-                                         padding mask.
-        """
-        non_pad_mask = ~padding_mask
-        # A tensor of length batch_size, with values equal to the
-        # number of not padding particles.
-        num_particles = non_pad_mask.sum(dim=1)
-        max_len_tensor = num_particles.max()
-        max_len = max_len_tensor.item()
-        input = input[:, :max_len, :]
-        padding_mask = padding_mask[:, :max_len]
-        return input, padding_mask
-
     def forward(self, input, target, enc_input_mask, dec_input_mask):
         """Computes the output of the model by projecting both input
         and target into an hidden representation space, processing them
@@ -275,9 +254,8 @@ class ParticleTransformer(nn.Module):
             optim (torch.optim.optimizer): Optimizer used for updating
                                            model parameters.
         Returns:
-            loss_epoch (float):
+            loss_epoch (float): Loss computed in the current epoch.
         """
-
         self.train()
         loss_epoch = 0
 
@@ -290,12 +268,8 @@ class ParticleTransformer(nn.Module):
             dec_input = dec_input.to(self.device)
             enc_input_padding_mask = enc_input_padding_mask.to(self.device)
             dec_input_padding_mask = dec_input_padding_mask.to(self.device)
-            """target, target_padding_mask = self.de_padding(
-                target, target_padding_mask
-            )"""
 
             inverse_dec_input_padding_mask = ~dec_input_padding_mask
-
             eos_tensor = torch.zeros(
                 dec_input.size(0), dec_input.size(1) + 1, dec_input.size(2)
             ).to(self.device)
@@ -314,12 +288,12 @@ class ParticleTransformer(nn.Module):
                 output[:, :-1] * inverse_dec_input_padding_mask.float(),
                 dec_input.squeeze(-1) * inverse_dec_input_padding_mask.float(),
             )
-
             bce = self.bce_loss(eos_prob_vector, eos_tensor.squeeze(-1))
             loss = mse + bce
 
             if not torch.isfinite(loss):
                 raise ValueError(f"Loss is not finite at epoch {epoch + 1}")
+
             loss.backward()
             optim.step()
             loss_epoch += loss.item()
@@ -339,7 +313,7 @@ class ParticleTransformer(nn.Module):
             )
             torch.cuda.empty_cache()
 
-        gc.collect()  # forcing garbage collector
+        gc.collect()
         torch.cuda.empty_cache()
 
         loss_epoch = loss_epoch / len(self.train_data)
@@ -353,10 +327,8 @@ class ParticleTransformer(nn.Module):
 
         Args:
             epoch (int): current epoch.
-            val (bool): Default True. Set to False when using the test
-                        set
         Returns:
-            loss_epoch (float):
+            loss_epoch (float): Loss computed in the current epoch.
         """
         self.eval()
         loss_epoch = 0
@@ -415,11 +387,10 @@ class ParticleTransformer(nn.Module):
                     inverse_dec_input_padding_mask,
                 )
                 torch.cuda.empty_cache()
-
-        gc.collect()  # forcing garbage collector
+        gc.collect()
         torch.cuda.empty_cache()
 
-        loss_epoch = loss_epoch / len(self.train_data)
+        loss_epoch = loss_epoch / len(self.val_data)
         
         logger.debug(
             f"Validation loss at epoch {epoch + 1}: {loss_epoch:.4f}"
@@ -432,16 +403,20 @@ class ParticleTransformer(nn.Module):
         optim,
         patient_early=10,
     ):
-        """This function trains and validates the model for the given
-        number of epochs.
+        """Trains and validates the model for the given number of
+        epochs, using train_one_epoch and loss_one_epoch. Implements
+        early stopping if validation loss does not improve.
+
         Args:
             num_epochs (int): Number of total epochs.
             optim (torch.optim.optimizer): Optimizer used for updating
                                            model parameters.
-            patient (int):
+            patient (int): Number of consecutive epochs to wait for an
+                           improvement in validation loss before
+                           stopping early. Default 10.
         Returns:
-            train_loss (list):
-            val_loss (list):
+            train_loss (list): Training loss recorded at each epoch.
+            val_loss (list): Validation loss recorded at each epoch.
         """
         if not isinstance(num_epochs, int):
             raise TypeError(
@@ -459,7 +434,6 @@ class ParticleTransformer(nn.Module):
         train_loss = []
         val_loss = []
 
-        # early_stop initialization
         counter_earlystop = 0
 
         logger.info("Training started!")
@@ -470,20 +444,20 @@ class ParticleTransformer(nn.Module):
             train_loss.append(train_loss_epoch)
             val_loss.append(val_loss_epoch)
 
-            if epoch >= int(num_epochs / 100):
-                # early_stopping check
+            if epoch >= int(num_epochs / 10):
                 stop_early = self.early_stopping(val_loss, epoch)
                 if stop_early:
                     counter_earlystop += 1
                 else:
                     counter_earlystop = 0
-                logger.info(f"stop early: {stop_early}")
                 if counter_earlystop >= patient_early:
                     logger.warning(
                         f"Overfitting at epoch {epoch + 1 - patient_early}."
                     )
+                    train_loss = train_loss[:epoch - patient_early]
+                    val_loss = val_loss[:epoch - patient_early]
                     break
-
+                
             torch.cuda.empty_cache()
             log_gpu_memory(epoch)
             log_peak_memory(epoch)
@@ -492,12 +466,16 @@ class ParticleTransformer(nn.Module):
         return train_loss, val_loss
 
     def early_stopping(self, val_losses, current_epoch):
-        """
+        """Checks whether the validation loss has increased or remained
+        the same compared to the previous epoch.
+
         Args:
-            val_losses (list):
-            current_epoch (int):
+            val_losses (list): List containing validation losses for
+                               each epoch before the current.
+            current_epoch (int): Index of the current epoch.
         Returns:
-            stop (bool):
+            stop (bool): True if validation loss has no improved, False
+                         otherwise.
         """
         if val_losses[current_epoch - 1] <= val_losses[current_epoch]:
             stop = True
@@ -506,8 +484,15 @@ class ParticleTransformer(nn.Module):
         return stop
 
     def generate_targets(self, stop_threshold=0.5):
-        """ 
+        """Performs autoregressive generation of stable particles'
+        energy for one batch of events from the test set.
 
+        Args:
+            stop_threshold (float): Threshold for the EOS probability
+                                    to stop generation. Default is 0.5.
+        Returns:
+            generated (torch.Tensor): Tensor containing the predicted
+                                      stable particles.
         """
         for (input, target), (
             input_padding_mask,
@@ -556,16 +541,16 @@ class ParticleTransformer(nn.Module):
                 half_sum = input[event_idx].sum().item() / 2
                 print("Input:")
                 print(input[event_idx].cpu().numpy().tolist())
-                print(f"half inputs sum: {half_sum}")
+                print(f"Half inputs sum: {half_sum}")
 
                 print("\n Real target:")
                 real_sum = target[event_idx].sum().item()
-                print(f"real target sum: {real_sum}")
+                print(f"Real target sum: {real_sum}")
                 print(target[event_idx].cpu().numpy().tolist())
 
+                print("\n Predicted target:")
                 pred_sum = generated[event_idx].sum().item()
-                print(f"predicted target sum: {pred_sum}")
-                print("\n predicted target:")
+                print(f"Predicted target sum: {pred_sum}")
                 print(generated[event_idx].cpu().numpy())
             break # only one batch
         return generated

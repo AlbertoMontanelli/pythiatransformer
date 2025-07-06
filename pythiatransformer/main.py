@@ -1,10 +1,19 @@
+"""This script builds, trains, evaluates and saves a transformer based
+model designed to predict stable particles from status 23 particles.
+The main steps are:
+- Load the preprocessed datasets from data_processing.py
+- Define and build the transformer model.
+- Train and validate the model.
+- Plot training and validation loss curves.
+- Save the trained model.
+"""
 import os
 
+from loguru import logger
 import matplotlib.pyplot as plt
 import torch
 import torch.nn as nn
 import torch.optim as optimizer
-from loguru import logger
 
 from data_processing import load_saved_dataloaders
 from transformer import ParticleTransformer
@@ -19,15 +28,23 @@ from transformer import ParticleTransformer
     subset,
 ) = load_saved_dataloaders(batch_size=256)
 
-
 os.environ["PYTORCH_CUDA_ALLOC_CONF"] = "expandable_segments:True"
 device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
 epochs = 100
 
-
 def plot_losses(
-    train_loss, val_loss, filename="learning_curve_1M.pdf", dpi=1200
+    train_loss, val_loss, filename="learning_curve_last_version.pdf", dpi=1200
 ):
+    """
+    Plots and saves the training and validation loss curves over
+    epochs.
+
+    Args:
+        train_loss (list): Training loss values.
+        val_loss (list): Validation loss values.
+        filename (string): Output file name for the saved plot.
+        dpi (int): Resolution of the saved figure.
+    """
     plt.figure()
     plt.plot(train_loss, label="Training Loss")
     plt.plot(val_loss, label="Validation Loss")
@@ -41,7 +58,11 @@ def plot_losses(
 
 
 def build_model():
-    """Build a unique istance of ParticleTransformer class."""
+    """Build a unique istance of ParticleTransformer class.
+
+    Returns:
+        ParticleTransformer: A model ready for training or inference.
+    """
     return ParticleTransformer(
         train_data=loader_train,
         val_data=loader_val,
@@ -58,17 +79,20 @@ def build_model():
         activation=nn.ReLU(),
     )
 
-
 def train_and_save_model():
+    """Trains the ParticleTransformer model and saves the trained
+    weights to a `.pt` file.
+    """
     transformer = build_model()
     transformer.to(device)
     transformer.device = device
-    num_params = sum(
+
+    num_params_learnable = sum(
         p.numel() for p in transformer.parameters() if p.requires_grad
     )
-    print(f"Numero totale di parametri allenabili: {num_params}")
-    print(f"Numero totali di parametri")
-    print(sum(p.numel() for p in transformer.parameters()))
+    num_params = sum(p.numel() for p in transformer.parameters())
+    logger.info(f"Number of learnable parameters: {num_params_learnable}")
+    logger.info(f"Number of total parameters: {num_params}")
 
     learning_rate = 5e-4
     optim = optimizer.Adam(
@@ -80,8 +104,8 @@ def train_and_save_model():
 
     plot_losses(train_loss, val_loss)
 
-    torch.save(transformer.state_dict(), "transformer_model_1M.pt")
-    logger.info("Modello salvato in transformer_model_1M.pt")
+    torch.save(transformer.state_dict(), "transformer_model_last_version.pt")
+    logger.info("Model saved: transformer_model_last_version.pt")
 
 
 if __name__ == "__main__":
