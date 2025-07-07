@@ -277,10 +277,26 @@ def train_val_test_split(
 
 
 def load_and_save_tensor(filename):
+    """
+    Loading of the ak.Array data and saving of the Torch Tensors.
 
+    Args:
+        filename (str): name of the data file.
+
+    Returns:
+        None
+    """
     logger.info("Beginning data_processing.")
 
     with uproot.open(filename) as file:
+        if "tree_23" not in file:
+            raise KeyError(
+                f"'tree_23' not found in file."
+            )
+        if "tree_final" not in file:
+            raise KeyError(
+                f"'tree_final' not found in file."
+            )
         data_23 = file["tree_23"].arrays(library="ak")
         data_final = file["tree_final"].arrays(library="ak")
 
@@ -292,6 +308,12 @@ def load_and_save_tensor(filename):
     padded_tensor_final, padding_mask_final = awkward_to_padded_tensor(
         data_final, ["pT_final"], list_pt=pt_23, truncate_pt=True
     )
+    if padded_tensor_23.size(0) != padded_tensor_final.size(0):
+        raise ValueError(
+            f"Status 23 particles tensor and final particles tensor do not "
+            f"have the same number of events, respectively "
+            f"{padded_tensor_23.size(0)} and {padded_tensor_final.size(0)}."
+        )
 
     logger.info("Padded tensors created.")
 
@@ -314,7 +336,7 @@ def load_and_save_tensor(filename):
 
     logger.info("Train/Val/Test splitting terminated.")
 
-    # Salvataggio dei tensori per ripristino futuro
+    # Saving the tensors for future recovery.
     torch.save(train_23, "train_23_1M.pt")
     logger.info("Tensor train_23 saved")
     torch.save(train_final, "train_final_1M.pt")
@@ -342,15 +364,65 @@ def load_and_save_tensor(filename):
 
 
 def load_saved_dataloaders(batch_size):
-    """Load tensors salvati da file .pt e ricrea i DataLoader."""
+    """
+    Load tensors and forming the DataLoader objects.
 
-    # Caricamento tensori da file .pt
+    Args:
+        batch_size (int): number of samples per batch in DataLoader.
+    
+    Returns:
+        tuple: (
+            loader_train,
+            loader_val,
+            loader_test,
+            loader_padding_train,
+            loader_padding_val,
+            loader_padding_test,
+            subset (torch.Tensor): example feature vector from train_23
+        )
+    """
+    if not isinstance(batch_size, int):
+        raise TypeError(
+            "Parameter 'batch_size' must be of type 'int', "
+            f"got '{type(batch_size)}' instead."
+        )
+    if batch_size < 1:
+        raise ValueError(
+            "Parameter 'batch_size' must be at least 1, "
+            f"got {batch_size} instead."
+        )
+    # Loading tensors.
     train_23 = torch.load("train_23_1M.pt")
     train_final = torch.load("train_final_1M.pt")
     val_23 = torch.load("val_23_1M.pt")
     val_final = torch.load("val_final_1M.pt")
     test_23 = torch.load("test_23_1M.pt")
     test_final = torch.load("test_final_1M.pt")
+
+    if not (batch_size <= train_23.shape[0]):
+        raise ValueError(
+            "Parameter 'batch_size' must be smaller than or equal "
+            f"to the input dataset size {len(train_23.shape[0])}, "
+            f"got {batch_size} instead."
+        )
+    if train_23.shape[0] != train_final.shape[0]:
+        raise ValueError(
+            f"Status 23 particles tensor and final particles tensor do not "
+            f"have the same number of events in training sets, respectively "
+            f"{train_23.shape[0]} and {train_final.shape[0]}."
+        )
+    if val_23.shape[0] != val_final.shape[0]:
+        raise ValueError(
+            f"Status 23 particles tensor and final particles tensor do not "
+            f"have the same number of events in validation sets, respectively "
+            f"{val_23.shape[0]} and {val_final.shape[0]}."
+        )
+    if test_23.shape[0] != test_final.shape[0]:
+        raise ValueError(
+            f"Status 23 particles tensor and final particles tensor do not "
+            f"have the same number of events in test sets, respectively "
+            f"{test_23.shape[0]} and {test_final.shape[0]}."
+        )
 
     mask_train_23 = torch.load("mask_train_23_1M.pt")
     mask_train_final = torch.load("mask_train_final_1M.pt")
@@ -359,7 +431,7 @@ def load_saved_dataloaders(batch_size):
     mask_test_23 = torch.load("mask_test_23_1M.pt")
     mask_test_final = torch.load("mask_test_final_1M.pt")
 
-    # Ricostruzione dei DataLoader
+    # Rebuilding the DataLoaders.
     loader_train = batching(train_23, train_final, batch_size)
     loader_val = batching(val_23, val_final, batch_size)
     loader_test = batching(test_23, test_final, batch_size)
@@ -370,8 +442,8 @@ def load_saved_dataloaders(batch_size):
     loader_padding_val = batching(mask_val_23, mask_val_final, batch_size)
     loader_padding_test = batching(mask_test_23, mask_test_final, batch_size)
 
-    # Informazioni extra
-    subset = train_23[0, 0, :]  # esempio primo vettore features
+    # Extra information
+    subset = train_23[0, 0, :]
 
     return (
         loader_train,
@@ -383,6 +455,9 @@ def load_saved_dataloaders(batch_size):
         subset,
     )
 
+#######################################
+#                MAIN                 #
+#######################################
 
 if __name__ == "__main__":
     load_and_save_tensor("events_1M.root")
