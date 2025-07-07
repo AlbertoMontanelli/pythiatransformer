@@ -381,16 +381,6 @@ def load_saved_dataloaders(batch_size):
             subset (torch.Tensor): example feature vector from train_23
         )
     """
-    if not isinstance(batch_size, int):
-        raise TypeError(
-            "Parameter 'batch_size' must be of type 'int', "
-            f"got '{type(batch_size)}' instead."
-        )
-    if batch_size < 1:
-        raise ValueError(
-            "Parameter 'batch_size' must be at least 1, "
-            f"got {batch_size} instead."
-        )
     # Loading tensors.
     train_23 = torch.load("train_23_1M.pt")
     train_final = torch.load("train_final_1M.pt")
@@ -399,12 +389,6 @@ def load_saved_dataloaders(batch_size):
     test_23 = torch.load("test_23_1M.pt")
     test_final = torch.load("test_final_1M.pt")
 
-    if not (batch_size <= train_23.shape[0]):
-        raise ValueError(
-            "Parameter 'batch_size' must be smaller than or equal "
-            f"to the input dataset size {len(train_23.shape[0])}, "
-            f"got {batch_size} instead."
-        )
     if train_23.shape[0] != train_final.shape[0]:
         raise ValueError(
             f"Status 23 particles tensor and final particles tensor do not "
