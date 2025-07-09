@@ -535,7 +535,7 @@ class ParticleTransformer(nn.Module):
                     if eos > stop_threshold:
                         break
 
-            for event_idx in range(10):
+            for event_idx in range(20):
                 print(f"\n================ Event {event_idx}================\n")
 
                 half_sum = input[event_idx].sum().item() / 2

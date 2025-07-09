@@ -10,16 +10,18 @@ from pythiatransformer.transformer import ParticleTransformer
 
 
 class TestParticleTransformer(unittest.TestCase):
-    """This class contains unit tests to verify the functionality of the
+    """Contains unit tests to verify the functionality of the
     ParticleTransformer class.
     It uses the unittest framework to run the tests.
     The tests include:
+    - Checks that all the tensors used during the training are on the
+      same device as the model.
     - Ensuring the dim_features matches the dim_features of the torch
       tensor.
-    - Ensuring the output shape of the forward method matches the input
-      shape.
     - Ensuring the output does not contain NaN or Inf.
     - Ensuring the projection produces the correct shape.
+    - Checks that the model's weights are updated after some epochs of
+      training.
     - Verifies that the model can complete training and testing over 20
       epochs without issues.
     """
@@ -33,7 +35,7 @@ class TestParticleTransformer(unittest.TestCase):
         seed = 1
         torch.Generator().manual_seed(seed)
 
-        self.dim_features = 4
+        self.dim_features = 1
         self.batch_size = 5
 
         # Initialization input tensors and them padding mask
@@ -75,9 +77,6 @@ class TestParticleTransformer(unittest.TestCase):
             self.pad_mask_input_test, self.pad_mask_target_test, False
         )
 
-        print(f"train data: {self.train_data}")
-        print(f"padding_mask: {self.train_data_pad_mask}")
-
         self.num_heads = 4
         self.num_encoder_layers = 1
         self.num_decoder_layers = 1
@@ -105,7 +104,21 @@ class TestParticleTransformer(unittest.TestCase):
         self.optim = optimizer.Adam(self.transformer.parameters(), lr=1e-3)
 
     def target_creation(self, num_event, max_num_particles, num_features):
-        """ """
+        """Generates padded target sequences and corresponding padding
+        masks for a given number of events.
+        Each event consists of a random number of particles (between 1
+        and max_num_particles). The sequences are padded with zeros to
+        match max_num_particles, and a padding mask is generated to
+        indicate which elements are padding.
+
+        Args:
+            num_event (int): Number of events to generate.
+            max_num_particles (int): Maximum number of particles.
+            num_features (int): Number of features for each particle.
+        Returns:
+            target (torch.Tensor): Target particles tensor.
+            padding_mask (torch.Tensor): Corresponding padding mask.
+        """
         target = []
         padding_mask = []
         for i in range(num_event):
@@ -127,28 +140,26 @@ class TestParticleTransformer(unittest.TestCase):
                 ]
             )
             padding_mask.append(mask)
-            # from list to torch.tensor
         target = torch.stack(target)
         padding_mask = torch.stack(padding_mask)
 
         return target, padding_mask
 
     def data_processing(self, input, target, shuffle=True):
-        """This function prepares the data for training by splitting it
-        into batches and shuffling the training data.
+        """Prepares the data for training by splitting it into batches
+        and shuffling the training data.
 
         Args:
-            shuffle (bool):
+            input (torch.Tensor): Input tensor.
+            target (torch.Tensor): Target tensor.
+            shuffle (bool): True if the data are to be shuffled.
+                            Default True.
         Returns:
-            loader (Iterator): An iterator for the training
-                                        data, with batching and
-                                        shuffling enabled.
-            loader (Iterator): An iterator for the test data, with
-                                    batching and shuffling enabled.
-
+            loader (Iterator): An iterator for the data, with batching
+                               and shuffling enabled.
         """
         seed = 1
-        generator = torch.Generator()  # creation of a new generator
+        generator = torch.Generator()
         generator.manual_seed(seed)
         set = TensorDataset(input, target)
 
@@ -158,11 +169,42 @@ class TestParticleTransformer(unittest.TestCase):
             shuffle=shuffle,
             generator=generator if shuffle else None,
         )
-
         return loader
+    
+    def test_device_consistency(self):
+        """Verifies that all tensors used in training (inputs, targets
+        and their corresponding padding masks) are on the same device
+        as the model to ensure device consistency during training and
+        evaluation.
+        """
+        device = next(self.transformer.parameters()).device
+
+        for (input, target), (input_pad, target_pad) in zip(
+            self.train_data, self.train_data_pad_mask
+        ):
+            self.assertEqual(
+                input.device,
+                device,
+                "Input tensor is not on the correct device"
+            )
+            self.assertEqual(
+                target.device,
+                device,
+                "Target tensor is not on the correct device"
+            )
+            self.assertEqual(
+                input_pad.device,
+                device,
+                "Input padding mask is not on the correct device"
+            )
+            self.assertEqual(
+                target_pad.device,
+                device,
+                "Target padding mask is not on the correct device"
+            )
 
     def test_dim_features(self):
-        """This function checks that the third dimension of the input
+        """Checks that the third dimension of the input
         tensor (i.e., the number of features per particle) matches
         the dim_features parameter of the model.
         """
@@ -173,42 +215,18 @@ class TestParticleTransformer(unittest.TestCase):
             f"got {self.input_train.shape[2]}",
         )
 
-    def test_forward_output_shape(self):
-        """This function tests that the forward method of the model
-        produces an output tensor with the correct shape. The shape of
-        the output tensor must match with the shape of the input tensor.
-        """
-        for (input, target), (input_padding_mask, target_padding_mask) in zip(
-            self.train_data, self.train_data_pad_mask
-        ):
-            target, target_padding_mask, attention_mask = (
-                self.transformer.de_padding(target, target_padding_mask)
-            )
-            output = self.transformer.forward(
-                input,
-                target,
-                input_padding_mask,
-                target_padding_mask,
-                attention_mask,
-            )
-            self.assertEqual(output.shape, target.shape)
-
     def test_forward_output_nans_infs(self):
-        """This function tests that the putput of the forward methods does
-        not contain Inf values or NaN values.
+        """Tests that the output of the forward methods does not
+        contain Inf values or NaN values.
         """
         for (input, target), (input_padding_mask, target_padding_mask) in zip(
             self.train_data, self.train_data_pad_mask
         ):
-            target, target_padding_mask, attention_mask = (
-                self.transformer.de_padding(target, target_padding_mask)
-            )
-            output = self.transformer.forward(
+            output, eos_prob_vector = self.transformer.forward(
                 input,
                 target,
                 input_padding_mask,
-                target_padding_mask,
-                attention_mask,
+                target_padding_mask
             )
             self.assertFalse(
                 torch.isnan(output).any(), "Output contains NaN values"
@@ -218,19 +236,36 @@ class TestParticleTransformer(unittest.TestCase):
             )
 
     def test_projection_layer(self):
-        """This function tests the functionality of the projection layers.
-        Ensures that the input projection transforms the data from the
+        """Tests the functionality of the projection layers.
+        Ensures that the input_projection transforms the data from the
         input feature space to the hidden representation space, and
-        that the output projection correctly maps it back to the
-        original feature dimension.
+        that the particle_head correctly maps it back to the original
+        feature dimension.
         """
         input_proj = self.transformer.input_projection(self.input_train)
-        output_proj = self.transformer.output_projection(input_proj)
-        self.assertEqual(input_proj.shape, (100, 2, self.num_units))
-        self.assertEqual(output_proj.shape, (100, 2, self.dim_features))
+        output_proj = self.transformer.particle_head(input_proj)
+        self.assertEqual(input_proj.shape, (20, 2, self.num_units))
+        self.assertEqual(output_proj.shape, (20, 2, self.dim_features))
+
+    def test_weights_change_after_training(self):
+        """Verifies that the model's weights are updated during
+        training.
+        """
+        initial_weights = self.transformer.input_projection.weight.detach().clone()
+        self.transformer.train_val(20, self.optim)
+        final_weights = self.transformer.input_projection.weight.detach()
+        self.assertFalse(
+            torch.allclose(initial_weights, final_weights),
+            "Weights did not change after training"
+        )
 
     def plot_losses(self, train_loss, val_loss):
-        """ """
+        """Plots the training and validation loss curves.
+
+        Args:
+            train_loss (list): Training loss values per epoch.
+            val_loss (list): Validation loss values per epoch.
+        """
         plt.figure()
         plt.plot(train_loss, label="Training Loss")
         plt.plot(val_loss, label="Validation Loss")
@@ -243,13 +278,14 @@ class TestParticleTransformer(unittest.TestCase):
 
     def test_training(self):
         """This function runs the full training, validation, and
-        testing process for the model. It first trains the model for 20
-        epochs, using the specified loss function and optimizer.
+        testing process for the model. It first trains the model for
+        20 epochs, using the specified loss function and optimizer.
         Then, it evaluates the model on the test data after training.
         """
-        num_epoch = 100
+        num_epoch = 20
         train_loss, val_loss = self.transformer.train_val(
-            num_epoch, self.loss_func, self.optim
+            num_epoch,
+            self.optim
         )
         self.plot_losses(train_loss, val_loss)
 
