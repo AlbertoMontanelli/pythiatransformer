@@ -83,9 +83,11 @@ Ensure that all tests pass before proceeding with your work.
 ```
 CMEPDA-project/
 │
-├── environment.yml          # Conda environment file
-├── README.md                # Project documentation
-├── pythiatransformer/        # Source code
+├── .gitignore              # Specifies which files and directories should be ignored by Git.
+├── LICENCE
+├── README.md               # Project documentation.
+├── requirements.txt        # Lists the Python packages required to run the CMEPDA project.
+├── pythiatransformer/      # Source code.
 │   ├── __init__.py
 │   ├── pythia_generator.py
 |   ├── data_processing.py
@@ -93,13 +95,20 @@ CMEPDA-project/
 │   ├── fastjet_preparation.py
 │   ├── jet_clustering.py
 │   ├── main.py
-│   └── inference.py
-├── tests/                   # Automated tests
+│   ├── inference.py
+│   ├── learning_curve_1M.pdf
+│   ├── transformer_model_1M.pt
+│   └── toy/
+│       ├── toy.py
+│       ├── evaluate_toy.py
+│       ├── toy_transformer.pt
+├── tests/                  # Automated tests.
 │   ├── test_pythia_generator.py
 │   ├── test_data_processing.py
-│   └── test_transformer.py
-├── pyproject.toml           # Build system configuration
-└── .github/workflows/       # GitHub Actions CI configuration
+│   ├── test_transformer.py
+│   └── toy_testing_save.root
+├── pyproject.toml          # Build system configuration.
+└── .github/workflows/      # GitHub Actions CI configuration.
     └── tests.yml      
 
 ```
