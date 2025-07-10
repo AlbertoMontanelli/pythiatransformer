@@ -1,5 +1,7 @@
 # CMEPDA-project
 Repository about CMEPDA project
+A framework to simulate high-energy physics events using Pythia8 and train a Transformer model to predict final state observables such as particle pT.
+
 
 ## Requirements
 
@@ -49,19 +51,32 @@ If no errors are raised, the setup is complete.
 To generate events using the provided ```pythia_generator.py``` script, run the following command:
 
 ```bash
-python pythia_generator/pythia_generator.py --output events.root --n_events 100
+python pythiatransformer/pythia_generator.py --output events.root --n_events 100
 ```
 
 Replace ```events.root``` and ```100``` with your desired output file name and number of events, respectively.
 
-## Run the tests
-
-This repository includes automated tests using ```pytest```. To run the tests, execute:
+To train the Transformer model using the provided ```main.py``` script, run the following command:
 
 ```bash
-pytest tests/
+python pythiatransformer/main.py
 ```
 
+To perform inference and predict particles' transverse momentum (pT) using the provided ```inference.py``` script, run the following command:
+
+```bash
+python pythiatransformer/inference.py
+```
+
+## Run the tests
+
+This repository includes automated tests using ```unittest```. To run the tests, execute:
+
+```bash
+PYTHONPATH=. python -m tests.test_name -v
+```
+
+Replace ```test_name``` with your desired test to run.
 Ensure that all tests pass before proceeding with your work.
 
 ## Repository structure
@@ -74,9 +89,14 @@ CMEPDA-project/
 │   ├── __init__.py
 │   ├── pythia_generator.py
 |   ├── data_processing.py
-│   └── transformer.py
+│   ├── transformer.py
+│   ├── fastjet_preparation.py
+│   ├── jet_clustering.py
+│   ├── main.py
+│   └── inference.py
 ├── tests/                   # Automated tests
-│   ├── test_pythia-generator.py
+│   ├── test_pythia_generator.py
+│   ├── test_data_processing.py
 │   └── test_transformer.py
 ├── pyproject.toml           # Build system configuration
 └── .github/workflows/       # GitHub Actions CI configuration
