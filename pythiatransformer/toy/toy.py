@@ -1,3 +1,9 @@
+"""This script implements a simple regression task using a transformer
+architecture. Given a single float input `x`, the model learns to
+generate a sequence of values [y_1, y_2, ..., y_k] such that the sum of
+the sequence equals `x`, with optional zero-padding up to a fixed
+maximum length.
+"""
 import random
 
 import torch
@@ -5,20 +11,38 @@ import torch.nn as nn
 from torch.utils.data import DataLoader, Dataset
 
 
-# Dataset di esempio: input x float, target y_i liste di float la cui somma fa x
 class ToyDataset(Dataset):
     def __init__(self, n_samples=10000, max_len=10, seed=42):
+        """This class prepares the dataset for the toy regression task.
+        Each data sample consists of:
+        - An input scalar x, sampled uniformly from (0, 10).
+        - A target sequence of k floats (y_1, ..., y_k) such that their
+          sum is equal to x. Here k is a random integer between 1 and
+          max_len. The sequence is zero-padded to a fixed maximum
+          lenght.
+        - A boolean mask indicating the valid (non-padded) elements of
+          the sequence.
+        
+        The purpose of this dataset is to train models to decompose a
+        scalar into a sequence of positive numbers that sum to it.
+
+        Args:
+            n_samples (int): Number of samples to generate. Default is
+                             10000.
+            max_len (int): Maximum sequence length for the target y.
+                           Default is 10.
+            seed (int): Random seed for reproducibility. Default is 42.
+        """
         random.seed(seed)
         torch.manual_seed(seed)
         self.max_len = max_len
         self.data = []
         for _ in range(n_samples):
-            x = random.uniform(0.0, 1.0) * 10  # input da 0 a 10
+            x = random.uniform(0.0, 1.0) * 10
             k = random.randint(1, max_len)
             v = torch.rand(k)
             v = v / v.sum()
             y = v * x
-            # padding a max_len con zeri
             y_pad = torch.zeros(max_len)
             mask = torch.zeros(max_len, dtype=torch.bool)
             y_pad[:k] = y
@@ -26,15 +50,37 @@ class ToyDataset(Dataset):
             self.data.append((x, y_pad, mask, k))
 
     def __len__(self):
+        """Returns the total number of samples in the dataset.
+
+        Returns:
+            int: The number of samples.
+        """
         return len(self.data)
 
     def __getitem__(self, idx):
+        """Retrieves the sample at the given index.
+
+        Args:
+            idx (int): Index of the sample to retrieve.
+
+        Returns:
+            Tuple[torch.Tensor, torch.Tensor, torch.Tensor, int]:
+                - x (torch.Tensor): Scalar input.
+                - y_pad (torch.Tensor): Target sequence.
+                - mask (torch.Tensor): Boolean mask indicating valid
+                                       (non-padded) elements.
+                - length (int): Actual sequence length before padding.
+        """
         x, y_pad, mask, length = self.data[idx]
         return torch.tensor(x, dtype=torch.float32), y_pad, mask, length
 
 
-# Modello Transformer per regressione sequenziale
 class ToyTransformer(nn.Module):
+    """Implements a toy transformer model for sequential regression.
+    The model takes as input a scalar x and learns to generate a
+    sequence of positive values that sum approximately to x. It uses
+    a transformer architecture with encoder-decoder structure.
+    """
     def __init__(
         self,
         d_model=64,
@@ -45,11 +91,21 @@ class ToyTransformer(nn.Module):
         dropout=0.1,
         max_len=10,
     ):
+        """
+        Args:
+        d_model (int): Dimensionality of the internal representation. Default is 64.
+        nhead (int): Number of attention heads. Default is 8.
+        num_encoder_layers (int): Number of encoder layers. Default is 2.
+        num_decoder_layers (int): Number of decoder layers. Default is 2.
+        dim_feedforward (int): Dimension of the feedforward network. Default is 256.
+        dropout (float): Dropout probability. Default is 0.1.
+        max_len (int): Maximum output sequence length. Default is 10.
+        """
         super().__init__()
         self.d_model = d_model
         self.max_len = max_len
-        self.in_proj = nn.Linear(1, d_model)  # embedding del float in d_model
-        self.sos_token = nn.Parameter(torch.randn(1, 1, d_model))  # token SOS
+        self.in_proj = nn.Linear(1, d_model)  # Embedding in d_model.
+        self.sos_token = nn.Parameter(torch.randn(1, 1, d_model))  # Learnable start-of-sequence token.
         self.transformer = nn.Transformer(
             d_model=d_model,
             nhead=nhead,
@@ -59,8 +115,8 @@ class ToyTransformer(nn.Module):
             dropout=dropout,
             batch_first=True,
         )
-        self.out_proj = nn.Linear(d_model, 1)  # proiezione output y_t
-        self.stop_head = nn.Linear(d_model, 1)  # head EOS
+        self.out_proj = nn.Linear(d_model, 1)
+        self.stop_head = nn.Linear(d_model, 1) # Head to predict the end-of-sequence (EOS) probability.
 
     def forward_teacher(self, x, y, mask, lengths):
         B, T = y.size()
@@ -179,5 +235,5 @@ if __name__ == "__main__":
             total_loss += loss.item()
         print(f"Epoca {ep+1}/{epochs}, Loss: {total_loss/len(loader):.4f}")
 
-    torch.save(model.state_dict(), "toy_transformer.pt")
-    print("Modello salvato in toy_transformer.pt")
+    torch.save(model.state_dict(), "toy_model.pt")
+    print("Model saved in toy_model.pt")
