@@ -126,16 +126,16 @@ class ToyTransformer(nn.Module):
         self.max_len = max_len
 
         _check_type(d_model, "d_model", int)
-        _check_type(num_heads, "num_heads", int)
+        _check_type(nhead, "nhead", int)
         _check_type(num_encoder_layers, "num_encoder_layers", int)
         _check_type(num_decoder_layers, "num_decoder_layers", int)
         _check_type(dim_feedforward, "dim_feedforward", int)
         _check_type(dropout, "dropout", float)
         _check_type(max_len, "max_len", int)
 
-        if not (d_model % num_heads == 0):
+        if not (d_model % nhead == 0):
             raise ValueError(
-                "d_model must be a multiple of num_heads."
+                "d_model must be a multiple of nhead."
             )
         if not (0.0 <= dropout <= 1.0):
             raise ValueError("Dropout must be between 0.0 and 1.0")
