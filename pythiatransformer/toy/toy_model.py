@@ -6,6 +6,7 @@ maximum length.
 """
 import random
 
+from loguru import logger
 import torch
 import torch.nn as nn
 from torch.utils.data import DataLoader, Dataset
@@ -323,7 +324,7 @@ if __name__ == "__main__":
             loss.backward()
             optim.step()
             total_loss += loss.item()
-        print(f"Epoch: {ep+1}/{epochs}, Loss: {total_loss/len(loader):.4f}")
+        logger.info(f"Epoch: {ep+1}/{epochs}, Loss: {total_loss/len(loader):.4f}")
 
     torch.save(model.state_dict(), "toy_model.pt")
-    print("Model saved in toy_model.pt")
+    logger.info("Model saved in toy_model.pt")
