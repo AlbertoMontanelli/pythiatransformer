@@ -7,6 +7,7 @@ maximum length.
 import random
 
 from loguru import logger
+import matplotlib.pyplot as plt
 import torch
 import torch.nn as nn
 from torch.utils.data import DataLoader, Dataset
@@ -22,6 +23,37 @@ def _check_type(var, name, t):
     """
     if not isinstance(var, t):
         raise TypeError(f"{name} must be of type {t.__name__}, got {type(var).__name__}")
+
+import matplotlib.pyplot as plt
+
+def plot_learning_curve(
+    train_loss,
+    filename="learning_curve.pdf",
+    title="Learning Curve",
+    dpi=1200
+):
+    """
+    Plots and saves the training and validation loss curves over
+    epochs.
+
+    Args:
+        train_loss (list): Training loss values.
+        filename (str): File name to save the plot. Default is
+                        "learning_curve.pdf".
+        title (str): Title of the plot. Default is "Learning Curve".
+        dpi (int): Resolution of the saved figure.
+    """
+    plt.figure()
+    plt.plot(range(1, len(loss_history) + 1), train_loss, label="Training Loss")
+    plt.xlabel("Epoch")
+    plt.ylabel("Loss")
+    plt.title("Learning curve")
+    plt.legend()
+    plt.grid(True)
+    plt.savefig(filename, dpi=dpi)
+    plt.close()
+    logger.info(f"Learning curve saved as {filename}")    
+
 
 class ToyDataset(Dataset):
     def __init__(self, n_samples=10000, max_len=10, seed=42):
@@ -280,7 +312,8 @@ if __name__ == "__main__":
     """Main training script for the ToyTransformer model.
     - Generates a toy dataset of scalar inputs and target sequences.
     - Defines and trains a transformer model.
-    - Trains for a fixed number of epochs and saves the trained model.
+    - Trains for a fixed number of epochs
+    - Saves the learning curve and the trained model.
     """
     # Set hyperparameters
     n_samples = 5000
@@ -308,6 +341,7 @@ if __name__ == "__main__":
     mse_loss = nn.MSELoss()
     bce_loss = nn.BCEWithLogitsLoss()
 
+    loss_history = []
     for ep in range(epochs):
         model.train()
         total_loss = 0.0
@@ -324,7 +358,10 @@ if __name__ == "__main__":
             loss.backward()
             optim.step()
             total_loss += loss.item()
-        logger.info(f"Epoch: {ep+1}/{epochs}, Loss: {total_loss/len(loader):.4f}")
+        avg_loss = total_loss / len(loader)
+        loss_history.append(avg_loss)
+        logger.info(f"Epoch: {ep+1}/{epochs}, Loss: {avg_loss:.4f}")
 
+    plot_learning_curve(loss_history)
     torch.save(model.state_dict(), "toy_model.pt")
     logger.info("Model saved in toy_model.pt")
