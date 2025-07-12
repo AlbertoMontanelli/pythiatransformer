@@ -11,6 +11,17 @@ import torch.nn as nn
 from torch.utils.data import DataLoader, Dataset
 
 
+def _check_type(var, name, t):
+    """Checks whether a variable is of the expected type.
+
+    Args:
+        var: The variable to check.
+        name (str): The name of the variable.
+        t: The expected type of the variable.
+    """
+    if not isinstance(var, t):
+        raise TypeError(f"{name} must be of type {t.__name__}, got {type(var).__name__}")
+
 class ToyDataset(Dataset):
     def __init__(self, n_samples=10000, max_len=10, seed=42):
         """This class prepares the dataset for the toy regression task.
@@ -93,38 +104,99 @@ class ToyTransformer(nn.Module):
     ):
         """
         Args:
-        d_model (int): Dimensionality of the internal representation. Default is 64.
+        d_model (int): Dimensionality of the internal representation.
+                       Default is 64.
         nhead (int): Number of attention heads. Default is 8.
-        num_encoder_layers (int): Number of encoder layers. Default is 2.
-        num_decoder_layers (int): Number of decoder layers. Default is 2.
-        dim_feedforward (int): Dimension of the feedforward network. Default is 256.
+        num_encoder_layers (int): Number of encoder layers. Default
+                                  is 2.
+        num_decoder_layers (int): Number of decoder layers. Default
+                                  is 2.
+        dim_feedforward (int): Dimension of the feedforward network.
+                               Default is 256.
         dropout (float): Dropout probability. Default is 0.1.
         max_len (int): Maximum output sequence length. Default is 10.
         """
         super().__init__()
         self.d_model = d_model
+        self.nhead = nhead
+        self.num_encoder_layers=num_encoder_layers
+        self.num_decoder_layers=num_decoder_layers
+        self.dim_feedforward=dim_feedforward
+        self.dropout=dropout
         self.max_len = max_len
-        self.in_proj = nn.Linear(1, d_model)  # Embedding in d_model.
-        self.sos_token = nn.Parameter(torch.randn(1, 1, d_model))  # Learnable start-of-sequence token.
+
+        _check_type(d_model, "d_model", int)
+        _check_type(num_heads, "num_heads", int)
+        _check_type(num_encoder_layers, "num_encoder_layers", int)
+        _check_type(num_decoder_layers, "num_decoder_layers", int)
+        _check_type(dim_feedforward, "dim_feedforward", int)
+        _check_type(dropout, "dropout", float)
+        _check_type(max_len, "max_len", int)
+
+        if not (d_model % num_heads == 0):
+            raise ValueError(
+                "d_model must be a multiple of num_heads."
+            )
+        if not (0.0 <= dropout <= 1.0):
+            raise ValueError("Dropout must be between 0.0 and 1.0")
+        if max_len <= 0:
+            raise ValueError(f"max_len must be > 0, got {max_len}")
+
+        self.in_proj = nn.Linear(1, d_model) # Embedding in d_model.
+        # Learnable start-of-sequence token.
+        self.sos_token = nn.Parameter(torch.randn(1, 1, d_model))
         self.transformer = nn.Transformer(
-            d_model=d_model,
-            nhead=nhead,
-            num_encoder_layers=num_encoder_layers,
-            num_decoder_layers=num_decoder_layers,
-            dim_feedforward=dim_feedforward,
-            dropout=dropout,
+            d_model=self.d_model,
+            nhead=self.nhead,
+            num_encoder_layers=self.num_encoder_layers,
+            num_decoder_layers=self.num_decoder_layers,
+            dim_feedforward=self.dim_feedforward,
+            dropout=self.dropout,
             batch_first=True,
         )
-        self.out_proj = nn.Linear(d_model, 1)
-        self.stop_head = nn.Linear(d_model, 1) # Head to predict the end-of-sequence (EOS) probability.
+        self.out_proj = nn.Linear(self.d_model, 1)
+        # Head to predict the end-of-sequence (EOS) probability.
+        self.stop_head = nn.Linear(self.d_model, 1)
 
     def forward_teacher(self, x, y, mask, lengths):
+        """Forward pass in teacher forcing mode. The model receives a
+        scalar input x, a padded target sequence y and the corresponding
+        padding mask. The decoder receives the target sequence with a special start of
+        sequence (SOS) token. It predicts the output sequence and a
+        stop signal for each step.
+
+        Args:
+            x (torch.Tensor): Input tensor of shape (B,).
+            y (torch.Tensor): Target padded sequences of shape (B, T).
+            mask (torch.Tensor): Boolean mask of shape (B, T), where
+                                 True indicates non-padded elements.
+            lengths (torch.Tensor): Actual lengths of each target
+                                    sequence.
+
+        Returns:
+            y_hat (torch.Tensor): Predicted sequence of shape (B, T+1).
+            stop_logits (torch,Tensor): Logits for stop signalof shape
+                                        (B, T+1).
+        """
+        if x.dim() != 1:
+            raise ValueError(
+                f"x must be a 1D tensor of shape (B,), got shape {x.shape}"
+            )
+        if y.dim() != 2:
+            raise ValueError(
+                f"y must be a 2D tensor of shape (B, T), got shape {y.shape}"
+            )
+        if y.shape != mask.shape:
+            raise ValueError(
+                "Shape mismatch: y and mask must have the same shape."
+            )
+
         B, T = y.size()
         device = x.device
-        src = self.in_proj(x.unsqueeze(-1)).unsqueeze(1)  # [B,1,d]
-        sos = self.sos_token.expand(B, -1, -1)  # [B,1,d]
-        tgt_emb = self.in_proj(y.unsqueeze(-1))  # [B,T,d]
-        tgt = torch.cat([sos, tgt_emb], dim=1)  # [B,T+1,d]
+        src = self.in_proj(x.unsqueeze(-1)).unsqueeze(1) # shape [B,1,d]
+        sos = self.sos_token.expand(B, -1, -1) # shape [B,1,d]
+        tgt_emb = self.in_proj(y.unsqueeze(-1)) # shape [B,T,d]
+        tgt = torch.cat([sos, tgt_emb], dim=1) # shape [B,T+1,d]
         tgt_mask = nn.Transformer.generate_square_subsequent_mask(T + 1).to(
             device
         )
@@ -142,24 +214,40 @@ class ToyTransformer(nn.Module):
             tgt_mask=tgt_mask,
             src_key_padding_mask=src_key_padding_mask,
             tgt_key_padding_mask=tgt_key_padding_mask,
-        )  # [B,T+1,d]
-        y_hat = self.out_proj(out).squeeze(-1)  # [B,T+1]
-        stop_logits = self.stop_head(out).squeeze(-1)  # [B,T+1]
+        ) # shape [B,T+1,d]
+        y_hat = self.out_proj(out).squeeze(-1) # shape [B,T+1]
+        stop_logits = self.stop_head(out).squeeze(-1) # shape [B,T+1]
         return y_hat, stop_logits
 
     def generate(self, x, max_len=None, stop_thresh=0.5):
+        """Autoregressive inference for sequence generation. Starts
+        with a special start of sequence (SOS) token and generates
+        outputs one step at a time using the model's own predictions.
+        Generation continues until either the maximum sequence length
+        is reached or all stop probabilities exceed the given threshold.
+
+        Args:
+            x (torch.Tensor): Input tensor of shape (B,).
+            max_len (int): Maximum number of steps to generate.
+                           Optional, if None uses self.max_len.
+                           Default None.
+            stop_thresh (float): Threshold for the stop probability to
+                                 end generation.
+
+        Returns:
+            y_seq (torch.Tensor): Generated sequence of shape (B, T),
+                                  where T ≤ max_len.
         """
-        Inferenza autoregressiva con SOS e decisione EOS.
-        Genera fino a max_len o finché p_stop > stop_thresh.
-        """
+        if not (0.0 <= stop_thresh <= 1.0):
+            raise ValueError(
+                f"stop_thresh must be between 0 and 1, got {stop_thresh}"
+            )
+
         if max_len is None:
             max_len = self.max_len
         device = x.device
-        print(f"x shape: {x.shape}")
         B = x.size(0)
-        print(f"in proj shape: {self.in_proj(x.unsqueeze(-1)).shape}")
         src = self.in_proj(x.unsqueeze(-1)).unsqueeze(1)
-        print(f"src shape: {src.shape}")
         src_key_padding_mask = torch.zeros(
             B, 1, dtype=torch.bool, device=device
         )
@@ -174,24 +262,26 @@ class ToyTransformer(nn.Module):
                 tgt=tgt_emb,
                 tgt_mask=tgt_mask,
                 src_key_padding_mask=src_key_padding_mask,
-            )  # [B,t+1,d]
+            )
             last = out[:, -1, :]
             y_t = self.out_proj(last).squeeze(-1)
             p_stop = torch.sigmoid(self.stop_head(last)).squeeze(-1)
             generated.append(y_t)
-            # embedding per passo successivo
             y_emb = self.in_proj(y_t.unsqueeze(-1)).unsqueeze(1)
             tgt_emb = torch.cat([tgt_emb, y_emb], dim=1)
             if (p_stop > stop_thresh).all():
                 break
-        # ritorna la sequenza raw senza alcuna normalizzazione
         y_seq = torch.stack(generated, dim=1)
-        # print(f"y_seq shape: {y_seq.shape}")
         return y_seq
 
 
 if __name__ == "__main__":
-    # Iperparametri
+    """Main training script for the ToyTransformer model.
+    - Generates a toy dataset of scalar inputs and target sequences.
+    - Defines and trains a transformer model.
+    - Trains for a fixed number of epochs and saves the trained model.
+    """
+    # Set hyperparameters
     n_samples = 5000
     max_len = 10
     batch_size = 64
@@ -233,7 +323,7 @@ if __name__ == "__main__":
             loss.backward()
             optim.step()
             total_loss += loss.item()
-        print(f"Epoca {ep+1}/{epochs}, Loss: {total_loss/len(loader):.4f}")
+        print(f"Epoch: {ep+1}/{epochs}, Loss: {total_loss/len(loader):.4f}")
 
     torch.save(model.state_dict(), "toy_model.pt")
     print("Model saved in toy_model.pt")

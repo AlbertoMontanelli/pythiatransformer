@@ -9,7 +9,7 @@ if __name__ == "__main__":
                            dim_feedforward=256, dropout=0.1,
                            max_len=max_len)
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-    model.load_state_dict(torch.load("toy_transformer.pt", map_location=device))
+    model.load_state_dict(torch.load("toy_model.pt", map_location=device))
     model.to(device)
     model.eval()
 

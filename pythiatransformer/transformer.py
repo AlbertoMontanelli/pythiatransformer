@@ -39,6 +39,10 @@ def log_gpu_memory(epoch=None):
         f" {total_alloc_MB:.2f} MB"
     )
 
+def _check_type(var, name, t):
+    if not isinstance(var, t):
+        raise TypeError(f"{name} must be of type {t.__name__}, got {type(var).__name__}")
+
 
 class ParticleTransformer(nn.Module):
     """Transformer taking in input particles having status 23
@@ -101,50 +105,28 @@ class ParticleTransformer(nn.Module):
         self.train_data_pad_mask = train_data_pad_mask
         self.val_data_pad_mask = val_data_pad_mask
         self.test_data_pad_mask = test_data_pad_mask
+        self.num_encoder_layers = num_encoder_layers
 
         self.dim_features = dim_features
-        if not isinstance(dim_features, int):
-            raise TypeError(
-                f"Number of features must be int, got {type(dim_features)}"
-            )
-
         self.num_heads = num_heads
-        if not isinstance(num_heads, int):
-            raise TypeError(
-                f"Number of heads must be int, got {type(num_heads)}"
-            )
-
-        self.num_encoder_layers = num_encoder_layers
-        if not isinstance(num_encoder_layers, int):
-            raise TypeError(
-                f"Number of encoder layers must be int, got "
-                f"{type(num_encoder_layers)}"
-            )
-
         self.num_decoder_layers = num_decoder_layers
-        if not isinstance(num_decoder_layers, int):
-            raise TypeError(
-                f"Number of decoder layers must be int, got "
-                f"{type(num_decoder_layers)}"
-            )
-
         self.num_units = num_units
-        if not isinstance(num_units, int):
-            raise TypeError(
-                f"Number of unit must be int, got {type(num_units)}"
-            )
+        self.dropout = dropout
+        self.activation = activation
+
+        _check_type(dim_features, "dim_features", int)
+        _check_type(num_heads, "num_heads", int)
+        _check_type(num_encoder_layers, "num_encoder_layers", int)
+        _check_type(num_decoder_layers, "num_decoder_layers", int)
+        _check_type(num_units, "num_units", int)
+        _check_type(dropout, "dropout", float)
+
         if not (num_units % num_heads == 0):
             raise ValueError(
                 "Number of units must be a multiple of number of heads."
             )
-
-        self.dropout = dropout
-        if not isinstance(dropout, float):
-            raise TypeError(f"Dropout must be float, got {type(dropout)}")
         if not (0.0 <= dropout <= 1.0):
             raise ValueError("Dropout must be between 0.0 and 1.0")
-
-        self.activation = activation
 
         # Loss functions used during the training
         self.mse_loss = nn.MSELoss()
@@ -154,7 +136,7 @@ class ParticleTransformer(nn.Module):
         self.initialize_transformer()
 
         self.device = next(self.parameters()).device
-        print(self.device)
+        logger.info(f"Model initialized on device: {self.device}")
 
     def build_projection_layer(self):
         """Initializes the layers responible for projecting input
@@ -285,7 +267,7 @@ class ParticleTransformer(nn.Module):
                 dec_input_padding_mask,
             )
             mse = self.mse_loss(
-                output[:, :-1] * inverse_dec_input_padding_mask.float(),
+                output[:, 1:] * inverse_dec_input_padding_mask.float(),
                 dec_input.squeeze(-1) * inverse_dec_input_padding_mask.float(),
             )
             bce = self.bce_loss(eos_prob_vector, eos_tensor.squeeze(-1))
@@ -360,10 +342,10 @@ class ParticleTransformer(nn.Module):
                 )
 
                 mse = self.mse_loss(
-                    output[:, :-1] * inverse_dec_input_padding_mask.float(),
-                    dec_input.squeeze(-1)
-                    * inverse_dec_input_padding_mask.float(),
+                    output[:, 1:] * inverse_dec_input_padding_mask.float(),
+                    dec_input.squeeze(-1) * inverse_dec_input_padding_mask.float(),
                 )
+
                 bce = self.bce_loss(eos_prob_vector, eos_tensor.squeeze(-1))
                 loss = mse + bce
 
@@ -418,14 +400,9 @@ class ParticleTransformer(nn.Module):
             train_loss (list): Training loss recorded at each epoch.
             val_loss (list): Validation loss recorded at each epoch.
         """
-        if not isinstance(num_epochs, int):
-            raise TypeError(
-                f"The number of epoch must be int, got {type(num_epochs)}"
-            )
-        if not isinstance(patient_early, int):
-            raise TypeError(
-                f"The patien must be int, got {type(patient_early)}"
-            )
+        _check_type(num_epochs, "num_epochs", int)
+        _check_type(patient_early, "patient_early", int)
+
         if not (patient_early < num_epochs):
             raise ValueError(
                 f"Patient must be smaller than the number of epochs."
@@ -454,8 +431,8 @@ class ParticleTransformer(nn.Module):
                     logger.warning(
                         f"Overfitting at epoch {epoch + 1 - patient_early}."
                     )
-                    train_loss = train_loss[:epoch - patient_early]
-                    val_loss = val_loss[:epoch - patient_early]
+                    train_loss = train_loss[:epoch + 1 - patient_early]
+                    val_loss = val_loss[:epoch + 1 - patient_early]
                     break
                 
             torch.cuda.empty_cache()
