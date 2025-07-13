@@ -4,6 +4,22 @@ from data_processing import dict_ids, mean_final, std_final
 
 
 def de_standardization(data, data_padding_mask, index, mean, std):
+    """
+    Bring data to its original values, before standardization.
+
+    Args:
+        data (torch.Tensor): data to be transformed;
+        data_padding_mask (torch.Tensor): padding mask associated to
+                                          data;
+        index (int): index corresponding to the feature column to be
+                     transformed;
+        mean (float): mean of the original feature of the data;
+        std (float): standard deviation of the original feature of the
+                     data.
+
+    Returns:
+        data (torch.Tensor): de-standardized data.
+    """
     for tensor, mask in zip(data, data_padding_mask):
         tensor[:, :, index][~mask] = tensor[:, :, index][~mask] * std + mean
     return data
@@ -11,24 +27,25 @@ def de_standardization(data, data_padding_mask, index, mean, std):
 
 def outputs_computing(model, device, data, data_pad_mask):
     """
-    Esegue la forward su tutti i batch nel train set e restituisce
-    due liste: outputs e targets, entrambi depaddati e pronte per fastjet.
+    Forward every batch of the dataset and return two lists, one for
+    outputs of the transformer and one of the corresponding targets.
+    Both are fastjet algorithm-ready.
 
     Args:
-        model (ParticleTransformer): modello già caricato.
-        device (torch.device): cpu o cuda.
+        model (ParticleTransformer): transformer model;
+        device (torch.device): device to which the tensors are moved.
 
     Returns:
-        outputs_all (list[Tensor]): Lista di batch depaddati di output.
-        targets_all (list[Tensor]): Lista di batch depaddati di target.
+        outputs (list[torch.Tensor]): list of de-padded output batches; 
+        targets (list[torch.Tensor]): list of de-padded target batches.
     """
     model.eval()
     outputs = []
     outputs_mask = []
     targets = []
     targets_mask = []
-    print("inizio")
 
+    # Computing the outputs of the transformer.
     with torch.no_grad():
         for (input, target), (input_mask, target_mask) in zip(
             data, data_pad_mask
@@ -58,16 +75,18 @@ def outputs_computing(model, device, data, data_pad_mask):
 
 def fastjet_tensor_preparing(batches, dict_ids, device=None):
     """
-    Converte una lista di batch (output o target) in una lista di tensori con [px, py, pz, E].
+    Convert a list of batch (either output or target) in a list of
+    tensors with columns [px, py, pz, E].
 
     Args:
-        batches (list[Tensor]): lista di batch (ognuno [B, Nᵢ, F])
-        dict_ids (dict): dizionario one-hot degli ID.
-        masses (torch.Tensor): tensore delle masse ordinate come one-hot.
-        device (torch.device, optional): se specificato, sposta i tensori sul device.
+        batches (list[torch.Tensor]): list of batches ([B, N_i, F]);
+        dict_ids (dict): one-hot-encoding dictionary of the IDs;
+        masses (torch.Tensor): masses of the particles, same order of
+                               one-hot encoding dictionary.
+        device (torch.device): device to which the tensors are moved.
 
     Returns:
-        list[Tensor]: lista di tensori [B, Nᵢ, 4]
+        result (list[torch.Tensor]): list of tensors [B, N_i, 4].
     """
 
     # Masses array; the index corresponds to the one-hot-encoding index.
@@ -149,11 +168,10 @@ if __name__ == "__main__":
     )
 
     for output, target in zip(outputs, targets):
-        # print(f"output: {output[0, 0:2, :]}")
         print(f"target!!!!: {target[0, 0:2, :]}")
         break
 
-    print(f"media: {mean_final}")
+    print(f"mean: {mean_final}")
     print(f"std: {std_final}")
 
     outputs = de_standardization(
