@@ -60,7 +60,7 @@ if __name__ == "__main__":
     model.to(device)
     model.eval()
     # Prepare deterministic test dataset.
-    n_samples = 1000
+    n_samples = 100000
     testset = ToyDataset(n_samples=n_samples, max_len=max_len, seed=999)
     # Prepare deterministic test dataset.
     for i in range(n_samples):
