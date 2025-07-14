@@ -29,10 +29,10 @@ def plot_residual_histogram(model, dataset, device, max_len, stop_thresh, filena
         residuals.append(residual)
 
     plt.figure(figsize=(8, 5))
-    plt.hist(residuals, bins=40, density=True, alpha=0.7, color='skyblue', edgecolor='black')
+    plt.hist(residuals, bins=40, density=False, alpha=0.7, color='skyblue', edgecolor='black')
     plt.axvline(0, color='red', linestyle='--', label='Zero Error')
     plt.xlabel("Residual (Input - Sum of Prediction)")
-    plt.ylabel("Density")
+    plt.ylabel("Counts")
     plt.title("Distribution of Prediction Residuals")
     plt.grid(True)
     plt.legend()
