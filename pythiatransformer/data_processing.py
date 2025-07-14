@@ -115,6 +115,10 @@ def awkward_to_padded_tensor(
                 "Parameter 'list_pt' must be of type 'list', "
                 f"got '{type(list_pt)}' instead."
             )
+        if not all(isinstance(pt, (int, float)) for pt in list_pt):
+            raise ValueError(
+                "Parameter 'list_pt' must be a list of numbers."
+            )
         if len(list_pt) != len(data):
             raise ValueError(
                 f"'list_pt' must have length equal to number of events " 
