@@ -43,6 +43,8 @@ def _check_type(var, name, t):
     if not isinstance(var, t):
         raise TypeError(f"{name} must be of type {t.__name__}, got {type(var).__name__}")
 
+import matplotlib.pyplot as plt
+
 
 class ParticleTransformer(nn.Module):
     """Transformer taking in input particles having status 23
@@ -462,20 +464,23 @@ class ParticleTransformer(nn.Module):
 
     def generate_targets(self, stop_threshold=0.5):
         """Performs autoregressive generation of stable particles'
-        energy for one batch of events from the test set.
+        energy using the test set. Computes the difference between
+        targets and predictions in order to plots an histogram.
 
         Args:
             stop_threshold (float): Threshold for the EOS probability
                                     to stop generation. Default is 0.5.
         Returns:
-            generated (torch.Tensor): Tensor containing the predicted
-                                      stable particles.
+            diff (list): List containing the difference between target
+                         and prediction
         """
+        diff = []
+        nbatch = 0
         for (input, target), (
             input_padding_mask,
             target_padding_mask,
         ) in zip(self.test_data, self.test_data_pad_mask):
-
+            nbatch = nbatch + 1
             input = input.to(self.device)
             target = target.to(self.device)
             input_padding_mask = input_padding_mask.to(self.device)
@@ -511,23 +516,11 @@ class ParticleTransformer(nn.Module):
                     )
                     if eos > stop_threshold:
                         break
+            # Compute the difference from target to predicted
+            for i in range(batch_size):
+                target_sum = target[i].sum().item()
+                pred_sum = generated[i].sum().item()
+                diff.append(target_sum - pred_sum)
+            logger.info(f"Generated batch n: {nbatch}")
 
-            for event_idx in range(20):
-                print(f"\n================ Event {event_idx}================\n")
-
-                half_sum = input[event_idx].sum().item() / 2
-                print("Input:")
-                print(input[event_idx].cpu().numpy().tolist())
-                print(f"Half inputs sum: {half_sum}")
-
-                print("\n Real target:")
-                real_sum = target[event_idx].sum().item()
-                print(f"Real target sum: {real_sum}")
-                print(target[event_idx].cpu().numpy().tolist())
-
-                print("\n Predicted target:")
-                pred_sum = generated[event_idx].sum().item()
-                print(f"Predicted target sum: {pred_sum}")
-                print(generated[event_idx].cpu().numpy())
-            break # only one batch
-        return generated
+        return diff

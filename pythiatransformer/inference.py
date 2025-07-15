@@ -8,6 +8,7 @@ The main steps are:
 import os
 
 from loguru import logger
+import matplotlib.pyplot as plt
 import torch
 import torch.nn as nn
 
@@ -23,6 +24,31 @@ from transformer import ParticleTransformer
     loader_padding_test,
     subset,
 ) = load_saved_dataloaders(batch_size=128)
+
+
+def plot_diff_histogram(diff, filename="diff_hist_noeos.pdf"):
+    """Plots a histogram of the differences between the target sums
+    and predicted target sums across all events.
+
+    Args:
+        diff (list): A list of differences between target sums and
+                     predicted target sums for each event.
+        filename (str): The name of the output PDF file where the
+                        histogram will be saved. Default is
+                        'diff_hist.pdf'.
+    """
+    plt.figure(figsize=(8, 5))
+    plt.hist(diff, bins=40, color="lightgreen", edgecolor="black", alpha=0.7)
+    plt.axvline(0, color="red", linestyle="--", label="Zero Error")
+    plt.xlabel("Target Sum - Predicted Target Sum")
+    plt.ylabel("Counts")
+    plt.title("Histogram of difference")
+    plt.grid(True)
+    plt.legend()
+    plt.tight_layout()
+    plt.savefig(filename)
+    logger.info(f"Difference histogram saved to {filename}")
+
 
 def build_model():
     """Build a unique istance of ParticleTransformer class.
@@ -51,11 +77,11 @@ device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
 
 model = build_model()
 model.load_state_dict(
-    torch.load("transformer_model_last_version.pt", map_location=device)
+    torch.load("transformer_model_noeos.pt", map_location=device)
 )
 model.to(device)
 model.device = device
 
 logger.info("Starting autoregressive inference")
-with torch.no_grad():
-    output_gen = model.generate_targets()
+diff = model.generate_targets()
+plot_diff_histogram(diff)
