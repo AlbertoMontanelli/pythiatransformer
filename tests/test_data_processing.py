@@ -22,8 +22,7 @@ class TestDataProcessing(unittest.TestCase):
     - Check padded_tensor, padding_mask if truncate_pT = 1, check that
     the second dataset is actually truncated at 50% pT
     - Check length and alignment of batches
-    - Check splitting in training, validation, and test sets
-    -  
+    - Check splitting in training, validation, and test set
     """
     def test_awkward_to_padded_tensor_invalid(self):
         with self.assertRaises(TypeError):
