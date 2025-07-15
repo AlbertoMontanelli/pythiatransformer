@@ -33,7 +33,7 @@ device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
 epochs = 100
 
 def plot_losses(
-    train_loss, val_loss, filename="learning_curve_1M.pdf", dpi=1200
+    train_loss, val_loss, filename="learning_curve.pdf", dpi=1200
 ):
     """
     Plots and saves the training and validation loss curves over
@@ -104,8 +104,8 @@ def train_and_save_model():
 
     plot_losses(train_loss, val_loss)
 
-    torch.save(transformer.state_dict(), "transformer_model_1M.pt")
-    logger.info("Model saved: transformer_model_1M.pt")
+    torch.save(transformer.state_dict(), "transformer_model.pt")
+    logger.info("Model saved: transformer_model.pt")
 
 
 if __name__ == "__main__":

@@ -26,7 +26,7 @@ from transformer import ParticleTransformer
 ) = load_saved_dataloaders(batch_size=128)
 
 
-def plot_diff_histogram(diff, filename="diff_hist_noeos.pdf"):
+def plot_diff_histogram(diff, filename="diff_hist.pdf"):
     """Plots a histogram of the differences between the target sums
     and predicted target sums across all events.
 
@@ -38,16 +38,16 @@ def plot_diff_histogram(diff, filename="diff_hist_noeos.pdf"):
                         'diff_hist.pdf'.
     """
     plt.figure(figsize=(8, 5))
-    plt.hist(diff, bins=40, color="lightgreen", edgecolor="black", alpha=0.7)
+    plt.hist(diff, bins=100, color="lightgreen", edgecolor="black", alpha=0.7, log = True)
     plt.axvline(0, color="red", linestyle="--", label="Zero Error")
-    plt.xlabel("Target Sum - Predicted Target Sum")
+    plt.xlabel("Residuals")
     plt.ylabel("Counts")
-    plt.title("Histogram of difference")
+    plt.title("Histogram of Residuals")
     plt.grid(True)
     plt.legend()
     plt.tight_layout()
     plt.savefig(filename)
-    logger.info(f"Difference histogram saved to {filename}")
+    logger.info(f"Residual histogram saved to {filename}")
 
 
 def build_model():
@@ -77,7 +77,7 @@ device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
 
 model = build_model()
 model.load_state_dict(
-    torch.load("transformer_model_noeos.pt", map_location=device)
+    torch.load("transformer_model_nosos.pt", map_location=device)
 )
 model.to(device)
 model.device = device

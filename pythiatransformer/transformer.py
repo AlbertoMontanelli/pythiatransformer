@@ -269,7 +269,7 @@ class ParticleTransformer(nn.Module):
                 dec_input_padding_mask,
             )
             mse = self.mse_loss(
-                output[:, :-1] * inverse_dec_input_padding_mask.float(),
+                output[:, 1:] * inverse_dec_input_padding_mask.float(),
                 dec_input.squeeze(-1) * inverse_dec_input_padding_mask.float(),
             )
             bce = self.bce_loss(eos_prob_vector, eos_tensor.squeeze(-1))
@@ -344,7 +344,7 @@ class ParticleTransformer(nn.Module):
                 )
 
                 mse = self.mse_loss(
-                    output[:, :-1] * inverse_dec_input_padding_mask.float(),
+                    output[:, 1:] * inverse_dec_input_padding_mask.float(),
                     dec_input.squeeze(-1) * inverse_dec_input_padding_mask.float(),
                 )
 
@@ -520,7 +520,7 @@ class ParticleTransformer(nn.Module):
             for i in range(batch_size):
                 target_sum = target[i].sum().item()
                 pred_sum = generated[i].sum().item()
-                diff.append(target_sum - pred_sum)
+                diff.append((target_sum - pred_sum)/target_sum)
             logger.info(f"Generated batch n: {nbatch}")
 
         return diff
