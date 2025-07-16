@@ -228,7 +228,7 @@ def batching(input, target, batch_size, shuffle=True):
 
 
 def train_val_test_split(
-    tensor, train_perc=0.8, val_perc=0.19, test_perc=0.01, min_size=1
+    tensor, train_perc=0.8, val_perc=0.19, test_perc=0.01
 ):
     """
     Split a tensor into training, validation, and test sets.
@@ -272,11 +272,6 @@ def train_val_test_split(
     n_train = i1
     n_val = i2 - i1
     n_test = n -i2
-    if any(split < min_size for split in (n_train, n_val, n_test)):
-        raise ValueError(
-            f"Each split must have at least {min_size} elements. "
-            f"Got train={n_train}, val={n_val}, test={n_test}."
-        )
     return tensor[:i1], tensor[i1:i2], tensor[i2:]
 
 
