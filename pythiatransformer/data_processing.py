@@ -115,7 +115,7 @@ def awkward_to_padded_tensor(
                 "Parameter 'list_pt' must be of type 'torch.Tensor', "
                 f"got '{type(list_pt)}' instead."
             )
-        if not all(isinstance(pt, (int, float)) for pt in list_pt.to_list()):
+        if not all(isinstance(pt, (int, float)) for pt in list_pt.tolist()):
             raise ValueError(
                 "Parameter 'list_pt' must be a list of numbers."
             )
