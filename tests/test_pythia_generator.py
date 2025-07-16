@@ -1,6 +1,7 @@
 from pathlib import Path
 
 import awkward as ak
+import scipy
 import unittest
 from unittest.mock import patch
 import uproot
