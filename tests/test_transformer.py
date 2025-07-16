@@ -277,9 +277,9 @@ class TestParticleTransformer(unittest.TestCase):
         plt.show()
 
     def test_training(self):
-        """This function runs the full training, validation, and
-        testing process for the model. It first trains the model for
-        20 epochs, using the specified loss function and optimizer.
+        """Runs the full training, validation, and testing process for
+        the model. It first trains the model for 20 epochs, using the
+        specified loss function and optimizer.
         Then, it evaluates the model on the test data after training.
         """
         num_epoch = 20
