@@ -24,7 +24,7 @@ jobs:
 
     - name: Install dependencies
       run: |
-        conda run -n myrootenv conda install -c conda-forge root -y
+        conda run -n myrootenv conda install -c conda-forge root scipy -y
         conda run -n myrootenv pip install -r requirements.txt
 
     - name: Run tests with unittest
