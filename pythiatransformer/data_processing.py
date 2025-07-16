@@ -12,6 +12,7 @@ v. the saving of the tensors and the loaders.
 """
 
 import awkward as ak
+import math
 import numpy as np
 import torch
 import uproot
@@ -247,7 +248,7 @@ def train_val_test_split(
             "Parameter 'tensor' must be of type torch.Tensor, "
             f"got '{type(tensor)}' instead."
         )
-    if not (train_perc + val_perc + test_perc == 1):
+    if not math.isclose(train_perc + val_perc + test_perc, 1.0, rel_tol=1e-9, abs_tol=1e-12)
         raise ValueError(
             "Invalid values for split percentages. Must sum to 1."
         )
