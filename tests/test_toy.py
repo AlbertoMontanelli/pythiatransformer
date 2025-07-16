@@ -1,4 +1,5 @@
 import unittest
+import scipy
 import torch
 from pythiatransformer.toy.toy_model import ToyDataset, ToyTransformer
 
