@@ -28,7 +28,7 @@ import matplotlib.pyplot as plt
 
 def plot_learning_curve(
     train_loss,
-    filename="learning_curve.pdf",
+    filename="toy_learning_curve.pdf",
     title="Learning Curve",
     dpi=1200
 ):

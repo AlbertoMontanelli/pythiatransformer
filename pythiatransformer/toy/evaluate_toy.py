@@ -13,7 +13,7 @@ import torch
 
 from toy_model import ToyTransformer, ToyDataset
 
-def plot_residual_histogram(model, dataset, device, max_len, stop_thresh, filename="residuals.pdf"):
+def plot_residual_histogram(model, dataset, device, max_len, stop_thresh, filename="toy_residuals.pdf"):
     residuals = []
     for i in range(len(dataset)):
         x, _, _, _ = dataset[i]
@@ -25,13 +25,13 @@ def plot_residual_histogram(model, dataset, device, max_len, stop_thresh, filena
                 stop_thresh=stop_thresh
             )
         sum_pred = y_pred.squeeze(0).sum().item()
-        residual = x.item() - sum_pred
+        residual = (x.item() - sum_pred)/x.item()
         residuals.append(residual)
 
     plt.figure(figsize=(8, 5))
-    plt.hist(residuals, bins=40, density=False, alpha=0.7, color='skyblue', edgecolor='black')
+    plt.hist(residuals, bins=40, density=False, alpha=0.7, color='skyblue', edgecolor='black', log='True')
     plt.axvline(0, color='red', linestyle='--', label='Zero Error')
-    plt.xlabel("Residual (Input - Sum of Prediction)")
+    plt.xlabel("Residual")
     plt.ylabel("Counts")
     plt.title("Distribution of Prediction Residuals")
     plt.grid(True)
