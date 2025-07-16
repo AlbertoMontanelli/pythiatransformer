@@ -132,7 +132,7 @@ class TestDataProcessing(unittest.TestCase):
         divide perfectly the dataset.
         """
         inputs = torch.arange(20).view(10, 2)
-        targets = torch.arange(21, 61).view(10, 3)
+        targets = torch.arange(21, 61).view(10, 4)
         batch_size = 3
         batches = batching(inputs, targets, batch_size, False)
         self.assertEqual(len(batches), math.ceil(len(inputs)/batch_size))
