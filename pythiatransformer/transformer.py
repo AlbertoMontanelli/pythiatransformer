@@ -6,6 +6,7 @@ particles starting from the status 23 particles.
 import gc
 
 from loguru import logger
+from scipy.stats import wasserstein_distance
 import torch
 import torch.nn as nn
 from torch.nn.utils.rnn import pad_sequence
@@ -472,15 +473,18 @@ class ParticleTransformer(nn.Module):
                                     to stop generation. Default is 0.5.
         Returns:
             diff (list): List containing the difference between target
-                         and prediction
+                         and prediction.
+            wasserstein_dists (list): List containing the Wasserstein
+                                      distances computed event-wise
+                                      between predicted and target
+                                      pT distributions.
         """
         diff = []
-        nbatch = 0
+        wasserstein_dists = []
         for (input, target), (
             input_padding_mask,
             target_padding_mask,
         ) in zip(self.test_data, self.test_data_pad_mask):
-            nbatch = nbatch + 1
             input = input.to(self.device)
             target = target.to(self.device)
             input_padding_mask = input_padding_mask.to(self.device)
@@ -516,11 +520,23 @@ class ParticleTransformer(nn.Module):
                     )
                     if eos > stop_threshold:
                         break
-            # Compute the difference from target to predicted
             for i in range(batch_size):
+                # Compute the difference from target to predicted
                 target_sum = target[i].sum().item()
                 pred_sum = generated[i].sum().item()
-                diff.append((target_sum - pred_sum)/target_sum)
-            logger.info(f"Generated batch n: {nbatch}")
+                diff.append((target_sum - pred_sum) / target_sum)
+                # Compute the wasserstain distance
+                pred_np = generated[i].detach().cpu().numpy()
+                target_np = target[i].detach().cpu().numpy()
+                # De-padding.
+                pred_np = pred_np[pred_np > 0]
+                target_np = target_np[target_np > 0]
 
-        return diff
+                if len(pred_np) == 0 or len(target_np) == 0:
+                    wasserstein_dists.append(float('nan'))
+                else:
+                    wd = wasserstein_distance(pred_np, target_np)
+                    wasserstein_dists.append(wd)
+            logger.info(f"One batch completed")
+
+        return diff, wasserstein_dists

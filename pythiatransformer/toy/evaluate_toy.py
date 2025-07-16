@@ -15,14 +15,14 @@ from toy_model import ToyTransformer, ToyDataset
 
 def plot_residual_histogram(residuals, filename="toy_residuals.pdf"):
     plt.figure(figsize=(8, 5))
-    plt.hist(residuals, bins=1000, density=False, alpha=0.7, color='skyblue', edgecolor='black', log='True')
+    plt.hist(residuals, bins=5000, alpha=0.7, color='lightgreen', edgecolor='black', log=True)
     plt.axvline(0, color='red', linestyle='--', label='Zero Error')
     plt.xlabel("Residuals")
     plt.ylabel("Counts")
     plt.title("Distribution of Prediction Residuals")
     plt.grid(True)
     plt.legend()
-    plt.xlim(-8, 1)
+    plt.xlim(-20, 1)
     plt.tight_layout()
     plt.savefig(filename)
     logger.info(f"Residual histogram saved as {filename}")

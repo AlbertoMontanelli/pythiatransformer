@@ -49,6 +49,27 @@ def plot_diff_histogram(diff, filename="diff_hist.pdf"):
     plt.savefig(filename)
     logger.info(f"Residual histogram saved to {filename}")
 
+def plot_wasserstein_histogram(wasserstein_dists, filename="wasserstain_hist.pdf"):
+    """Plot an histogram of Wasserstein distances per event.
+
+    Args:
+        wasserstein_dists (list): List of Wasserstein distances.
+        filename (str): The name of the output PDF file where the
+                        histogram will be saved. Default is
+                        'wasserstain_hist.pdf'.
+    """
+    # Filter out NaN values if present
+    clean_dists = [d for d in wasserstein_dists if not np.isnan(d)]
+
+    plt.figure(figsize=(8, 5))
+    plt.hist(clean_dists, bins=100, color='lightgreen', edgecolor='black', alpha=0.7)
+    plt.xlabel('Wasserstein Distance')
+    plt.ylabel('Frequency')
+    plt.title('Distribution of Wasserstein Distances per Event')
+    plt.grid(True)
+    plt.tight_layout()
+    plt.savefig(filename)
+    logger.info(f"Residual histogram saved to {filename}")
 
 def build_model():
     """Build a unique istance of ParticleTransformer class.
@@ -83,5 +104,6 @@ model.to(device)
 model.device = device
 
 logger.info("Starting autoregressive inference")
-diff = model.generate_targets()
+diff, wass = model.generate_targets()
 plot_diff_histogram(diff)
+plot_wasserstein_histogram(wass)
