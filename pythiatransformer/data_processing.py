@@ -110,9 +110,9 @@ def awkward_to_padded_tensor(
             raise ValueError(
                 f"Parameter 'list_pt' can not be an empty list."
             )
-        if not isinstance(list_pt, list):
+        if not isinstance(list_pt, torch.Tensor):
             raise TypeError(
-                "Parameter 'list_pt' must be of type 'list', "
+                "Parameter 'list_pt' must be of type 'torch.Tensor', "
                 f"got '{type(list_pt)}' instead."
             )
         if not all(isinstance(pt, (int, float)) for pt in list_pt):
