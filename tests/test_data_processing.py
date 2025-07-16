@@ -181,9 +181,9 @@ class TestDataProcessing(unittest.TestCase):
         expected_train = torch.arange(6)
         expected_val = torch.arange(6, 9)
         expected_test = torch.Tensor([9])
-        self.assertEqual(train, expected_train)
-        self.assertEqual(val, expected_val)
-        self.assertEqual(test, expected_test)
+        self.assertTrue(torch.Equal(train, expected_train))
+        self.assertTrue(torch.Equal(val, expected_val))
+        self.assertTrue(torch.Equal(test, expected_test))
 
 
 if __name__ == "__main__":
