@@ -2,11 +2,9 @@ name: Run Tests
 
 on:
   push:
-    branches:
-      - main
+    branches: [main]
   pull_request:
-    branches:
-      - main
+    branches: [main]
 
 jobs:
   test:
@@ -19,12 +17,10 @@ jobs:
     - name: Set up Conda
       uses: conda-incubator/setup-miniconda@v2
       with:
-        conda-version: 24.11.2
+        python-version: 3.9
 
     - name: Create Conda environment
-      run: |
-        conda create -n myrootenv python=3.9 -y
-        conda init bash
+      run: conda create -n myrootenv python=3.9 -y
 
     - name: Install dependencies
       run: |
@@ -32,9 +28,4 @@ jobs:
         conda run -n myrootenv pip install -r requirements.txt
 
     - name: Run tests with unittest
-      run: |
-        conda run -n myrootenv python -m unittest discover -s tests -p "*.py"
-
-
-
-
+      run: conda run -n myrootenv python -m unittest discover -s tests -p "*.py"
