@@ -56,11 +56,11 @@ class TestDataProcessing(unittest.TestCase):
             awkward_to_padded_tensor(
                 data=ak.Array({"pT": [[1]]}), features=["pT"], list_pt=3, truncate_pt=True
             )
-        with self.assertRaises(ValueError):
+        with self.assertRaises(TypeError):
             awkward_to_padded_tensor(
                 data=ak.Array({"pT": [[1]]}), features=["pT"], list_pt=[3, 4], truncate_pt=True
             )
-        with self.assertRaises(ValueError):
+        with self.assertRaises(TypeError):
             awkward_to_padded_tensor(
                 data=ak.Array({"pT": [[1]]}), features=["pT"], list_pt=["3"], truncate_pt=True
             )
@@ -95,7 +95,7 @@ class TestDataProcessing(unittest.TestCase):
         )
         self.assertEqual(tensor_f.shape[0], tot_pT_23.shape[0])
         sum_pT_f = tensor_f.squeeze(-1).sum(dim=1)
-        self.assertTrue(torch.allclose(
+        self.assertTrue(torch.all(
             torch.all((sum_pT_f > 0.5*tot_pT_23) & (sum_pT_f < 0.7*tot_pT_23))
         ))
 
