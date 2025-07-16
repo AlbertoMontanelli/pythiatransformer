@@ -22,7 +22,7 @@ class PythiaTransformerTest(unittest.TestCase):
 
     def setUp(self):
 
-        self.features = ["id", "status", "px", "py", "pz", "e", "m"]
+        self.features = ["id", "status", "px", "py", "pz", "e", "m", "pT", "theta", "phi", "y"]
         self.toy_data_23 = {
             "id_23": [[2, 1], [2, 2, 4], [2]],
             "px_23": [[0.2, 1.0], [0.3, 0.4, 0.5], [2.1]],
