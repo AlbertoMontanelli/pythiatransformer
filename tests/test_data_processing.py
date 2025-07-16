@@ -42,27 +42,27 @@ class TestDataProcessing(unittest.TestCase):
             )
         with self.assertRaises(KeyError):
             awkward_to_padded_tensor(
-                data=ak.Array({"pT": [[1]]}), features="E"
+                data=ak.Array({"pT": [[1]]}), features=["E"]
             )
         with self.assertRaises(ValueError):
             awkward_to_padded_tensor(
-                data=ak.Array({"pT": [[1]]}), features="pT", truncate_pt=True
+                data=ak.Array({"pT": [[1]]}), features=["pT"], truncate_pt=True
             )
         with self.assertRaises(ValueError):
             awkward_to_padded_tensor(
-                data=ak.Array({"pT": [[1]]}), features="pT", list_pt=[], truncate_pt=True
+                data=ak.Array({"pT": [[1]]}), features=["pT"], list_pt=[], truncate_pt=True
             )
         with self.assertRaises(ValueError):
             awkward_to_padded_tensor(
-                data=ak.Array({"pT": [[1]]}), features="pT", list_pt=3, truncate_pt=True
+                data=ak.Array({"pT": [[1]]}), features=["pT"], list_pt=3, truncate_pt=True
             )
         with self.assertRaises(ValueError):
             awkward_to_padded_tensor(
-                data=ak.Array({"pT": [[1]]}), features="pT", list_pt=[3, 4], truncate_pt=True
+                data=ak.Array({"pT": [[1]]}), features=["pT"], list_pt=[3, 4], truncate_pt=True
             )
         with self.assertRaises(ValueError):
             awkward_to_padded_tensor(
-                data=ak.Array({"pT": [[1]]}), features="pT", list_pt=["3"], truncate_pt=True
+                data=ak.Array({"pT": [[1]]}), features=["pT"], list_pt=["3"], truncate_pt=True
             )
     
 
@@ -91,7 +91,7 @@ class TestDataProcessing(unittest.TestCase):
         data_23 = ak.Array({"pT": [[1., 2., 3.], [4.]]})
         data_f = ak.Array({"pT": [[2., 2., 3.], [1., 1., 1., 2.]]})
         tensor_23, mask_23, tot_pT_23 = awkward_to_padded_tensor(
-            data, ["pT"]
+            data_23, ["pT"]
         )
         tensor_f, mask_f = awkward_to_padded_tensor(
             data_f, ["pT"], tot_pT_23, True
@@ -119,7 +119,7 @@ class TestDataProcessing(unittest.TestCase):
             batching(valid_3, invalid_3, batch_size=1)
         with self.assertRaises(ValueError):
             batching(valid_3, valid_2, batch_size=1)
-        with self.assertRaises(ValueError):
+        with self.assertRaises(TypeError):
             batching(valid_2, valid_2, batch_size=1.5)
         with self.assertRaises(ValueError):
             batching(valid_2, valid_2, batch_size=5)
