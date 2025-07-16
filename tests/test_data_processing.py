@@ -52,7 +52,7 @@ class TestDataProcessing(unittest.TestCase):
             awkward_to_padded_tensor(
                 data=ak.Array({"pT": [[1]]}), features=["pT"], list_pt=[], truncate_pt=True
             )
-        with self.assertRaises(ValueError):
+        with self.assertRaises(TypeError):
             awkward_to_padded_tensor(
                 data=ak.Array({"pT": [[1]]}), features=["pT"], list_pt=3, truncate_pt=True
             )
