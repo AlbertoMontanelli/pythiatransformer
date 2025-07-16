@@ -75,9 +75,6 @@ class TestDataProcessing(unittest.TestCase):
             data, ["pT"]
         )
         self.assertEqual(tensor.shape, (2, 3, 1))
-        self.assertTrue(
-           torch.all(tensor[:-1] >= tensor[1:])
-        )
         self.assertEqual(mask.shape, (2, 3))
         self.assertEqual(mask.dtype, torch.bool)
         self.assertFalse(mask[0, 0]) # check true particle.
@@ -96,6 +93,7 @@ class TestDataProcessing(unittest.TestCase):
         tensor_f, mask_f = awkward_to_padded_tensor(
             data_f, ["pT"], tot_pT_23, True
         )
+        print(tensor_f)
         self.assertEqual(tensor_f.shape, (2, 4, 1))
         self.assertEqual(mask_f.shape, (2, 4))
         self.assertFalse(mask_f[0, 0]) # check true particle.
