@@ -25,6 +25,9 @@ class TestDataProcessing(unittest.TestCase):
     - Check splitting in training, validation, and test set
     """
     def test_awkward_to_padded_tensor_invalid(self):
+        """
+        Test invalid types of parameters of original function.
+        """
         with self.assertRaises(TypeError):
             awkward_to_padded_tensor(
                 data=[1, 2, 3], features=["pT"]
@@ -64,6 +67,9 @@ class TestDataProcessing(unittest.TestCase):
     
 
     def test_awkward_to_padded_tensor_no_trunc(self):
+        """
+        Test original function if truncate_pt=False.
+        """
         data = ak.Array({"pT": [[1., 2., 3.], [4.]]})
         tensor, mask, tot_pT = awkward_to_padded_tensor(
             data, ["pT"]
@@ -79,6 +85,9 @@ class TestDataProcessing(unittest.TestCase):
         self.assertTrue(torch.allclose(tot_pT, torch.Tensor([6., 4.])))
 
     def test_awkward_to_padded_tensor_trunc(self):
+        """
+        Test original function if truncate_pt=True.
+        """
         data_23 = ak.Array({"pT": [[1., 2., 3.], [4.]]})
         data_f = ak.Array({"pT": [[2., 2., 3.], [1., 1., 1., 2.]]})
         tensor_23, mask_23, tot_pT_23 = awkward_to_padded_tensor(
@@ -98,6 +107,9 @@ class TestDataProcessing(unittest.TestCase):
         ))
 
     def test_batching_invalid(self):
+        """
+        Test invalid types of parameters of original function.
+        """
         invalid_3 = [[0.1, 0.2], [0.3, 0.4], [0.5, 0.6]]
         valid_3 = torch.arange(6).view(3, 2)
         valid_2 = torch.arange(6).view(2, 3)
@@ -115,6 +127,10 @@ class TestDataProcessing(unittest.TestCase):
             batching(valid_2, valid_2, batch_size=-4)
         
     def test_batching_len(self):
+        """
+        Test length of batches when batch_size does not
+        divide perfectly the dataset.
+        """
         inputs = torch.arange(20).view(10, 2)
         targets = torch.arange(21, 61).view(10, 3)
         batch_size = 3
@@ -122,6 +138,9 @@ class TestDataProcessing(unittest.TestCase):
         self.assertEqual(len(batches), math.ceil(len(inputs)/batch_size))
 
     def test_batching_shuffle_alignment(self):
+        """
+        Test alignment of input and target if shuffle=True.
+        """        
         inputs = torch.arange(20).view(10, 2)
         targets = torch.arange(10)
         batch_size = 5
@@ -138,6 +157,9 @@ class TestDataProcessing(unittest.TestCase):
             self.assertEqual(expected_target, shuffled_targets[ii].item())
 
     def test_train_val_test_split_invalid(self):
+        """
+        Test invalid types of parameters of original function.
+        """
         valid = torch.arange(10).view(5,2)
         with self.assertRaises(TypeError):
             train_val_test_split([1, 2, 3, 4], 0.5, 0.25, 0.25)
@@ -149,6 +171,9 @@ class TestDataProcessing(unittest.TestCase):
             train_val_test_split(valid, 0.5, 0.4, 0.1)
 
     def test_train_val_test_split(self):
+        """
+        Test splitting the dataset.
+        """
         tensor = torch.arange(10)
         train, val, test = train_val_test_split(
             tensor, 0.6, 0.3, 0.1
