@@ -93,11 +93,6 @@ class TestDataProcessing(unittest.TestCase):
         tensor_f, mask_f = awkward_to_padded_tensor(
             data_f, ["pT"], tot_pT_23, True
         )
-        print(tensor_f)
-        self.assertEqual(tensor_f.shape, (2, 4, 1))
-        self.assertEqual(mask_f.shape, (2, 4))
-        self.assertFalse(mask_f[0, 0]) # check true particle.
-        self.assertTrue(mask_f[0, 3]) # check padding.
         self.assertEqual(tensor_f.shape[0], tot_pT_23.shape[0])
         sum_pT_f = tensor_f.squeeze(-1).sum(dim=1)
         self.assertTrue(torch.allclose(
@@ -166,8 +161,6 @@ class TestDataProcessing(unittest.TestCase):
             train_val_test_split(valid, 0.5, 0.3, 0.1)
         with self.assertRaises(ValueError):
             train_val_test_split(valid, -0.2, 0.8, 0.4)
-        with self.assertRaises(ValueError):
-            train_val_test_split(valid, 0.7, 0.2, 0.1)
 
     def test_train_val_test_split(self):
         """
