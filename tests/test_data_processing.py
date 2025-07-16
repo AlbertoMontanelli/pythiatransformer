@@ -1,7 +1,6 @@
 import awkward as ak
 import math
 import numpy as np
-import scipy
 import torch
 import unittest
 
