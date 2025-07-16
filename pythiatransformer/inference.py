@@ -77,7 +77,7 @@ device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
 
 model = build_model()
 model.load_state_dict(
-    torch.load("transformer_model_nosos.pt", map_location=device)
+    torch.load("transformer_model.pt", map_location=device)
 )
 model.to(device)
 model.device = device
