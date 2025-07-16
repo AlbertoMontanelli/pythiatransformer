@@ -1,6 +1,5 @@
 # CMEPDA-project
-Repository about CMEPDA project
-A framework to simulate high-energy physics events using Pythia8 and train a Transformer model to predict final state observables such as particle pT.
+Repository about CMEPDA project. A framework to simulate high-energy physics events using Pythia8 and train a Transformer model to predict final state observables such as particle pT.
 
 
 ## Requirements
