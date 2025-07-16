@@ -106,7 +106,7 @@ def awkward_to_padded_tensor(
             raise ValueError(
                 f"Parameter 'list_pt' is required when 'truncate_pT=True'."
             )
-        if len(list_pt)==0:
+        if list_pt==[]:
             raise ValueError(
                 f"Parameter 'list_pt' can not be an empty list."
             )
@@ -207,7 +207,7 @@ def batching(input, target, batch_size, shuffle=True):
     if not (batch_size <= input.shape[0]):
         raise ValueError(
             "Parameter 'batch_size' must be smaller than or equal "
-            f"to the input dataset size {len(input.shape[0])}, "
+            f"to the input dataset size {input.shape[0]}, "
             f"got {batch_size} instead."
         )
     if batch_size < 1:
