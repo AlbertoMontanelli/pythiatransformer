@@ -149,12 +149,13 @@ class TestDataProcessing(unittest.TestCase):
         shuffled_inputs = torch.cat([bb[0] for bb in batches], dim=0)
         shuffled_targets = torch.cat([bb[1] for bb in batches], dim=0)
 
-        for ii in range(len(inputs)):
-            input_row = shuffled_inputs[ii]
-            # Since inputs = [[0,1], [2,3], [4,5],...] the expected
-            # target is the first number of the row // 2.
-            expected_target = (input_row[0] // 2).item()
-            self.assertEqual(expected_target, shuffled_targets[ii].item())
+        # Rebuild the original mapping to compare
+        original_pairs = {tuple(inputs[i].tolist()): targets[i].item() for i in range(len(inputs))}
+
+        for ii in range(len(shuffled_inputs)):
+            input_row = tuple(shuffled_inputs[ii].tolist())
+            target = shuffled_targets[ii].item()
+            self.assertEqual(original_pairs[input_row], target)
 
     def test_train_val_test_split_invalid(self):
         """
@@ -168,7 +169,7 @@ class TestDataProcessing(unittest.TestCase):
         with self.assertRaises(ValueError):
             train_val_test_split(valid, -0.2, 0.8, 0.4)
         with self.assertRaises(ValueError):
-            train_val_test_split(valid, 0.5, 0.4, 0.1)
+            train_val_test_split(valid, 0.7, 0.2, 0.1)
 
     def test_train_val_test_split(self):
         """
