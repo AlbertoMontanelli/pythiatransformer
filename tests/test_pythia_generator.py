@@ -68,6 +68,17 @@ class PythiaTransformerTest(unittest.TestCase):
             def m(self):
                 return 0.511
 
+            def pT(self):
+                return 0.22
+
+            def theta(self):
+                return 0.2
+
+            def phi(self):
+                return 0.3
+
+            def y(self):
+                return 0.1
         # Save DummyParticle as attribute of test class
         self.DummyParticle = DummyParticle
 
@@ -122,9 +133,9 @@ class PythiaTransformerTest(unittest.TestCase):
         record_particle(particle, self.features, data, "")
         for feature in self.features:
             self.assertEqual(
-                data[feature][-1],
+                data[feature][-1][-1],
                 getattr(particle, feature)(),
-                f"The element {data[feature][-1]}"
+                f"The element {data[feature][-1][-1]}"
                 f"does not match with {getattr(particle, feature)()}",
             )
 
