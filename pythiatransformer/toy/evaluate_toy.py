@@ -14,6 +14,16 @@ import torch
 from toy_model import ToyTransformer, ToyDataset
 
 def plot_residual_histogram(residuals, filename="toy_residuals.pdf"):
+    """
+    Function to plot histogram of relative residuals.
+
+    Args:
+      residuals (list): list of computed residuals, one per event;
+      filename (str): name of the figure that will be saved.
+
+    Returns:
+      None
+    """
     plt.figure(figsize=(8, 5))
     plt.hist(residuals, bins=5000, alpha=0.7, color='lightgreen', edgecolor='black', log=True)
     plt.axvline(0, color='red', linestyle='--', label='Zero Error')

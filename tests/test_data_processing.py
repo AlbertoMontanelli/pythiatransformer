@@ -105,11 +105,13 @@ class TestDataProcessing(unittest.TestCase):
         tensor_f, mask_f = awkward_to_padded_tensor(
             data_f, ["pT"], tot_pT_23, True
         )
-        self.assertEqual(tensor_f.shape[0], tot_pT_23.shape[0])
+        self.assertEqual(
+            tensor_f.shape[0], tot_pT_23.shape[0], "Target tensor does not have same number of events as events for which pT has been computed"
+        )
         sum_pT_f = tensor_f.squeeze(-1).sum(dim=1)
-        self.assertTrue(torch.all(
-            torch.all(sum_pT_f >= 0.5*tot_pT_23)
-        ))
+        self.assertTrue(
+            torch.all(sum_pT_f >= 0.5*tot_pT_23), "Sum of pT of targets is not always at least 50% of pT of corresponding data"
+        )
 
     def test_batching_invalid(self):
         """
@@ -140,7 +142,9 @@ class TestDataProcessing(unittest.TestCase):
         targets = torch.arange(21, 61).view(10, 4)
         batch_size = 3
         batches = batching(inputs, targets, batch_size, False)
-        self.assertEqual(len(batches), math.ceil(len(inputs)/batch_size))
+        self.assertEqual(
+            len(batches), math.ceil(len(inputs)/batch_size), "Batch length is not what expected"
+        )
 
     def test_train_val_test_split_invalid(self):
         """
@@ -165,9 +169,15 @@ class TestDataProcessing(unittest.TestCase):
         expected_train = torch.arange(6)
         expected_val = torch.arange(6, 9)
         expected_test = torch.Tensor([9])
-        self.assertTrue(torch.equal(train, expected_train))
-        self.assertTrue(torch.equal(val, expected_val))
-        self.assertTrue(torch.equal(test, expected_test))
+        self.assertTrue(
+            torch.equal(train, expected_train), "Training set size is not what expected"
+        )
+        self.assertTrue(
+            torch.equal(val, expected_val), "Validation set size is not what expected"
+        )
+        self.assertTrue(
+            torch.equal(test, expected_test), "Test set size is not what expected"
+        )
 
 
 if __name__ == "__main__":

@@ -10,14 +10,13 @@ iii. the batching of the data;
 iv. the splitting of the data into training, validation and test sets;
 v. the saving of the tensors and the loaders.
 """
+import math
 
 import awkward as ak
-import math
 import numpy as np
 import torch
 import uproot
 from loguru import logger
-from torch.nn.utils.rnn import pad_sequence
 from torch.utils.data import DataLoader, TensorDataset
 
 #######################################
@@ -74,7 +73,7 @@ def awkward_to_padded_tensor(
         )
     if not all(isinstance(f, str) for f in features):
         raise TypeError(
-            f"Parameter 'features' must be a list of strings."
+            "Parameter 'features' must be a list of strings."
         )
     missing_features = [f for f in features if f not in data.fields]
     if missing_features:
@@ -104,11 +103,11 @@ def awkward_to_padded_tensor(
     if truncate_pt:
         if list_pt is None:
             raise ValueError(
-                f"Parameter 'list_pt' is required when 'truncate_pT=True'."
+                "Parameter 'list_pt' is required when 'truncate_pT=True'."
             )
         if list_pt==[]:
             raise ValueError(
-                f"Parameter 'list_pt' can not be an empty list."
+                "Parameter 'list_pt' can not be an empty list."
             )
         if not isinstance(list_pt, torch.Tensor):
             raise TypeError(
@@ -163,8 +162,8 @@ def awkward_to_padded_tensor(
 
     if truncate_pt:
         return padded_tensor_trunc, padding_mask
-    else:
-        return padded_tensor, padding_mask, total_pt
+    
+    return padded_tensor, padding_mask, total_pt
 
 
 def batching(input, target, batch_size, shuffle=True):
@@ -204,7 +203,7 @@ def batching(input, target, batch_size, shuffle=True):
             "Parameter 'batch_size' must be of type 'int', "
             f"got '{type(batch_size)}' instead."
         )
-    if not (batch_size <= input.shape[0]):
+    if not batch_size <= input.shape[0]:
         raise ValueError(
             "Parameter 'batch_size' must be smaller than or equal "
             f"to the input dataset size {input.shape[0]}, "
@@ -252,15 +251,15 @@ def train_val_test_split(
         raise ValueError(
             "Invalid values for split percentages. Must sum to 1."
         )
-    if not (0 <= train_perc <= 1):
+    if not 0 <= train_perc <= 1:
         raise ValueError(
             f"Invalid train_perc={train_perc}. Must be in [0,1]."
         )
-    if not (0 <= val_perc <= 1):
+    if not 0 <= val_perc <= 1:
         raise ValueError(
             f"Invalid val_perc={val_perc}. Must be in [0,1]."
         )
-    if not (0 <= test_perc <= 1):
+    if not 0 <= test_perc <= 1:
         raise ValueError(
             f"Invalid test_perc={test_perc}. Must be in [0,1]."
         )
@@ -269,9 +268,6 @@ def train_val_test_split(
     i1 = int(train_perc * n)
     i2 = i1 + int(val_perc * n)
 
-    n_train = i1
-    n_val = i2 - i1
-    n_test = n -i2
     return tensor[:i1], tensor[i1:i2], tensor[i2:]
 
 
@@ -290,11 +286,11 @@ def load_and_save_tensor(filename):
     with uproot.open(filename) as file:
         if "tree_23" not in file:
             raise KeyError(
-                f"'tree_23' not found in file."
+                "'tree_23' not found in file."
             )
         if "tree_final" not in file:
             raise KeyError(
-                f"'tree_final' not found in file."
+                "'tree_final' not found in file."
             )
         data_23 = file["tree_23"].arrays(library="ak")
         data_final = file["tree_final"].arrays(library="ak")
