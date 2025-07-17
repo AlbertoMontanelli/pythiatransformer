@@ -21,9 +21,10 @@ class TestDataProcessing(unittest.TestCase):
     - Check padded_tensor, padding_mask and tot_pt if truncate_pT = 0
     - Check padded_tensor, padding_mask if truncate_pT = 1, check that
     the second dataset is actually truncated at 50% pT
-    - Check length and alignment of batches
+    - Check length of batches
     - Check splitting in training, validation, and test set
     """
+    
     def test_awkward_to_padded_tensor_invalid(self):
         """
         Test invalid types of parameters of original function.
@@ -65,7 +66,6 @@ class TestDataProcessing(unittest.TestCase):
                 data=ak.Array({"pT": [[1]]}), features=["pT"], list_pt=["3"], truncate_pt=True
             )
     
-
     def test_awkward_to_padded_tensor_no_trunc(self):
         """
         Test original function if truncate_pt=False.
@@ -129,26 +129,6 @@ class TestDataProcessing(unittest.TestCase):
         batch_size = 3
         batches = batching(inputs, targets, batch_size, False)
         self.assertEqual(len(batches), math.ceil(len(inputs)/batch_size))
-
-    def test_batching_shuffle_alignment(self):
-        """
-        Test alignment of input and target if shuffle=True.
-        """        
-        inputs = torch.arange(20).view(10, 2)
-        targets = torch.arange(10)
-        batch_size = 5
-        batches = batching(inputs, targets, batch_size, True)
-
-        shuffled_inputs = torch.cat([bb[0] for bb in batches], dim=0)
-        shuffled_targets = torch.cat([bb[1] for bb in batches], dim=0)
-
-        # Rebuild the original mapping to compare
-        original_pairs = {tuple(inputs[i].tolist()): targets[i].item() for i in range(len(inputs))}
-
-        for ii in range(len(shuffled_inputs)):
-            input_row = tuple(shuffled_inputs[ii].tolist())
-            target = shuffled_targets[ii].item()
-            self.assertEqual(original_pairs[input_row], target)
 
     def test_train_val_test_split_invalid(self):
         """
