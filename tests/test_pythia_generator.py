@@ -214,15 +214,15 @@ class PythiaTransformerTest(unittest.TestCase):
             )
 
     """
-    @patch è un decoratore fornito dalla libreria unittest.mock che consente 
-    di sostituire o "mockare") oggetti o funzioni specifici all'interno del 
-    codice da testare. Questo è utile per simulare comportamenti o isolare 
-    dipendenze durante i test.
+    @patch is a decorator given by unittest.mock library, which allows to 
+    substitute (mock) specific objects or functions of the code that needs
+    to be tested. This is useful in order to simulate behaviours or to isolate
+    dependencies during testing.
 
-    Come Funziona @patch?
-    Quando usi @patch('module.object'), stai dicendo a Python di sostituire
-    temporaneamente object con un mock durante il test.
-    Il mock viene passato come argomento alla funzione di test.
+    How does @patch work?
+    When using @patch('module.object'), you are telling Python to substitute
+    said object during testing.
+    The mock is passed as a parameter of the testing function.
     """
 
     @patch("pythiatransformer.pythia_generator.setup_pythia")
