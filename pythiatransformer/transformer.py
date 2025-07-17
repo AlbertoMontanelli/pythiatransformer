@@ -418,7 +418,8 @@ class ParticleTransformer(nn.Module):
 
         logger.info("Training started!")
         for epoch in range(num_epochs):
-            torch.cuda.reset_peak_memory_stats()
+            if torch.cuda.is_available():
+                torch.cuda.reset_peak_memory_stats()
             train_loss_epoch = self.train_one_epoch(epoch, optim)
             val_loss_epoch = self.val_one_epoch(epoch)
             train_loss.append(train_loss_epoch)
