@@ -122,9 +122,9 @@ class PythiaTransformerTest(unittest.TestCase):
         record_particle(particle, self.features, data, "")
         for feature in self.features:
             self.assertEqual(
-                data[feature][-1][-1],
+                data[feature][-1],
                 getattr(particle, feature)(),
-                f"The element {data[feature][-1][-1]}"
+                f"The element {data[feature][-1]}"
                 f"does not match with {getattr(particle, feature)()}",
             )
 
