@@ -8,8 +8,7 @@ import gc
 from loguru import logger
 from scipy.stats import wasserstein_distance
 import torch
-import torch.nn as nn
-from torch.nn.utils.rnn import pad_sequence
+from torch import nn
 
 
 def log_peak_memory(epoch=None):
@@ -17,9 +16,9 @@ def log_peak_memory(epoch=None):
     Print the maximum GPU memory allocated during the current epoch and
     reset the counter.
     """
-    peak_MB = torch.cuda.max_memory_allocated() / 1024**2
+    peak_mb = torch.cuda.max_memory_allocated() / 1024**2
     prefix = f"[Epoch: {epoch + 1}] " if epoch is not None else ""
-    print(f"{prefix} Max memory allocated: {peak_MB:.2f} MB")
+    print(f"{prefix} Max memory allocated: {peak_mb:.2f} MB")
     torch.cuda.reset_peak_memory_stats()
 
 
@@ -27,24 +26,22 @@ def log_gpu_memory(epoch=None):
     """
     Print a clear summary of GPU memory usage.
     """
-    alloc_MB = torch.cuda.memory_allocated() / 1024**2
-    reserved_MB = torch.cuda.memory_reserved() / 1024**2
+    alloc_mb = torch.cuda.memory_allocated() / 1024**2
+    reserved_mb = torch.cuda.memory_reserved() / 1024**2
     stats = torch.cuda.memory_stats()
-    total_alloc_MB = stats["allocation.all.allocated"] / 1024**2
+    total_alloc_mb = stats["allocation.all.allocated"] / 1024**2
 
     prefix = f"[Epoca {epoch + 1}] " if epoch is not None else ""
-    print(f"{prefix}Memory allocated: {alloc_MB:.2f} MB")
-    print(f"{prefix}Memory reserved: {reserved_MB:.2f} MB")
+    print(f"{prefix}Memory allocated: {alloc_mb:.2f} MB")
+    print(f"{prefix}Memory reserved: {reserved_mb:.2f} MB")
     print(
         f"{prefix}Total memory allocated througth epochs:"
-        f" {total_alloc_MB:.2f} MB"
+        f" {total_alloc_mb:.2f} MB"
     )
 
 def _check_type(var, name, t):
     if not isinstance(var, t):
         raise TypeError(f"{name} must be of type {t.__name__}, got {type(var).__name__}")
-
-import matplotlib.pyplot as plt
 
 
 class ParticleTransformer(nn.Module):
@@ -125,11 +122,11 @@ class ParticleTransformer(nn.Module):
         _check_type(num_units, "num_units", int)
         _check_type(dropout, "dropout", float)
 
-        if not (num_units % num_heads == 0):
+        if not num_units % num_heads == 0:
             raise ValueError(
                 "Number of units must be a multiple of number of heads."
             )
-        if not (0.0 <= dropout <= 1.0):
+        if not 0.0 <= dropout <= 1.0:
             raise ValueError("Dropout must be between 0.0 and 1.0")
 
         # Loss functions used during the training
@@ -382,7 +379,6 @@ class ParticleTransformer(nn.Module):
         torch.cuda.empty_cache()
 
         loss_epoch = loss_epoch / len(self.val_data)
-        
         logger.debug(
             f"Validation loss at epoch {epoch + 1}: {loss_epoch:.4f}"
         )
@@ -413,9 +409,9 @@ class ParticleTransformer(nn.Module):
         _check_type(num_epochs, "num_epochs", int)
         _check_type(patient_early, "patient_early", int)
 
-        if not (patient_early < num_epochs):
+        if not patient_early < num_epochs:
             raise ValueError(
-                f"Patient must be smaller than the number of epochs."
+                "Patient must be smaller than the number of epochs."
             )
 
         train_loss = []
@@ -445,7 +441,6 @@ class ParticleTransformer(nn.Module):
                     train_loss = train_loss[:epoch + 1 - patient_early]
                     val_loss = val_loss[:epoch + 1 - patient_early]
                     break
-                
             if torch.cuda.is_available():
                 torch.cuda.empty_cache()
                 log_gpu_memory(epoch)
@@ -548,6 +543,6 @@ class ParticleTransformer(nn.Module):
                 else:
                     wd = wasserstein_distance(pred_np, target_np)
                     wasserstein_dists.append(wd)
-            logger.info(f"Batch completed.")
+            logger.info("Batch completed.")
 
         return diff, wasserstein_dists

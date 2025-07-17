@@ -13,7 +13,7 @@ import os
 from loguru import logger
 import matplotlib.pyplot as plt
 import torch
-import torch.nn as nn
+from torch import nn
 import torch.optim as optimizer
 
 from data_processing import load_saved_dataloaders
@@ -31,7 +31,7 @@ from transformer import ParticleTransformer
 
 os.environ["PYTORCH_CUDA_ALLOC_CONF"] = "expandable_segments:True"
 device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
-epochs = 100
+EPOCHS = 100
 
 def plot_losses(
     train_loss, val_loss, filename="learning_curve.pdf", dpi=1200
@@ -102,7 +102,7 @@ def train_and_save_model():
         transformer.parameters(), lr=learning_rate, weight_decay=1e-4
     )
     train_loss, val_loss = transformer.train_val(
-        num_epochs=epochs, optim=optim
+        num_epochs=EPOCHS, optim=optim
     )
 
     plot_losses(train_loss, val_loss)
