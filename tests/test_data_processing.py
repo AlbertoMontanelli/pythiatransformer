@@ -74,12 +74,24 @@ class TestDataProcessing(unittest.TestCase):
         tensor, mask, tot_pT = awkward_to_padded_tensor(
             data, ["pT"]
         )
-        self.assertEqual(tensor.shape, (2, 3, 1))
-        self.assertEqual(mask.shape, (2, 3))
-        self.assertEqual(mask.dtype, torch.bool)
-        self.assertFalse(mask[0, 0]) # check true particle.
-        self.assertTrue(mask[1, 2]) # check padding.
-        self.assertTrue(torch.allclose(tot_pT, torch.Tensor([6., 4.])))
+        self.assertEqual(
+            tensor.shape, (2, 3, 1), "Data tensor does not have the expected shape"
+        )
+        self.assertEqual(
+            mask.shape, (2, 3), "Mask tensor does not have the expected shape"
+        )
+        self.assertEqual(
+            mask.dtype, torch.bool, "Mask tensor does not have torch.bool type"
+        )
+        self.assertFalse(
+            mask[0, 0], "Padding when correspoding particle is a true particle"
+        ) # check true particle.
+        self.assertTrue(
+            mask[1, 2], "No padding when corresponding particle is not a true particle"
+        ) # check padding.
+        self.assertTrue(
+            torch.allclose(tot_pT, torch.Tensor([6., 4.])), "Error in summing pT per event"
+        )
 
     def test_awkward_to_padded_tensor_trunc(self):
         """
