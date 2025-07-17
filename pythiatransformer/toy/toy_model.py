@@ -14,7 +14,8 @@ from torch.utils.data import DataLoader, Dataset
 
 
 def _check_type(var, name, t):
-    """Checks whether a variable is of the expected type.
+    """
+    Checks whether a variable is of the expected type.
 
     Args:
         var: The variable to check.
@@ -57,7 +58,8 @@ def plot_learning_curve(
 
 class ToyDataset(Dataset):
     def __init__(self, n_samples=10000, max_len=10, seed=42):
-        """This class prepares the dataset for the toy regression task.
+        """
+        This class prepares the dataset for the toy regression task.
         Each data sample consists of:
         - An input scalar x, sampled uniformly from (0, 10).
         - A target sequence of k floats (y_1, ..., y_k) such that their
@@ -94,7 +96,8 @@ class ToyDataset(Dataset):
             self.data.append((x, y_pad, mask, k))
 
     def __len__(self):
-        """Returns the total number of samples in the dataset.
+        """
+        Returns the total number of samples in the dataset.
 
         Returns:
             int: The number of samples.
@@ -102,7 +105,8 @@ class ToyDataset(Dataset):
         return len(self.data)
 
     def __getitem__(self, idx):
-        """Retrieves the sample at the given index.
+        """
+        Retrieves the sample at the given index.
 
         Args:
             idx (int): Index of the sample to retrieve.
@@ -120,7 +124,8 @@ class ToyDataset(Dataset):
 
 
 class ToyTransformer(nn.Module):
-    """Implements a toy transformer model for sequential regression.
+    """
+    Implements a toy transformer model for sequential regression.
     The model takes as input a scalar x and learns to generate a
     sequence of positive values that sum approximately to x. It uses
     a transformer architecture with encoder-decoder structure.
@@ -192,7 +197,8 @@ class ToyTransformer(nn.Module):
         self.stop_head = nn.Linear(self.d_model, 1)
 
     def forward_teacher(self, x, y, mask, lengths):
-        """Forward pass in teacher forcing mode. The model receives a
+        """
+        Forward pass in teacher forcing mode. The model receives a
         scalar input x, a padded target sequence y and the corresponding
         padding mask. The decoder receives the target sequence with a special start of
         sequence (SOS) token. It predicts the output sequence and a
@@ -253,7 +259,8 @@ class ToyTransformer(nn.Module):
         return y_hat, stop_logits
 
     def generate(self, x, max_len=None, stop_thresh=0.5):
-        """Autoregressive inference for sequence generation. Starts
+        """
+        Autoregressive inference for sequence generation. Starts
         with a special start of sequence (SOS) token and generates
         outputs one step at a time using the model's own predictions.
         Generation continues until either the maximum sequence length
@@ -309,7 +316,8 @@ class ToyTransformer(nn.Module):
 
 
 if __name__ == "__main__":
-    """Main training script for the ToyTransformer model.
+    """
+    Main training script for the ToyTransformer model.
     - Generates a toy dataset of scalar inputs and target sequences.
     - Defines and trains a transformer model.
     - Trains for a fixed number of epochs

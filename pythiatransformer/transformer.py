@@ -48,7 +48,8 @@ import matplotlib.pyplot as plt
 
 
 class ParticleTransformer(nn.Module):
-    """Transformer taking in input particles having status 23
+    """
+    Transformer taking in input particles having status 23
     (i.e. outgoing particles of the hardest subprocess) and as target
     the final particles of the event.
     """
@@ -142,7 +143,8 @@ class ParticleTransformer(nn.Module):
         logger.info(f"Model initialized on device: {self.device}")
 
     def build_projection_layer(self):
-        """Initializes the layers responible for projecting input
+        """
+        Initializes the layers responible for projecting input
         features to the model's hidden dimentionality and outputs back
         to the original feature space.
         """
@@ -154,7 +156,8 @@ class ParticleTransformer(nn.Module):
         logger.info("Projection layers input/output created.")
 
     def initialize_transformer(self):
-        """This function initializes the transformer with the specified
+        """
+        This function initializes the transformer with the specified
         configuration parameters.
         """
         self.transformer = nn.Transformer(
@@ -180,7 +183,8 @@ class ParticleTransformer(nn.Module):
         )
 
     def forward(self, input, target, enc_input_mask, dec_input_mask):
-        """Computes the output of the model by projecting both input
+        """
+        Computes the output of the model by projecting both input
         and target into an hidden representation space, processing them
         through a Transformer, and projecting the result back to the
         original feature space.
@@ -229,7 +233,8 @@ class ParticleTransformer(nn.Module):
         return pred, eos_prob_vector
 
     def train_one_epoch(self, epoch, optim):
-        """This function trains the model for one epoch. It iterates
+        """
+        This function trains the model for one epoch. It iterates
         through the training data, computes the model's output and the
         loss, performs backpropagation and updates the model parameters
         provided optimizer.
@@ -306,7 +311,8 @@ class ParticleTransformer(nn.Module):
         return loss_epoch
 
     def val_one_epoch(self, epoch):
-        """This function validates the model for one epoch. It iterates
+        """
+        This function validates the model for one epoch. It iterates
         through the validation data, computes the model's output and
         the loss.
 
@@ -388,7 +394,8 @@ class ParticleTransformer(nn.Module):
         optim,
         patient_early=10,
     ):
-        """Trains and validates the model for the given number of
+        """
+        Trains and validates the model for the given number of
         epochs, using train_one_epoch and loss_one_epoch. Implements
         early stopping if validation loss does not improve.
 
@@ -448,7 +455,8 @@ class ParticleTransformer(nn.Module):
         return train_loss, val_loss
 
     def early_stopping(self, val_losses, current_epoch):
-        """Checks whether the validation loss has increased or remained
+        """
+        Checks whether the validation loss has increased or remained
         the same compared to the previous epoch.
 
         Args:
@@ -466,7 +474,8 @@ class ParticleTransformer(nn.Module):
         return stop
 
     def generate_targets(self, stop_threshold=0.5):
-        """Performs autoregressive generation of stable particles'
+        """
+        Performs autoregressive generation of stable particles'
         energy using the test set. Computes the difference between
         targets and predictions in order to plots an histogram.
 
@@ -539,6 +548,6 @@ class ParticleTransformer(nn.Module):
                 else:
                     wd = wasserstein_distance(pred_np, target_np)
                     wasserstein_dists.append(wd)
-            logger.info(f"One batch completed")
+            logger.info(f"Batch completed.")
 
         return diff, wasserstein_dists

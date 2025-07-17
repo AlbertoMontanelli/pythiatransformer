@@ -1,4 +1,5 @@
-"""This script loads a trained Transformer based model and performs
+"""
+This script loads a trained Transformer based model and performs
 autoregressive inference to generate stable particles from status 23.
 The main steps are:
 - Load the preprocessed datasets from data_processing.py
@@ -28,7 +29,8 @@ from transformer import ParticleTransformer
 
 
 def plot_diff_histogram(diff, filename="diff_hist.pdf"):
-    """Plots a histogram of the differences between the target sums
+    """
+    Plots a histogram of the differences between the target sums
     and predicted target sums across all events.
 
     Args:
@@ -51,7 +53,8 @@ def plot_diff_histogram(diff, filename="diff_hist.pdf"):
     logger.info(f"Residual histogram saved to {filename}")
 
 def plot_wasserstein_histogram(wasserstein_dists, filename="wasserstain_hist.pdf"):
-    """Plot an histogram of Wasserstein distances per event.
+    """
+    Plot an histogram of Wasserstein distances per event.
 
     Args:
         wasserstein_dists (list): List of Wasserstein distances.
@@ -73,7 +76,8 @@ def plot_wasserstein_histogram(wasserstein_dists, filename="wasserstain_hist.pdf
     logger.info(f"Residual histogram saved to {filename}")
 
 def build_model():
-    """Build a unique istance of ParticleTransformer class.
+    """
+    Build a unique istance of ParticleTransformer class.
 
     Returns:
         ParticleTransformer: A model ready for training or inference.

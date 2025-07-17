@@ -11,7 +11,8 @@ from pythiatransformer.transformer import ParticleTransformer
 
 
 class TestParticleTransformer(unittest.TestCase):
-    """Contains unit tests to verify the functionality of the
+    """
+    Contains unit tests to verify the functionality of the
     ParticleTransformer class.
     It uses the unittest framework to run the tests.
     The tests include:
@@ -28,7 +29,8 @@ class TestParticleTransformer(unittest.TestCase):
     """
 
     def setUp(self):
-        """This function initializes the variables required to create an
+        """
+        This function initializes the variables required to create an
         instance of the ParticleTransformers class.
         This method is automatically called before each test to set up
         a consistent test environment.
@@ -105,7 +107,8 @@ class TestParticleTransformer(unittest.TestCase):
         self.optim = optimizer.Adam(self.transformer.parameters(), lr=1e-3)
 
     def target_creation(self, num_event, max_num_particles, num_features):
-        """Generates padded target sequences and corresponding padding
+        """
+        Generates padded target sequences and corresponding padding
         masks for a given number of events.
         Each event consists of a random number of particles (between 1
         and max_num_particles). The sequences are padded with zeros to
@@ -147,7 +150,8 @@ class TestParticleTransformer(unittest.TestCase):
         return target, padding_mask
 
     def data_processing(self, input, target, shuffle=True):
-        """Prepares the data for training by splitting it into batches
+        """
+        Prepares the data for training by splitting it into batches
         and shuffling the training data.
 
         Args:
@@ -173,7 +177,8 @@ class TestParticleTransformer(unittest.TestCase):
         return loader
     
     def test_device_consistency(self):
-        """Verifies that all tensors used in training (inputs, targets
+        """
+        Verifies that all tensors used in training (inputs, targets
         and their corresponding padding masks) are on the same device
         as the model to ensure device consistency during training and
         evaluation.
@@ -205,7 +210,8 @@ class TestParticleTransformer(unittest.TestCase):
             )
 
     def test_dim_features(self):
-        """Checks that the third dimension of the input
+        """
+        Checks that the third dimension of the input
         tensor (i.e., the number of features per particle) matches
         the dim_features parameter of the model.
         """
@@ -217,7 +223,8 @@ class TestParticleTransformer(unittest.TestCase):
         )
 
     def test_forward_output_nans_infs(self):
-        """Tests that the output of the forward methods does not
+        """
+        Tests that the output of the forward methods does not
         contain Inf values or NaN values.
         """
         for (input, target), (input_padding_mask, target_padding_mask) in zip(
@@ -237,7 +244,8 @@ class TestParticleTransformer(unittest.TestCase):
             )
 
     def test_projection_layer(self):
-        """Tests the functionality of the projection layers.
+        """
+        Tests the functionality of the projection layers.
         Ensures that the input_projection transforms the data from the
         input feature space to the hidden representation space, and
         that the particle_head correctly maps it back to the original
@@ -249,7 +257,8 @@ class TestParticleTransformer(unittest.TestCase):
         self.assertEqual(output_proj.shape, (20, 2, self.dim_features))
 
     def test_weights_change_after_training(self):
-        """Verifies that the model's weights are updated during
+        """
+        Verifies that the model's weights are updated during
         training.
         """
         initial_weights = self.transformer.input_projection.weight.detach().clone()
@@ -261,7 +270,8 @@ class TestParticleTransformer(unittest.TestCase):
         )
 
     def plot_losses(self, train_loss, val_loss):
-        """Plots the training and validation loss curves.
+        """
+        Plots the training and validation loss curves.
 
         Args:
             train_loss (list): Training loss values per epoch.
@@ -278,7 +288,8 @@ class TestParticleTransformer(unittest.TestCase):
         plt.show()
 
     def test_training(self):
-        """Runs the full training, validation, and testing process for
+        """
+        Runs the full training, validation, and testing process for
         the model. It first trains the model for 20 epochs, using the
         specified loss function and optimizer.
         Then, it evaluates the model on the test data after training.

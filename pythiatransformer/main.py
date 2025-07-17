@@ -1,4 +1,5 @@
-"""This script builds, trains, evaluates and saves a transformer based
+"""
+This script builds, trains, evaluates and saves a transformer based
 model designed to predict stable particles from status 23 particles.
 The main steps are:
 - Load the preprocessed datasets from data_processing.py
@@ -58,7 +59,8 @@ def plot_losses(
 
 
 def build_model():
-    """Build a unique istance of ParticleTransformer class.
+    """
+    Build a unique istance of ParticleTransformer class.
 
     Returns:
         ParticleTransformer: A model ready for training or inference.
@@ -80,7 +82,8 @@ def build_model():
     )
 
 def train_and_save_model():
-    """Trains the ParticleTransformer model and saves the trained
+    """
+    Trains the ParticleTransformer model and saves the trained
     weights to a `.pt` file.
     """
     transformer = build_model()

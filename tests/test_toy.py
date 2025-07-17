@@ -5,7 +5,8 @@ from pythiatransformer.toy.toy_model import ToyDataset, ToyTransformer
 
 
 class TestToyDataset(unittest.TestCase):
-    """Unit tests for the ToyDataset class. Ensures that the ToyDataset
+    """
+    Unit tests for the ToyDataset class. Ensures that the ToyDataset
     behaves as expected. Tested behaviors include:
     - Correct dataset length based on initialization parameter.
     - Expected shapes and dimensions of the returned sample tensors.
@@ -14,14 +15,16 @@ class TestToyDataset(unittest.TestCase):
       valid elements in the padded target sequence.
     """
     def test_dataset_length(self):
-        """Tests that the dataset returns the correct number of
+        """
+        Tests that the dataset returns the correct number of
         samples when initialized with n_samples=100.
         """
         dataset = ToyDataset(n_samples=100)
         self.assertEqual(len(dataset), 100)
 
     def test_shapes(self):
-        """Tests that the shapes of the returned tensors from a sample
+        """
+        Tests that the shapes of the returned tensors from a sample
         in ToyDataset are as expected.
         """
         dataset = ToyDataset(n_samples=1, max_len=5)
@@ -32,7 +35,8 @@ class TestToyDataset(unittest.TestCase):
         self.assertEqual(mask.shape, (5,))
 
     def test_mask_sum_matches_length(self):
-        """Verifies that the length value matches the sum of the mask
+        """
+        Verifies that the length value matches the sum of the mask
         (i.e., number of valid tokens).
         """
         dataset = ToyDataset(n_samples=1, max_len=5)
@@ -40,7 +44,8 @@ class TestToyDataset(unittest.TestCase):
         self.assertEqual(length, mask.sum().item())
 
     def test_sample_sum(self):
-        """Checks that the sum of the valid elements in the target
+        """
+        Checks that the sum of the valid elements in the target
         sequence (y_pad) is approximately equal to the scalar input x.
         The equality is checked up to 3 decimal places (places=3),
         meaning the absolute difference between the two values should
@@ -57,7 +62,8 @@ class TestToyDataset(unittest.TestCase):
 
 
 class TestToyTransformer(unittest.TestCase):
-    """Unit tests for the ToyTransformer class. Verifies the correct
+    """
+    Unit tests for the ToyTransformer class. Verifies the correct
     behavior and output shapes of the ToyTransformer's methods.
     Verifies:
     - The forward_teacher method returns outputs with correct shapes.
@@ -66,14 +72,16 @@ class TestToyTransformer(unittest.TestCase):
       respecting the configured max_len.
     """
     def setUp(self):
-        """Initializes an instance of the model and initializes the
+        """
+        Initializes an instance of the model and initializes the
         model in evaluation mode before each test.
         """
         self.model = ToyTransformer(d_model=32, nhead=4, max_len=5)
         self.model.eval()
 
     def test_forward_shapes(self):
-        """Verifies that the forward_teacher method returns outputs of
+        """
+        Verifies that the forward_teacher method returns outputs of
         the correct shape.
         """
         B, T = 2, 5
@@ -86,7 +94,8 @@ class TestToyTransformer(unittest.TestCase):
         self.assertEqual(stop_logits.shape, (B, T + 1))
 
     def test_training_step(self):
-        """Tests the model behavior during training. Ensures that the
+        """
+        Tests the model behavior during training. Ensures that the
         model can perform a typical training step without numerical
         errors or crashes, and that the gradients are computed
         correctly.
@@ -108,7 +117,8 @@ class TestToyTransformer(unittest.TestCase):
         self.assertFalse(torch.isnan(loss).any())
 
     def test_generate_shape(self):
-        """Tests the generate method. Checks that:
+        """
+        Tests the generate method. Checks that:
         - The output y_seq is a two-dimensional tensor.
         - The batch size dimension in the output matches the input
           batch size.
