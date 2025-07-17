@@ -439,9 +439,10 @@ class ParticleTransformer(nn.Module):
                     val_loss = val_loss[:epoch + 1 - patient_early]
                     break
                 
-            torch.cuda.empty_cache()
-            log_gpu_memory(epoch)
-            log_peak_memory(epoch)
+            if torch.cuda.is_available():
+                torch.cuda.empty_cache()
+                log_gpu_memory(epoch)
+                log_peak_memory(epoch)
 
         logger.info("Training completed!")
         return train_loss, val_loss
