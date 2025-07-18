@@ -1,11 +1,16 @@
+"""
+Unit tests for the transformer functions.
+All tests are written using Python's `unittest` framework.
+"""
+
+import unittest
+
 import matplotlib.pyplot as plt
-import scipy
 import torch
-import torch.nn as nn
+from torch import nn
 import torch.nn.functional
 import torch.optim as optimizer
 from torch.utils.data import TensorDataset, DataLoader
-import unittest
 
 from pythiatransformer.transformer import ParticleTransformer
 
@@ -125,7 +130,7 @@ class TestParticleTransformer(unittest.TestCase):
         """
         target = []
         padding_mask = []
-        for i in range(num_event):
+        for _ in range(num_event):
             target_len = torch.randint(1, max_num_particles + 1, (1,)).item()
             one_event_target = torch.rand(target_len, num_features)
             padded_target = nn.functional.pad(
@@ -175,7 +180,7 @@ class TestParticleTransformer(unittest.TestCase):
             generator=generator if shuffle else None,
         )
         return loader
-    
+
     def test_device_consistency(self):
         """
         Verifies that all tensors used in training (inputs, targets
@@ -230,7 +235,7 @@ class TestParticleTransformer(unittest.TestCase):
         for (input, target), (input_padding_mask, target_padding_mask) in zip(
             self.train_data, self.train_data_pad_mask
         ):
-            output, eos_prob_vector = self.transformer.forward(
+            output, _ = self.transformer.forward(
                 input,
                 target,
                 input_padding_mask,

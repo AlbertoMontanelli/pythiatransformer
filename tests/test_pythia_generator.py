@@ -1,10 +1,15 @@
+"""
+Unit tests for the pythia_generator functions.
+All tests are written using Python's `unittest` framework.
+"""
+
 from pathlib import Path
 
-import awkward as ak
 import unittest
 from unittest.mock import patch
 import uproot
-from loguru import logger
+
+import awkward as ak
 
 from pythiatransformer.pythia_generator import (
     setup_pythia,
@@ -83,12 +88,12 @@ class PythiaTransformerTest(unittest.TestCase):
         self.DummyParticle = DummyParticle
 
     def test_setup_pythia(self):
-        seed=1
-        eCM=1000
-        pTHatMin=1
         """
         Test if Pythia is set up correctly.
         """
+        seed=1
+        eCM=1000
+        pTHatMin=1
         try:
             pythia = setup_pythia(seed, eCM, pTHatMin)
             self.assertIsNot(pythia, None, "Pythia setup returned None.")
@@ -147,7 +152,7 @@ class PythiaTransformerTest(unittest.TestCase):
         append_empty_event(data, self.features, "")
         cleanup_event(data, self.features, "")
         for key in data.keys():
-            self.assertEqual(len(data[key]), 0, f"Cleaning unsuccessful")
+            self.assertEqual(len(data[key]), 0, "Cleaning unsuccessful")
 
     def test_convert_to_awkward(self):
         """
@@ -272,7 +277,7 @@ class PythiaTransformerTest(unittest.TestCase):
         data_final = {}
 
         # Mock function to simulate saving data to a ROOT file.
-        def mock_save(file_name, data_23_input, data_final_input):
+        def mock_save(data_23_input, data_final_input):
             """
             Mocking function to substituite save_to_root function.
             Fill non locally the dictionaries defined before with the

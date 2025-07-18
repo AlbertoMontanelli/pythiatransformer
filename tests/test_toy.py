@@ -1,5 +1,9 @@
+"""
+Unit tests for the toy_model functions.
+All tests are written using Python's `unittest` framework.
+"""
+
 import unittest
-import scipy
 import torch
 from pythiatransformer.toy.toy_model import ToyDataset, ToyTransformer
 
@@ -29,7 +33,7 @@ class TestToyDataset(unittest.TestCase):
         """
         dataset = ToyDataset(n_samples=1, max_len=5)
         # Retrieves the first sample from the dataset.
-        x, y_pad, mask, length = dataset[0]
+        x, y_pad, mask, _ = dataset[0]
         self.assertEqual(x.ndim, 0)
         self.assertEqual(y_pad.shape, (5,))
         self.assertEqual(mask.shape, (5,))
@@ -53,7 +57,7 @@ class TestToyDataset(unittest.TestCase):
         due to floating-point computations.
         """
         dataset = ToyDataset(n_samples=1, max_len=5)
-        x, y_pad, mask, length = dataset[0]
+        x, y_pad, _, length = dataset[0]
         self.assertAlmostEqual(
             y_pad[:length].sum().item(),
             x.item(),
@@ -84,14 +88,14 @@ class TestToyTransformer(unittest.TestCase):
         Verifies that the forward_teacher method returns outputs of
         the correct shape.
         """
-        B, T = 2, 5
-        x = torch.rand(B)
-        y = torch.rand(B, T)
-        mask = torch.ones(B, T, dtype=torch.bool)
-        length = torch.full((B,), T)
+        b, t = 2, 5
+        x = torch.rand(b)
+        y = torch.rand(b, t)
+        mask = torch.ones(b, t, dtype=torch.bool)
+        length = torch.full((b,), t)
         y_hat, stop_logits = self.model.forward_teacher(x, y, mask, length)
-        self.assertEqual(y_hat.shape, (B, T + 1))
-        self.assertEqual(stop_logits.shape, (B, T + 1))
+        self.assertEqual(y_hat.shape, (b, t + 1))
+        self.assertEqual(stop_logits.shape, (b, t + 1))
 
     def test_training_step(self):
         """
@@ -104,14 +108,14 @@ class TestToyTransformer(unittest.TestCase):
         model.train()
         optimizer = torch.optim.Adam(model.parameters(), lr=1e-3)
         criterion = torch.nn.MSELoss()
-        B, T = 2, 5
-        x = torch.rand(B)
-        y = torch.rand(B, T)
-        mask = torch.ones(B, T, dtype=torch.bool)
-        length = torch.full((B,), T)
+        b, t = 2, 5
+        x = torch.rand(b)
+        y = torch.rand(b, t)
+        mask = torch.ones(b, t, dtype=torch.bool)
+        length = torch.full((b,), t)
         # Ignore SOS for simplicity.
         y_hat, _ = model.forward_teacher(x, y, mask, length)
-        loss = criterion(y_hat[:, :T], y)
+        loss = criterion(y_hat[:, :t], y)
         loss.backward()
         optimizer.step()
         self.assertFalse(torch.isnan(loss).any())

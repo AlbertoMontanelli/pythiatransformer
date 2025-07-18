@@ -9,7 +9,7 @@ import random
 from loguru import logger
 import matplotlib.pyplot as plt
 import torch
-import torch.nn as nn
+from torch import nn
 from torch.utils.data import DataLoader, Dataset
 
 
@@ -24,8 +24,6 @@ def _check_type(var, name, t):
     """
     if not isinstance(var, t):
         raise TypeError(f"{name} must be of type {t.__name__}, got {type(var).__name__}")
-
-import matplotlib.pyplot as plt
 
 def plot_learning_curve(
     train_loss,
@@ -45,33 +43,35 @@ def plot_learning_curve(
         dpi (int): Resolution of the saved figure.
     """
     plt.figure()
-    plt.plot(range(1, len(loss_history) + 1), train_loss, label="Training Loss")
+    plt.plot(range(1, len(train_loss) + 1), train_loss, label="Training Loss")
     plt.xlabel("Epoch")
     plt.ylabel("Loss")
-    plt.title("Learning curve")
+    plt.title(title)
     plt.legend()
     plt.grid(True)
     plt.savefig(filename, dpi=dpi)
     plt.close()
-    logger.info(f"Learning curve saved as {filename}")    
+    logger.info(f"Learning curve saved as {filename}")
 
 
 class ToyDataset(Dataset):
+    """
+    This class prepares the dataset for the toy regression task.
+    Each data sample consists of:
+    - An input scalar x, sampled uniformly from (0, 10).
+    - A target sequence of k floats (y_1, ..., y_k) such that their
+        sum is equal to x. Here k is a random integer between 1 and
+        max_len. The sequence is zero-padded to a fixed maximum
+        lenght.
+    - A boolean mask indicating the valid (non-padded) elements of
+        the sequence.
+    
+    The purpose of this dataset is to train models to decompose a
+    scalar into a sequence of positive numbers that sum to it.
+
+    """
     def __init__(self, n_samples=10000, max_len=10, seed=42):
         """
-        This class prepares the dataset for the toy regression task.
-        Each data sample consists of:
-        - An input scalar x, sampled uniformly from (0, 10).
-        - A target sequence of k floats (y_1, ..., y_k) such that their
-          sum is equal to x. Here k is a random integer between 1 and
-          max_len. The sequence is zero-padded to a fixed maximum
-          lenght.
-        - A boolean mask indicating the valid (non-padded) elements of
-          the sequence.
-        
-        The purpose of this dataset is to train models to decompose a
-        scalar into a sequence of positive numbers that sum to it.
-
         Args:
             n_samples (int): Number of samples to generate. Default is
                              10000.
@@ -171,11 +171,11 @@ class ToyTransformer(nn.Module):
         _check_type(dropout, "dropout", float)
         _check_type(max_len, "max_len", int)
 
-        if not (d_model % nhead == 0):
+        if d_model % nhead != 0:
             raise ValueError(
                 "d_model must be a multiple of nhead."
             )
-        if not (0.0 <= dropout <= 1.0):
+        if not 0.0 <= dropout <= 1.0:
             raise ValueError("Dropout must be between 0.0 and 1.0")
         if max_len <= 0:
             raise ValueError(f"max_len must be > 0, got {max_len}")
@@ -196,7 +196,7 @@ class ToyTransformer(nn.Module):
         # Head to predict the end-of-sequence (EOS) probability.
         self.stop_head = nn.Linear(self.d_model, 1)
 
-    def forward_teacher(self, x, y, mask, lengths):
+    def forward_teacher(self, x, y, mask):
         """
         Forward pass in teacher forcing mode. The model receives a
         scalar input x, a padded target sequence y and the corresponding
@@ -209,8 +209,6 @@ class ToyTransformer(nn.Module):
             y (torch.Tensor): Target padded sequences of shape (B, T).
             mask (torch.Tensor): Boolean mask of shape (B, T), where
                                  True indicates non-padded elements.
-            lengths (torch.Tensor): Actual lengths of each target
-                                    sequence.
 
         Returns:
             y_hat (torch.Tensor): Predicted sequence of shape (B, T+1).
@@ -230,21 +228,21 @@ class ToyTransformer(nn.Module):
                 "Shape mismatch: y and mask must have the same shape."
             )
 
-        B, T = y.size()
+        b, t = y.size()
         device = x.device
         src = self.in_proj(x.unsqueeze(-1)).unsqueeze(1) # shape [B,1,d]
-        sos = self.sos_token.expand(B, -1, -1) # shape [B,1,d]
+        sos = self.sos_token.expand(b, -1, -1) # shape [B,1,d]
         tgt_emb = self.in_proj(y.unsqueeze(-1)) # shape [B,T,d]
         tgt = torch.cat([sos, tgt_emb], dim=1) # shape [B,T+1,d]
-        tgt_mask = nn.Transformer.generate_square_subsequent_mask(T + 1).to(
+        tgt_mask = nn.Transformer.generate_square_subsequent_mask(t + 1).to(
             device
         )
         src_key_padding_mask = torch.zeros(
-            B, 1, dtype=torch.bool, device=device
+            b, 1, dtype=torch.bool, device=device
         )
         pad_dec = ~mask
         tgt_key_padding_mask = torch.cat(
-            [torch.zeros(B, 1, dtype=torch.bool, device=device), pad_dec],
+            [torch.zeros(b, 1, dtype=torch.bool, device=device), pad_dec],
             dim=1,
         )
         out = self.transformer(
@@ -278,7 +276,7 @@ class ToyTransformer(nn.Module):
             y_seq (torch.Tensor): Generated sequence of shape (B, T),
                                   where T ≤ max_len.
         """
-        if not (0.0 <= stop_thresh <= 1.0):
+        if not 0.0 <= stop_thresh <= 1.0:
             raise ValueError(
                 f"stop_thresh must be between 0 and 1, got {stop_thresh}"
             )
@@ -286,12 +284,12 @@ class ToyTransformer(nn.Module):
         if max_len is None:
             max_len = self.max_len
         device = x.device
-        B = x.size(0)
+        b = x.size(0)
         src = self.in_proj(x.unsqueeze(-1)).unsqueeze(1)
         src_key_padding_mask = torch.zeros(
-            B, 1, dtype=torch.bool, device=device
+            b, 1, dtype=torch.bool, device=device
         )
-        tgt_emb = self.sos_token.expand(B, 1, self.d_model)
+        tgt_emb = self.sos_token.expand(b, 1, self.d_model)
         generated = []
         for t in range(max_len):
             tgt_mask = nn.Transformer.generate_square_subsequent_mask(
@@ -324,14 +322,14 @@ if __name__ == "__main__":
     - Saves the learning curve and the trained model.
     """
     # Set hyperparameters
-    n_samples = 5000
-    max_len = 10
-    batch_size = 64
-    epochs = 100
-    lr = 1e-3
+    N_SAMPLES = 5000
+    MAX_LEN = 10
+    BATCH_SIZE = 64
+    EPOCHS = 100
+    LR = 1e-3
 
-    dataset = ToyDataset(n_samples=n_samples, max_len=max_len)
-    loader = DataLoader(dataset, batch_size=batch_size, shuffle=True)
+    dataset = ToyDataset(n_samples=N_SAMPLES, max_len=MAX_LEN)
+    loader = DataLoader(dataset, batch_size=BATCH_SIZE, shuffle=True)
 
     model = ToyTransformer(
         d_model=64,
@@ -340,26 +338,26 @@ if __name__ == "__main__":
         num_decoder_layers=2,
         dim_feedforward=256,
         dropout=0.1,
-        max_len=max_len,
+        max_len=MAX_LEN,
     )
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
     model.to(device)
 
-    optim = torch.optim.Adam(model.parameters(), lr=lr)
+    optim = torch.optim.Adam(model.parameters(), lr=LR)
     mse_loss = nn.MSELoss()
     bce_loss = nn.BCEWithLogitsLoss()
 
     loss_history = []
-    for ep in range(epochs):
+    for ep in range(EPOCHS):
         model.train()
         total_loss = 0.0
         for x, y_pad, mask, length in loader:
             x, y_pad, mask = x.to(device), y_pad.to(device), mask.to(device)
-            stop_target = torch.zeros(x.size(0), max_len + 1, device=device)
+            stop_target = torch.zeros(x.size(0), MAX_LEN + 1, device=device)
             for i, L in enumerate(length):
                 stop_target[i, L] = 1.0
             optim.zero_grad()
-            y_hat, stop_logits = model.forward_teacher(x, y_pad, mask, length)
+            y_hat, stop_logits = model.forward_teacher(x, y_pad, mask)
             mse = mse_loss(y_hat[:, :-1] * mask.float(), y_pad * mask.float())
             stop = bce_loss(stop_logits, stop_target)
             loss = mse + stop
@@ -368,7 +366,7 @@ if __name__ == "__main__":
             total_loss += loss.item()
         avg_loss = total_loss / len(loader)
         loss_history.append(avg_loss)
-        logger.info(f"Epoch: {ep+1}/{epochs}, Loss: {avg_loss:.4f}")
+        logger.info(f"Epoch: {ep+1}/{EPOCHS}, Loss: {avg_loss:.4f}")
 
     plot_learning_curve(loss_history)
     torch.save(model.state_dict(), "toy_model.pt")

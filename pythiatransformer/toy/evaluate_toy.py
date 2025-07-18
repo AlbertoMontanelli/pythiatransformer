@@ -1,4 +1,5 @@
-"""Script to load a pretrained ToyTransformer model and run inference
+"""
+Script to load a pretrained ToyTransformer model and run inference
 on a ToyDataset test set.
 - Loads model weights from 'toy_model.pt'.
 - Uses a fixed max sequence length and stop threshold for generation.
@@ -13,19 +14,19 @@ import torch
 
 from toy_model import ToyTransformer, ToyDataset
 
-def plot_residual_histogram(residuals, filename="toy_residuals.pdf"):
+def plot_residual_histogram(res, filename="toy_residuals.pdf"):
     """
     Function to plot histogram of relative residuals.
 
     Args:
-      residuals (list): list of computed residuals, one per event;
+      res (list): list of computed residuals, one per event;
       filename (str): name of the figure that will be saved.
 
     Returns:
       None
     """
     plt.figure(figsize=(8, 5))
-    plt.hist(residuals, bins=5000, alpha=0.7, color='lightgreen', edgecolor='black', log=True)
+    plt.hist(res, bins=5000, alpha=0.7, color='lightgreen', edgecolor='black', log=True)
     plt.axvline(0, color='red', linestyle='--', label='Zero Error')
     plt.xlabel("Residuals")
     plt.ylabel("Counts")
@@ -40,8 +41,8 @@ def plot_residual_histogram(residuals, filename="toy_residuals.pdf"):
 
 if __name__ == "__main__":
     # Set generation parameters.
-    max_len = 10
-    threshold = 0.5
+    MAX_LEN = 10
+    THRESHOLD = 0.5
     # Load pretrained model.
     model = ToyTransformer(
         d_model=64,
@@ -50,25 +51,25 @@ if __name__ == "__main__":
         num_decoder_layers=2,
         dim_feedforward=256,
         dropout=0.1,
-        max_len=max_len
+        max_len=MAX_LEN
     )
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
     model.load_state_dict(torch.load("toy_model.pt", map_location=device))
     model.to(device)
     model.eval()
     # Prepare deterministic test dataset.
-    n_samples = 100000
-    testset = ToyDataset(n_samples=n_samples, max_len=max_len, seed=999)
+    N_SAMPLES = 100000
+    testset = ToyDataset(n_samples=N_SAMPLES, max_len=MAX_LEN, seed=999)
     # Prepare deterministic test dataset.
     residuals = []
-    for i in range(n_samples):
+    for i in range(N_SAMPLES):
         x, y_true, mask, length = testset[i]
         x = x.to(device)
         with torch.no_grad():
             y_pred = model.generate(
                 x.unsqueeze(0),
-                max_len=max_len,
-                stop_thresh=threshold
+                max_len=MAX_LEN,
+                stop_thresh=THRESHOLD
             )
         y_pred = y_pred.squeeze(0).cpu()
         pred_list = [f"{v:.4f}" for v in y_pred.tolist()]

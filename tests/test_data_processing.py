@@ -1,8 +1,13 @@
-import awkward as ak
+"""
+Unit tests for the data processing functions.
+All tests are written using Python's `unittest` framework.
+"""
+
 import math
-import numpy as np
-import torch
 import unittest
+
+import awkward as ak
+import torch
 
 from pythiatransformer.data_processing import (
     awkward_to_padded_tensor,
@@ -24,7 +29,6 @@ class TestDataProcessing(unittest.TestCase):
     - Check length of batches
     - Check splitting in training, validation, and test set
     """
-    
     def test_awkward_to_padded_tensor_invalid(self):
         """
         Test invalid types of parameters of original function.
@@ -65,13 +69,13 @@ class TestDataProcessing(unittest.TestCase):
             awkward_to_padded_tensor(
                 data=ak.Array({"pT": [[1]]}), features=["pT"], list_pt=["3"], truncate_pt=True
             )
-    
+
     def test_awkward_to_padded_tensor_no_trunc(self):
         """
         Test original function if truncate_pt=False.
         """
         data = ak.Array({"pT": [[1., 2., 3.], [4.]]})
-        tensor, mask, tot_pT = awkward_to_padded_tensor(
+        tensor, mask, tot_pt = awkward_to_padded_tensor(
             data, ["pT"]
         )
         self.assertEqual(
@@ -90,7 +94,7 @@ class TestDataProcessing(unittest.TestCase):
             mask[1, 2], "No padding when corresponding particle is not a true particle"
         ) # check padding.
         self.assertTrue(
-            torch.allclose(tot_pT, torch.Tensor([6., 4.])), "Error in summing pT per event"
+            torch.allclose(tot_pt, torch.Tensor([6., 4.])), "Error in summing pT per event"
         )
 
     def test_awkward_to_padded_tensor_trunc(self):
@@ -99,18 +103,23 @@ class TestDataProcessing(unittest.TestCase):
         """
         data_23 = ak.Array({"pT": [[1., 2., 3.], [4.]]})
         data_f = ak.Array({"pT": [[2., 2., 3.], [1., 1., 1., 2.]]})
-        tensor_23, mask_23, tot_pT_23 = awkward_to_padded_tensor(
+        _, _, tot_pt_23 = awkward_to_padded_tensor(
             data_23, ["pT"]
         )
-        tensor_f, mask_f = awkward_to_padded_tensor(
-            data_f, ["pT"], tot_pT_23, True
+        tensor_f, _ = awkward_to_padded_tensor(
+            data_f, ["pT"], tot_pt_23, True
         )
         self.assertEqual(
-            tensor_f.shape[0], tot_pT_23.shape[0], "Target tensor does not have same number of events as events for which pT has been computed"
+            tensor_f.shape[0],
+            tot_pt_23.shape[0],
+            "Target tensor does not have same number of events as "
+            "events for which pT has been computed"
         )
-        sum_pT_f = tensor_f.squeeze(-1).sum(dim=1)
+        sum_pt_f = tensor_f.squeeze(-1).sum(dim=1)
         self.assertTrue(
-            torch.all(sum_pT_f >= 0.5*tot_pT_23), "Sum of pT of targets is not always at least 50% of pT of corresponding data"
+            torch.all(sum_pt_f >= 0.5*tot_pt_23),
+            "Sum of pT of targets is not always at least 50% of pT of "
+            "corresponding data"
         )
 
     def test_batching_invalid(self):
@@ -132,7 +141,7 @@ class TestDataProcessing(unittest.TestCase):
             batching(valid_2, valid_2, batch_size=5)
         with self.assertRaises(ValueError):
             batching(valid_2, valid_2, batch_size=-4)
-        
+
     def test_batching_len(self):
         """
         Test length of batches when batch_size does not

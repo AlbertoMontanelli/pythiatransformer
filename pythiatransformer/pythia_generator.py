@@ -11,15 +11,15 @@ from loguru import logger
 from pythia8 import Pythia
 
 
-def setup_pythia(seed = 10, eCM = 13000., pTHatMin = 100.):
+def setup_pythia(seed = 10, e_cm = 13000., pt_hat_min = 100.):
     """
     Configure and return a Pythia instance for HardQCD process with
     initialized random seed, center of mass energy and minimum pTHat.
 
     Args:
         seed (int): initialization of the seed for reproducibility;
-        eCM (float): center of mass energy;
-        pTHatMin (float): minimum pTHat.
+        e_cm (float): center of mass energy;
+        pt_hat_min (float): minimum pTHat.
     
     Returns:
         pythia (Pythia): initialized instance of the Pythia generator.
@@ -29,33 +29,33 @@ def setup_pythia(seed = 10, eCM = 13000., pTHatMin = 100.):
             f"Parameter 'seed' must be of type 'int', "
             f"got '{type(seed)}' instead."
         )
-    if not isinstance(eCM, (int, float)):
+    if not isinstance(e_cm, (int, float)):
         raise TypeError(
-            f"Parameter 'eCM' must be a positive number (int/float), "
-            f"got '{type(eCM)}' instead."
+            f"Parameter 'e_cm' must be a positive number (int/float), "
+            f"got '{type(e_cm)}' instead."
         )
-    if eCM <= 0:
+    if e_cm <= 0:
         raise ValueError(
-            f"Parameter 'eCM' must be positive, "
-            f"got {eCM} instead."
+            f"Parameter 'e_cm' must be positive, "
+            f"got {e_cm} instead."
         )
-    if not isinstance(pTHatMin, (int, float)) or pTHatMin <= 0:
+    if not isinstance(pt_hat_min, (int, float)) or pt_hat_min <= 0:
         raise TypeError(
             f"Parameter 'pTHatMin' must be a positive number (int/float), "
-            f"got '{type(pTHatMin)}' instead."
+            f"got '{type(pt_hat_min)}' instead."
         )
-    if pTHatMin < 0:
+    if pt_hat_min < 0:
         raise ValueError(
-            f"Parameter 'pTHatMin' must be non negative, "
-            f"got {pTHatMin} instead."
+            f"Parameter 'pt_hat_min' must be non negative, "
+            f"got {pt_hat_min} instead."
         )
     try:
         pythia = Pythia()
         pythia.readString("Random:setSeed = on")
         pythia.readString(f"Random:seed = {seed}")
-        pythia.readString(f"Beams:eCM = {eCM}")
+        pythia.readString(f"Beams:e_cm = {e_cm}")
         pythia.readString("HardQCD:all = on")
-        pythia.readString(f"PhaseSpace:pTHatMin = {pTHatMin}.")
+        pythia.readString(f"PhaseSpace:pt_hat_min = {pt_hat_min}.")
         pythia.init()
         return pythia
     except Exception as e:
@@ -89,7 +89,7 @@ def initialize_data(features, suffix):
         )
     if not all(isinstance(f, str) for f in features):
         raise TypeError(
-            f"Parameter 'features' must be a list of strings."
+            "Parameter 'features' must be a list of strings."
         )
     return {f"{key}{suffix}": [] for key in features}
 
@@ -206,7 +206,7 @@ def save_to_root(output_file, data_23, data_final):
         raise
 
 
-def generate_events(output_file, n_events, seed = 10):
+def generate_events(output_file, n_events):
     """
     Generate events using Pythia and save particle data to a ROOT file.
     Store status==23 particles and final state particles in two TTrees.
@@ -216,7 +216,6 @@ def generate_events(output_file, n_events, seed = 10):
     Args:
         output_file (str): path to the output file;
         n_events (int): number of events;
-        seed (int): initialization of the seed for reproducibility.
 
     Returns:
         None
@@ -296,4 +295,4 @@ if __name__ == "__main__":
     for i in range(10):
         output = f"events_{i:02d}.root"
         seed = 10 + i
-        generate_events(output, n_events=100000, seed=seed)
+        generate_events(output, n_events=100000)

@@ -12,7 +12,7 @@ from loguru import logger
 import matplotlib.pyplot as plt
 import numpy as np
 import torch
-import torch.nn as nn
+from torch import nn
 
 from data_processing import load_saved_dataloaders
 from transformer import ParticleTransformer
@@ -28,20 +28,20 @@ from transformer import ParticleTransformer
 ) = load_saved_dataloaders(batch_size=128)
 
 
-def plot_diff_histogram(diff, filename="diff_hist.pdf"):
+def plot_diff_histogram(res, filename="diff_hist.pdf"):
     """
     Plots a histogram of the differences between the target sums
     and predicted target sums across all events.
 
     Args:
-        diff (list): A list of differences between target sums and
-                     predicted target sums for each event.
+        res (list): A list of differences between target sums and
+                    predicted target sums for each event.
         filename (str): The name of the output PDF file where the
                         histogram will be saved. Default is
                         'diff_hist.pdf'.
     """
     plt.figure(figsize=(8, 5))
-    plt.hist(diff, bins=100, color="lightgreen", edgecolor="black", alpha=0.7, log = True)
+    plt.hist(res, bins=100, color="lightgreen", edgecolor="black", alpha=0.7, log = True)
     plt.axvline(0, color="red", linestyle="--", label="Zero Error")
     plt.xlabel("Residuals")
     plt.ylabel("Counts")
