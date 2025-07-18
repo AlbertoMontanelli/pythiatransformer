@@ -92,8 +92,7 @@ class TestToyTransformer(unittest.TestCase):
         x = torch.rand(b)
         y = torch.rand(b, t)
         mask = torch.ones(b, t, dtype=torch.bool)
-        length = torch.full((b,), t)
-        y_hat, stop_logits = self.model.forward_teacher(x, y, mask, length)
+        y_hat, stop_logits = self.model.forward_teacher(x, y, mask)
         self.assertEqual(y_hat.shape, (b, t + 1))
         self.assertEqual(stop_logits.shape, (b, t + 1))
 
@@ -112,9 +111,8 @@ class TestToyTransformer(unittest.TestCase):
         x = torch.rand(b)
         y = torch.rand(b, t)
         mask = torch.ones(b, t, dtype=torch.bool)
-        length = torch.full((b,), t)
         # Ignore SOS for simplicity.
-        y_hat, _ = model.forward_teacher(x, y, mask, length)
+        y_hat, _ = model.forward_teacher(x, y, mask)
         loss = criterion(y_hat[:, :t], y)
         loss.backward()
         optimizer.step()
