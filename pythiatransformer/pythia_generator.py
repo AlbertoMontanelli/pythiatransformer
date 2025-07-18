@@ -11,15 +11,15 @@ from loguru import logger
 from pythia8 import Pythia
 
 
-def setup_pythia(seed = 10, e_cm = 13000., pt_hat_min = 100.):
+def setup_pythia(seed = 10, eCM = 13000., pTHatMin = 100.):
     """
     Configure and return a Pythia instance for HardQCD process with
     initialized random seed, center of mass energy and minimum pTHat.
 
     Args:
         seed (int): initialization of the seed for reproducibility;
-        e_cm (float): center of mass energy;
-        pt_hat_min (float): minimum pTHat.
+        eCM (float): center of mass energy;
+        pTHatMin (float): minimum pTHat.
     
     Returns:
         pythia (Pythia): initialized instance of the Pythia generator.
@@ -29,33 +29,33 @@ def setup_pythia(seed = 10, e_cm = 13000., pt_hat_min = 100.):
             f"Parameter 'seed' must be of type 'int', "
             f"got '{type(seed)}' instead."
         )
-    if not isinstance(e_cm, (int, float)):
+    if not isinstance(eCM, (int, float)):
         raise TypeError(
-            f"Parameter 'e_cm' must be a positive number (int/float), "
-            f"got '{type(e_cm)}' instead."
+            f"Parameter 'eCM' must be a positive number (int/float), "
+            f"got '{type(eCM)}' instead."
         )
-    if e_cm <= 0:
+    if eCM <= 0:
         raise ValueError(
-            f"Parameter 'e_cm' must be positive, "
-            f"got {e_cm} instead."
+            f"Parameter 'eCM' must be positive, "
+            f"got {eCM} instead."
         )
-    if not isinstance(pt_hat_min, (int, float)) or pt_hat_min <= 0:
+    if not isinstance(pTHatMin, (int, float)) or pTHatMin <= 0:
         raise TypeError(
             f"Parameter 'pTHatMin' must be a positive number (int/float), "
-            f"got '{type(pt_hat_min)}' instead."
+            f"got '{type(pTHatMin)}' instead."
         )
-    if pt_hat_min < 0:
+    if pTHatMin < 0:
         raise ValueError(
-            f"Parameter 'pt_hat_min' must be non negative, "
-            f"got {pt_hat_min} instead."
+            f"Parameter 'pTHatMin' must be non negative, "
+            f"got {pTHatMin} instead."
         )
     try:
         pythia = Pythia()
         pythia.readString("Random:setSeed = on")
         pythia.readString(f"Random:seed = {seed}")
-        pythia.readString(f"Beams:e_cm = {e_cm}")
+        pythia.readString(f"Beams:eCM = {eCM}")
         pythia.readString("HardQCD:all = on")
-        pythia.readString(f"PhaseSpace:pt_hat_min = {pt_hat_min}.")
+        pythia.readString(f"PhaseSpace:pTHatMin = {pTHatMin}.")
         pythia.init()
         return pythia
     except Exception as e:
