@@ -66,7 +66,7 @@ def plot_wasserstein_histogram(wasserstein_dists, filename="wasserstain_hist.pdf
     clean_dists = [d for d in wasserstein_dists if not np.isnan(d)]
 
     plt.figure(figsize=(8, 5))
-    plt.hist(clean_dists, bins=100, color='lightgreen', edgecolor='black', alpha=0.7)
+    plt.hist(clean_dists, bins=100, color='lightgreen', edgecolor='black', alpha=0.7, log = True)
     plt.xlabel('Wasserstein Distance')
     plt.ylabel('Frequency')
     plt.title('Distribution of Wasserstein Distances per Event')
