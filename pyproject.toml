@@ -17,7 +17,11 @@ authors = [
 dependencies = [
   "numpy",
   "uproot",
-  "loguru"
+  "loguru",
+  "torch",
+  "scipy",
+  "matplotlib",
+  "awkward"
 ]
 
 [tool.setuptools.packages.find]

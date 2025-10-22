@@ -1,31 +1,56 @@
-name: Run Tests
+name: CI
 
 on:
   push:
-    branches: [main]
+    branches: [ main ]
   pull_request:
-    branches: [main]
+    branches: [ main ]
 
 jobs:
   test:
     runs-on: ubuntu-latest
 
     steps:
-    - name: Checkout repository
-      uses: actions/checkout@v3
+      - name: Checkout
+        uses: actions/checkout@v4
 
-    - name: Set up Conda
-      uses: conda-incubator/setup-miniconda@v2
-      with:
-        python-version: 3.9
+      - name: Setup Miniconda
+        uses: conda-incubator/setup-miniconda@v3
+        with:
+          auto-update-conda: true
+          python-version: "3.9"
+          channels: conda-forge
+          activate-environment: myrootenv
 
-    - name: Create Conda environment
-      run: conda create -n myrootenv python=3.9 -y
+      - name: Create env and install ROOT (includes pythia8)
+        shell: bash -l {0}
+        run: |
+          conda create -y -n myrootenv python=3.9 -c conda-forge
+          conda activate myrootenv
+          conda install -y -c conda-forge root
+          python - <<'PY'
+            import ROOT
+            print("ROOT OK")
+            import pythia8
+            print("Pythia8 OK")
+            PY
 
-    - name: Install dependencies
-      run: |
-        conda run -n myrootenv conda install -c conda-forge root scipy -y
-        conda run -n myrootenv pip install -r requirements.txt
+      - name: Install Python deps via pip (torch + package deps from pyproject)
+        shell: bash -l {0}
+        run: |
+          conda activate myrootenv
+          python -m pip install --upgrade pip
+          # Torch CPU wheels
+          pip install -e .
 
-    - name: Run tests with unittest
-      run: conda run -n myrootenv python -m unittest discover -s tests -p "*.py"
+      - name: Configure headless Matplotlib
+        shell: bash -l {0}
+        run: |
+          echo "MPLBACKEND=Agg" >> $GITHUB_ENV
+
+      - name: Run unit tests
+        shell: bash -l {0}
+        run: |
+          conda activate myrootenv
+          python -m unittest discover -s tests -p "test_*.py" -v
+

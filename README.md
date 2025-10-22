@@ -1,7 +1,7 @@
 # pythiatransformer
 
 ![License](https://img.shields.io/github/license/AlbertoMontanelli/pythiatransformer.svg)
-[![CI](https://github.com/AlbertoMontanelli/pythiatransformer/actions/workflows/ci.yml/badge.svg)](https://github.com/AlbertoMontanelli/pythiatransformer/actions/workflows/ci.yml)
+[![CI](https://github.com/AlbertoMontanelli/pythiatransformer/actions/workflows/ci.yml/badge.svg)](https://github.com/AlbertoMontanelli/pythiatransformer/actions/workflows/tests.yml)
 [![Docs](https://github.com/AlbertoMontanelli/pythiatransformer/actions/workflows/docs.yml/badge.svg)](https://github.com/AlbertoMontanelli/pythiatransformer/actions/workflows/docs.yml)
 [![Docs](https://img.shields.io/badge/docs-latest-blue.svg)](https://albertomontanelli.github.io/pythiatransformer/)
 
