@@ -1,35 +1,56 @@
 """
-Unit tests for the toy_model functions.
-All tests are written using Python's `unittest` framework.
+Unit tests for ``pythiatransformer.toy.toy_model`` module.
+
+-``toy_model.ToyDataset`` class:
+    Ensure that the class behave as expected.
+    Tested behaviours include:
+
+    - correct dataset length based on initialization parameter;
+    - expected shapes and dimensions of the returned sample tensors;
+    - consistency between the mask and the reported sequence length;
+    - approximate equality between the scalar input and the sum of the
+      valid elements in the padded target sequence.
+
+-``toy_model.ToyTransformer`` class:
+    Verify the correct behaviour and output shapes of the different
+    class methods.
+    Tested behaviours include:
+
+    - ``ToyTransformer.forward_teacher`` returns outputs with correct
+      shapes;
+    - the model can perform a training step without numerical issues;
+    - the generate method outputs sequences with valid dimensions
+      respecting the configured ``max_len``.
+
+All tests are written using Python ``unittest`` framework.
 """
 
 import unittest
+
 import torch
+
 from pythiatransformer.toy.toy_model import ToyDataset, ToyTransformer
 
 
 class TestToyDataset(unittest.TestCase):
-    """
-    Unit tests for the ToyDataset class. Ensures that the ToyDataset
-    behaves as expected. Tested behaviors include:
-    - Correct dataset length based on initialization parameter.
-    - Expected shapes and dimensions of the returned sample tensors.
-    - Consistency between the mask and the reported sequence length.
-    - Approximate equality between the scalar input and the sum of the
-      valid elements in the padded target sequence.
-    """
+    """Test case for ``toy_model.ToyDataset`` class."""
+
     def test_dataset_length(self):
         """
-        Tests that the dataset returns the correct number of
-        samples when initialized with n_samples=100.
+        Test dataset length.
+
+        Assure that the dataset returns the correct number of samples
+        when initialized with ``n_samples=100``.
         """
         dataset = ToyDataset(n_samples=100)
         self.assertEqual(len(dataset), 100)
 
     def test_shapes(self):
         """
-        Tests that the shapes of the returned tensors from a sample
-        in ToyDataset are as expected.
+        Test shapes of returned tensors.
+
+        Assure that the shapes of the returned tensors from a sample
+        in ``toy_model.ToyDataset`` class are as expected.
         """
         dataset = ToyDataset(n_samples=1, max_len=5)
         # Retrieves the first sample from the dataset.
@@ -40,8 +61,10 @@ class TestToyDataset(unittest.TestCase):
 
     def test_mask_sum_matches_length(self):
         """
-        Verifies that the length value matches the sum of the mask
-        (i.e., number of valid tokens).
+        Test consistency between mask and length.
+
+        Verify that the length value matches the sum of the mask
+        (i.e. the number of valid tokens).
         """
         dataset = ToyDataset(n_samples=1, max_len=5)
         _, _, mask, length = dataset[0]
@@ -49,45 +72,37 @@ class TestToyDataset(unittest.TestCase):
 
     def test_sample_sum(self):
         """
+        Test sum of target sequence matches input scalar.
+
         Checks that the sum of the valid elements in the target
-        sequence (y_pad) is approximately equal to the scalar input x.
-        The equality is checked up to 3 decimal places (places=3),
-        meaning the absolute difference between the two values should
-        be less than 0.0005, allowing a reasonable numerical tolerance
-        due to floating-point computations.
+        sequence (``y_pad``) is approximately equal to the scalar input
+        ``x``. The equality is checked up to 3 decimal places
+        (``places=3``), meaning the absolute difference between the two
+        values should be less than 0.0005, allowing a reasonable
+        numerical tolerance due to floating-point computations.
         """
         dataset = ToyDataset(n_samples=1, max_len=5)
         x, y_pad, _, length = dataset[0]
         self.assertAlmostEqual(
-            y_pad[:length].sum().item(),
-            x.item(),
-            places=3
+            y_pad[:length].sum().item(), x.item(), places=3
         )
 
 
 class TestToyTransformer(unittest.TestCase):
-    """
-    Unit tests for the ToyTransformer class. Verifies the correct
-    behavior and output shapes of the ToyTransformer's methods.
-    Verifies:
-    - The forward_teacher method returns outputs with correct shapes.
-    - The model can perform a training step without numerical issues.
-    - The generate method outputs sequences with valid dimensions
-      respecting the configured max_len.
-    """
+    """Test case for ``toy_model.ToyTransformer`` class."""
+
     def setUp(self):
         """
-        Initializes an instance of the model and initializes the
-        model in evaluation mode before each test.
+        Initialize an instance of the model before each test.
+
+        After initialization of an istance of the model, the setup
+        method puts the model in evaluation mode before each test.
         """
         self.model = ToyTransformer(d_model=32, nhead=4, max_len=5)
         self.model.eval()
 
     def test_forward_shapes(self):
-        """
-        Verifies that the forward_teacher method returns outputs of
-        the correct shape.
-        """
+        """Test output shapes of forward_teacher method."""
         b, t = 2, 5
         x = torch.rand(b)
         y = torch.rand(b, t)
@@ -98,10 +113,11 @@ class TestToyTransformer(unittest.TestCase):
 
     def test_training_step(self):
         """
-        Tests the model behavior during training. Ensures that the
-        model can perform a typical training step without numerical
-        errors or crashes, and that the gradients are computed
-        correctly.
+        Test the model behaviour during training.
+
+        Ensure that the model can perform a typical training step
+        without numerical errors or crashes, and that the gradients
+        are computed correctly.
         """
         model = ToyTransformer(d_model=32, nhead=4, max_len=5)
         model.train()
@@ -120,13 +136,16 @@ class TestToyTransformer(unittest.TestCase):
 
     def test_generate_shape(self):
         """
-        Tests the generate method. Checks that:
-        - The output y_seq is a two-dimensional tensor.
-        - The batch size dimension in the output matches the input
-          batch size.
-        - The generated sequence length is less than or equal to
-          max_len, which is the maximum sequence length set in the
-          model.
+        Test the generate method.
+
+        Check that:
+
+        - the output ``y_seq`` is a two-dimensional tensor;
+        - the batch size dimension in the output matches the input
+          batch size;
+        - the generated sequence length is less than or equal to
+          ``max_len``, which is the maximum sequence length set in
+          the model.
         """
         x = torch.rand(5)
         y_seq = self.model.generate(x)
