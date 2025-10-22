@@ -1,0 +1,13 @@
+<!-- docs/installation.md -->
+# Installation
+
+## Requirements
+- Python >= 3.9
+- Conda (recommended)
+- ROOT + Pythia8
+
+## Quick start
+```bash
+git clone https://github.com/<user>/pythiatransformer.git
+cd pythiatransformer
+# conda env, install dipendenze, ecc.

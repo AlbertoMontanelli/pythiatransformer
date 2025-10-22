@@ -1,0 +1,754 @@
+<!DOCTYPE html>
+<html lang="en"
+      data-content_root="../../"
+      x-data="{ darkMode: localStorage.getItem('darkMode') || localStorage.setItem('darkMode', 'system'), activeSection: '' }"
+      x-init="$watch('darkMode', val => localStorage.setItem('darkMode', val))"
+      class="scroll-smooth"
+      :class="{'dark': darkMode === 'dark' || (darkMode === 'system' && window.matchMedia('(prefers-color-scheme: dark)').matches)}"
+>
+<head>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta charset="utf-8" />
+  <meta name="theme-color" media="(prefers-color-scheme: light)" content="white" />
+  <meta name="theme-color" media="(prefers-color-scheme: dark)" content="black" />
+  
+    <title>pythiatransformer.inference | pythiatransformer 0.1.0 documentation</title>
+    <meta property="og:title" content="pythiatransformer.inference | pythiatransformer 0.1.0 documentation" />
+    <meta name="twitter:title" content="pythiatransformer.inference | pythiatransformer 0.1.0 documentation" />
+      <link rel="stylesheet" type="text/css" href="../../_static/pygments.css?v=b86133f3" />
+      <link rel="stylesheet" type="text/css" href="../../_static/theme.css?v=42baaae4" />
+        <link rel="search" title="Search" href="../../search.html" />
+        <link rel="index" title="Index" href="../../genindex.html" />
+
+    <script>
+    <!-- Prevent Flash of wrong theme -->
+      const userPreference = localStorage.getItem('darkMode');
+      let mode;
+      if (userPreference === 'dark' || window.matchMedia('(prefers-color-scheme: dark)').matches) {
+        mode = 'dark';
+        document.documentElement.classList.add('dark');
+      } else {
+        mode = 'light';
+      }
+      if (!userPreference) {localStorage.setItem('darkMode', mode)}
+    </script>
+</head>
+  <body x-data="{ showSidebar: false, showScrollTop: false }" class="min-h-screen font-sans antialiased bg-background text-foreground" :class="{ 'overflow-hidden': showSidebar }">
+    <div x-cloak x-show="showSidebar" class="fixed inset-0 z-50 overflow-hidden bg-background/80 backdrop-blur-sm md:hidden" @click.self="showSidebar = false"></div><div id="page" class="relative flex flex-col min-h-screen"><a href="#content" class="absolute top-0 left-0 z-[100] block bg-background p-4 text-xl transition -translate-x-full opacity-0 focus:translate-x-0 focus:opacity-100">
+      Skip to content
+    </a><header
+  class="sticky top-0 z-40 w-full border-b shadow-sm border-border supports-backdrop-blur:bg-background/60 bg-background/95 backdrop-blur"><div class="container flex items-center h-14">
+    <div class="hidden mr-4 md:flex">
+      <a href="../../index.html" class="flex items-center mr-6"><span class="hidden font-bold sm:inline-block text-clip whitespace-nowrap">pythiatransformer 0.1.0 documentation</span>
+      </a></div><button
+      class="inline-flex items-center justify-center h-10 px-0 py-2 mr-2 text-base font-medium transition-colors rounded-md hover:text-accent-foreground hover:bg-transparent md:hidden"
+      type="button" @click="showSidebar = true">
+      <svg xmlns="http://www.w3.org/2000/svg" height="24" width="24" viewBox="0 96 960 960" aria-hidden="true"
+        fill="currentColor">
+        <path
+          d="M152.587 825.087q-19.152 0-32.326-13.174t-13.174-32.326q0-19.152 13.174-32.326t32.326-13.174h440q19.152 0 32.326 13.174t13.174 32.326q0 19.152-13.174 32.326t-32.326 13.174h-440Zm0-203.587q-19.152 0-32.326-13.174T107.087 576q0-19.152 13.174-32.326t32.326-13.174h320q19.152 0 32.326 13.174T518.087 576q0 19.152-13.174 32.326T472.587 621.5h-320Zm0-203.587q-19.152 0-32.326-13.174t-13.174-32.326q0-19.152 13.174-32.326t32.326-13.174h440q19.152 0 32.326 13.174t13.174 32.326q0 19.152-13.174 32.326t-32.326 13.174h-440ZM708.913 576l112.174 112.174q12.674 12.674 12.674 31.826t-12.674 31.826Q808.413 764.5 789.261 764.5t-31.826-12.674l-144-144Q600 594.391 600 576t13.435-31.826l144-144q12.674-12.674 31.826-12.674t31.826 12.674q12.674 12.674 12.674 31.826t-12.674 31.826L708.913 576Z" />
+      </svg>
+      <span class="sr-only">Toggle navigation menu</span>
+    </button>
+    <div class="flex items-center justify-between flex-1 space-x-2 sm:space-x-4 md:justify-end">
+      <div class="flex-1 w-full md:w-auto md:flex-none"><form id="searchbox"
+      action="../../search.html"
+      method="get"
+      class="relative flex items-center group"
+      @keydown.k.window.meta="$refs.search.focus()">
+  <input x-ref="search"
+          name="q"
+          id="search-input"
+          type="search"
+          aria-label="Search the docs"
+          placeholder="Search ..."
+          class="inline-flex items-center font-medium transition-colors bg-transparent focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 ring-offset-background border border-input hover:bg-accent focus:bg-accent hover:text-accent-foreground focus:text-accent-foreground hover:placeholder-accent-foreground py-2 px-4 relative h-9 w-full justify-start rounded-[0.5rem] text-sm text-muted-foreground sm:pr-12 md:w-40 lg:w-64" />
+  <kbd class="pointer-events-none absolute right-1.5 top-2 hidden h-5 select-none text-muted-foreground items-center gap-1 rounded border border-border bg-muted px-1.5 font-mono text-[10px] font-medium opacity-100 sm:flex group-hover:bg-accent group-hover:text-accent-foreground">
+    <span class="text-xs">⌘</span>
+    K
+  </kbd>
+</form>
+      </div>
+      <nav class="flex items-center space-x-1">
+        <button @click="darkMode = darkMode === 'light' ? 'dark' : 'light'"
+          class="relative inline-flex items-center justify-center px-0 text-sm font-medium transition-colors rounded-md hover:bg-accent hover:text-accent-foreground h-9 w-9"
+          type="button"
+          aria-label="Color theme switcher">
+          <svg xmlns="http://www.w3.org/2000/svg" height="24" width="24" viewBox="0 96 960 960" fill="currentColor"
+            class="absolute transition-all scale-100 rotate-0 dark:-rotate-90 dark:scale-0">
+            <path
+              d="M480 685q45.456 0 77.228-31.772Q589 621.456 589 576q0-45.456-31.772-77.228Q525.456 467 480 467q-45.456 0-77.228 31.772Q371 530.544 371 576q0 45.456 31.772 77.228Q434.544 685 480 685Zm0 91q-83 0-141.5-58.5T280 576q0-83 58.5-141.5T480 376q83 0 141.5 58.5T680 576q0 83-58.5 141.5T480 776ZM80 621.5q-19.152 0-32.326-13.174T34.5 576q0-19.152 13.174-32.326T80 530.5h80q19.152 0 32.326 13.174T205.5 576q0 19.152-13.174 32.326T160 621.5H80Zm720 0q-19.152 0-32.326-13.174T754.5 576q0-19.152 13.174-32.326T800 530.5h80q19.152 0 32.326 13.174T925.5 576q0 19.152-13.174 32.326T880 621.5h-80Zm-320-320q-19.152 0-32.326-13.174T434.5 256v-80q0-19.152 13.174-32.326T480 130.5q19.152 0 32.326 13.174T525.5 176v80q0 19.152-13.174 32.326T480 301.5Zm0 720q-19.152 0-32.326-13.17Q434.5 995.152 434.5 976v-80q0-19.152 13.174-32.326T480 850.5q19.152 0 32.326 13.174T525.5 896v80q0 19.152-13.174 32.33-13.174 13.17-32.326 13.17ZM222.174 382.065l-43-42Q165.5 327.391 166 308.239t13.174-33.065q13.435-13.674 32.587-13.674t32.065 13.674l42.239 43q12.674 13.435 12.555 31.706-.12 18.272-12.555 31.946-12.674 13.674-31.445 13.413-18.772-.261-32.446-13.174Zm494 494.761-42.239-43q-12.674-13.435-12.674-32.087t12.674-31.565Q686.609 756.5 705.38 757q18.772.5 32.446 13.174l43 41.761Q794.5 824.609 794 843.761t-13.174 33.065Q767.391 890.5 748.239 890.5t-32.065-13.674Zm-42-494.761Q660.5 369.391 661 350.62q.5-18.772 13.174-32.446l41.761-43Q728.609 261.5 747.761 262t33.065 13.174q13.674 13.435 13.674 32.587t-13.674 32.065l-43 42.239q-13.435 12.674-31.706 12.555-18.272-.12-31.946-12.555Zm-495 494.761Q165.5 863.391 165.5 844.239t13.674-32.065l43-42.239q13.435-12.674 32.087-12.674t31.565 12.674Q299.5 782.609 299 801.38q-.5 18.772-13.174 32.446l-41.761 43Q231.391 890.5 212.239 890t-33.065-13.174ZM480 576Z" />
+          </svg>
+          <svg xmlns="http://www.w3.org/2000/svg" height="24" width="24" viewBox="0 96 960 960" fill="currentColor"
+            class="absolute transition-all scale-0 rotate-90 dark:rotate-0 dark:scale-100">
+            <path
+              d="M480 936q-151 0-255.5-104.5T120 576q0-138 90-239.5T440 218q25-3 39 18t-1 44q-17 26-25.5 55t-8.5 61q0 90 63 153t153 63q31 0 61.5-9t54.5-25q21-14 43-1.5t19 39.5q-14 138-117.5 229T480 936Zm0-80q88 0 158-48.5T740 681q-20 5-40 8t-40 3q-123 0-209.5-86.5T364 396q0-20 3-40t8-40q-78 32-126.5 102T200 576q0 116 82 198t198 82Zm-10-270Z" />
+          </svg>
+        </button>
+      </nav>
+    </div>
+  </div>
+</header>
+
+    <div class="flex-1"><div class="container flex-1 items-start md:grid md:grid-cols-[220px_minmax(0,1fr)] md:gap-6 lg:grid-cols-[240px_minmax(0,1fr)] lg:gap-10"><aside id="left-sidebar"
+  class="fixed inset-y-0 left-0 md:top-14 z-50 md:z-30 bg-background md:bg-transparent transition-all duration-100 -translate-x-full md:translate-x-0 ml-0 p-6 md:p-0 md:-ml-2 md:h-[calc(100vh-3.5rem)] w-5/6 md:w-full shrink-0 overflow-y-auto border-r border-border md:sticky"
+  :aria-hidden="!showSidebar" :class="{ 'translate-x-0': showSidebar }">
+
+    <a href="../../index.html" class="!justify-start text-sm md:!hidden bg-background"><span class="font-bold text-clip whitespace-nowrap">pythiatransformer 0.1.0 documentation</span>
+    </a>
+
+    <div class="relative overflow-hidden md:overflow-auto my-4 md:my-0 h-[calc(100vh-8rem)] md:h-auto">
+      <div class="overflow-y-auto h-full w-full relative pr-6"><nav class="table w-full min-w-full my-6 lg:my-8">
+  <p class="caption" role="heading"><span class="caption-text">Contents:</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../installation.html">Installation</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">API</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../api.html">API Reference</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="../../_api/modules.html">pythiatransformer</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../_api/tests_index.html">tests</a></li>
+</ul>
+</li>
+</ul>
+
+</nav>
+      </div>
+    </div>
+    <button type="button" @click="showSidebar = false"
+      class="absolute md:hidden right-4 top-4 rounded-sm opacity-70 transition-opacity hover:opacity-100">
+      <svg xmlns="http://www.w3.org/2000/svg" height="24" width="24" viewBox="0 96 960 960" fill="currentColor"
+        stroke="none" class="h-4 w-4">
+        <path
+          d="M480 632 284 828q-11 11-28 11t-28-11q-11-11-11-28t11-28l196-196-196-196q-11-11-11-28t11-28q11-11 28-11t28 11l196 196 196-196q11-11 28-11t28 11q11 11 11 28t-11 28L536 576l196 196q11 11 11 28t-11 28q-11 11-28 11t-28-11L480 632Z" />
+      </svg>
+    </button>
+  </aside>
+        <main class="relative py-6 lg:gap-10 lg:py-8 xl:grid xl:grid-cols-[1fr_300px]">
+<div class="w-full min-w-0 mx-auto">
+<nav aria-label="breadcrumbs"
+     class="flex items-center mb-4 space-x-1 text-sm text-muted-foreground">
+  <a class="overflow-hidden text-ellipsis whitespace-nowrap hover:text-foreground"
+     href="../../index.html">
+    <span class="hidden md:inline">pythiatransformer 0.1.0 documentation</span>
+    <svg xmlns="http://www.w3.org/2000/svg"
+         height="18"
+         width="18"
+         viewBox="0 96 960 960"
+         aria-label="Home"
+         fill="currentColor"
+         stroke="none"
+         class="md:hidden">
+      <path d="M240 856h120V616h240v240h120V496L480 316 240 496v360Zm-80 80V456l320-240 320 240v480H520V696h-80v240H160Zm320-350Z" />
+    </svg>
+  </a>
+  
+<div class="mr-1">/</div><a class="hover:text-foreground overflow-hidden text-ellipsis whitespace-nowrap"
+       href="../index.html">Module code</a>
+    
+<div class="mr-1">/</div><span aria-current="page"
+        class="font-medium text-foreground overflow-hidden text-ellipsis whitespace-nowrap">pythiatransformer.inference</span>
+</nav>
+
+    <div id="content" role="main">
+      <h1>Source code for pythiatransformer.inference</h1><div class="highlight"><pre>
+<span></span><code><span id="line-1"><span class="sd">&quot;&quot;&quot;</span>
+</span><span id="line-2"><span class="sd">Run inference with a trained Transformer to generate final particles.</span>
+</span><span id="line-3">
+</span><span id="line-4"><span class="sd">This script loads a pretrained Transformer model and performs</span>
+</span><span id="line-5"><span class="sd">autoregressive generation of stable final-state particles starting</span>
+</span><span id="line-6"><span class="sd">from status-23 inputs. It can either run a new inference or reload</span>
+</span><span id="line-7"><span class="sd">previously saved results to reproduce diagnostic plots.</span>
+</span><span id="line-8">
+</span><span id="line-9"><span class="sd">Workflow</span>
+</span><span id="line-10"><span class="sd">--------</span>
+</span><span id="line-11"><span class="sd">- load preprocessed datasets and rebuild the Transformer architecture;</span>
+</span><span id="line-12"><span class="sd">- load pretrained model weights;</span>
+</span><span id="line-13"><span class="sd">- run autoregressive generation of target particle sequences;</span>
+</span><span id="line-14"><span class="sd">- compute physics-level diagnostics (residuals, Wasserstein, KS tests);</span>
+</span><span id="line-15"><span class="sd">- save all results and plots to ``data/`` and ``plots/`` directories.</span>
+</span><span id="line-16">
+</span><span id="line-17"><span class="sd">Notes</span>
+</span><span id="line-18"><span class="sd">-----</span>
+</span><span id="line-19"><span class="sd">All input, output, and plot filenames follow a default naming</span>
+</span><span id="line-20"><span class="sd">convention unique for all ``pythiatransformer`` package.</span>
+</span><span id="line-21"><span class="sd">Each file name includes a unique ``_{suffix}`` tag identifying the</span>
+</span><span id="line-22"><span class="sd">specific dataset/plot/filename depending on the number of events.</span>
+</span><span id="line-23"><span class="sd">This suffix is the only user-controlled identifier, and it must remain</span>
+</span><span id="line-24"><span class="sd">consistent across all stages of the workflow (data generation,</span>
+</span><span id="line-25"><span class="sd">preprocessing, training, inference, and plotting).</span>
+</span><span id="line-26"><span class="sd">File names themselves should **not be changed manually**, as they are</span>
+</span><span id="line-27"><span class="sd">managed automatically by the pipeline and ensure consistent data</span>
+</span><span id="line-28"><span class="sd">linkage.</span>
+</span><span id="line-29"><span class="sd">&quot;&quot;&quot;</span>
+</span><span id="line-30">
+</span><span id="line-31"><span class="kn">import</span><span class="w"> </span><span class="nn">argparse</span>
+</span><span id="line-32"><span class="kn">import</span><span class="w"> </span><span class="nn">os</span>
+</span><span id="line-33"><span class="kn">import</span><span class="w"> </span><span class="nn">re</span>
+</span><span id="line-34">
+</span><span id="line-35"><span class="kn">import</span><span class="w"> </span><span class="nn">matplotlib.pyplot</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">plt</span>
+</span><span id="line-36"><span class="kn">import</span><span class="w"> </span><span class="nn">numpy</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">np</span>
+</span><span id="line-37"><span class="kn">import</span><span class="w"> </span><span class="nn">torch</span>
+</span><span id="line-38"><span class="kn">from</span><span class="w"> </span><span class="nn">loguru</span><span class="w"> </span><span class="kn">import</span> <span class="n">logger</span>
+</span><span id="line-39">
+</span><span id="line-40"><span class="kn">from</span><span class="w"> </span><span class="nn">pythiatransformer.main</span><span class="w"> </span><span class="kn">import</span> <span class="n">build_model</span>
+</span><span id="line-41"><span class="kn">from</span><span class="w"> </span><span class="nn">pythiatransformer.pythia_generator</span><span class="w"> </span><span class="kn">import</span> <span class="n">_dir_path_finder</span>
+</span><span id="line-42">
+</span><span id="line-43"><span class="n">os</span><span class="o">.</span><span class="n">environ</span><span class="p">[</span><span class="s2">&quot;PYTORCH_CUDA_ALLOC_CONF&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="s2">&quot;expandable_segments:True&quot;</span>
+</span><span id="line-44"><span class="n">device</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">device</span><span class="p">(</span><span class="s2">&quot;cuda:0&quot;</span> <span class="k">if</span> <span class="n">torch</span><span class="o">.</span><span class="n">cuda</span><span class="o">.</span><span class="n">is_available</span><span class="p">()</span> <span class="k">else</span> <span class="s2">&quot;cpu&quot;</span><span class="p">)</span>
+</span><span id="line-45"><span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Using device: </span><span class="si">{</span><span class="n">device</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+</span><span id="line-46">
+</span><span id="line-47"><span class="c1"># Update matplotlib.pyplot parameters.</span>
+</span><span id="line-48"><span class="n">plt</span><span class="o">.</span><span class="n">rcParams</span><span class="o">.</span><span class="n">update</span><span class="p">(</span>
+</span><span id="line-49">    <span class="p">{</span>
+</span><span id="line-50">        <span class="s2">&quot;font.family&quot;</span><span class="p">:</span> <span class="s2">&quot;serif&quot;</span><span class="p">,</span>
+</span><span id="line-51">        <span class="s2">&quot;font.serif&quot;</span><span class="p">:</span> <span class="p">[</span><span class="s2">&quot;DejaVu Serif&quot;</span><span class="p">],</span>
+</span><span id="line-52">        <span class="s2">&quot;font.size&quot;</span><span class="p">:</span> <span class="mi">14</span><span class="p">,</span>
+</span><span id="line-53">        <span class="s2">&quot;axes.titlesize&quot;</span><span class="p">:</span> <span class="mi">16</span><span class="p">,</span>
+</span><span id="line-54">        <span class="s2">&quot;axes.labelsize&quot;</span><span class="p">:</span> <span class="mi">14</span><span class="p">,</span>
+</span><span id="line-55">        <span class="s2">&quot;legend.fontsize&quot;</span><span class="p">:</span> <span class="mi">12</span><span class="p">,</span>
+</span><span id="line-56">        <span class="s2">&quot;xtick.labelsize&quot;</span><span class="p">:</span> <span class="mi">12</span><span class="p">,</span>
+</span><span id="line-57">        <span class="s2">&quot;ytick.labelsize&quot;</span><span class="p">:</span> <span class="mi">12</span><span class="p">,</span>
+</span><span id="line-58">    <span class="p">}</span>
+</span><span id="line-59"><span class="p">)</span>
+</span><span id="line-60">
+</span><span id="line-61">
+<div class="viewcode-block" id="plot_1hist">
+<a class="viewcode-back" href="../../_api/pythiatransformer.inference.html#pythiatransformer.inference.plot_1hist">[docs]</a>
+</span><span id="line-62"><span class="k">def</span><span class="w"> </span><span class="nf">plot_1hist</span><span class="p">(</span>
+</span><span id="line-63">    <span class="n">data</span><span class="p">,</span>
+</span><span id="line-64">    <span class="n">suffix</span><span class="p">,</span>
+</span><span id="line-65">    <span class="n">residuals</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
+</span><span id="line-66">    <span class="n">wd</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
+</span><span id="line-67">    <span class="n">bins</span><span class="o">=</span><span class="mi">100</span><span class="p">,</span>
+</span><span id="line-68"><span class="p">):</span>
+</span><span id="line-69"><span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+</span><span id="line-70"><span class="sd">    Plot one of: ``residuals | wd`` (one flag only must be ``True``).</span>
+</span><span id="line-71">
+</span><span id="line-72"><span class="sd">    Parameters</span>
+</span><span id="line-73"><span class="sd">    ----------</span>
+</span><span id="line-74"><span class="sd">    data : list[float] | list[float]</span>
+</span><span id="line-75"><span class="sd">        Data to plot. Expected shapes by mode: ``residuals`` -&gt; list of</span>
+</span><span id="line-76"><span class="sd">        per-event relative differences | ``wd`` -&gt; list of per-event</span>
+</span><span id="line-77"><span class="sd">        Wassertein distances;</span>
+</span><span id="line-78"><span class="sd">    suffix : str</span>
+</span><span id="line-79"><span class="sd">        Tag appended to the output filename.</span>
+</span><span id="line-80"><span class="sd">    residuals : bool</span>
+</span><span id="line-81"><span class="sd">        Plot histogram of event-wise relative differences:</span>
+</span><span id="line-82"><span class="sd">        ``(sum(targets) - sum(generated)) / sum(targets)``.</span>
+</span><span id="line-83"><span class="sd">    wd : bool</span>
+</span><span id="line-84"><span class="sd">        Plot histogram of per-event Wasserstein distances.</span>
+</span><span id="line-85"><span class="sd">    bins : int</span>
+</span><span id="line-86"><span class="sd">        Number of bins for the histogram.</span>
+</span><span id="line-87"><span class="sd">    &quot;&quot;&quot;</span>
+</span><span id="line-88">    <span class="n">modes</span> <span class="o">=</span> <span class="p">{</span><span class="s2">&quot;residuals&quot;</span><span class="p">:</span> <span class="n">residuals</span><span class="p">,</span> <span class="s2">&quot;wd&quot;</span><span class="p">:</span> <span class="n">wd</span><span class="p">}</span>
+</span><span id="line-89">    <span class="k">if</span> <span class="nb">sum</span><span class="p">(</span><span class="nb">bool</span><span class="p">(</span><span class="n">v</span><span class="p">)</span> <span class="k">for</span> <span class="n">v</span> <span class="ow">in</span> <span class="n">modes</span><span class="o">.</span><span class="n">values</span><span class="p">())</span> <span class="o">!=</span> <span class="mi">1</span><span class="p">:</span>
+</span><span id="line-90">        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;Select exactly one of: residuals | wd .&quot;</span><span class="p">)</span>
+</span><span id="line-91">
+</span><span id="line-92">    <span class="c1"># Find the only True mode.</span>
+</span><span id="line-93">    <span class="n">mode</span> <span class="o">=</span> <span class="nb">next</span><span class="p">(</span><span class="n">k</span> <span class="k">for</span> <span class="n">k</span><span class="p">,</span> <span class="n">v</span> <span class="ow">in</span> <span class="n">modes</span><span class="o">.</span><span class="n">items</span><span class="p">()</span> <span class="k">if</span> <span class="n">v</span><span class="p">)</span>
+</span><span id="line-94">
+</span><span id="line-95">    <span class="c1"># Titles, axes labels, filenames.</span>
+</span><span id="line-96">    <span class="n">titles</span> <span class="o">=</span> <span class="p">{</span>
+</span><span id="line-97">        <span class="s2">&quot;residuals&quot;</span><span class="p">:</span> <span class="s2">&quot;Distribution of residuals per event&quot;</span><span class="p">,</span>
+</span><span id="line-98">        <span class="s2">&quot;wd&quot;</span><span class="p">:</span> <span class="s2">&quot;Distribution of Wasserstein distances per event&quot;</span><span class="p">,</span>
+</span><span id="line-99">    <span class="p">}</span>
+</span><span id="line-100">    <span class="n">xlabels</span> <span class="o">=</span> <span class="p">{</span>
+</span><span id="line-101">        <span class="s2">&quot;residuals&quot;</span><span class="p">:</span> <span class="s2">&quot;Per-event residual&quot;</span><span class="p">,</span>
+</span><span id="line-102">        <span class="s2">&quot;wd&quot;</span><span class="p">:</span> <span class="s2">&quot;Per-event Wasserstein distance [GeV]&quot;</span><span class="p">,</span>
+</span><span id="line-103">    <span class="p">}</span>
+</span><span id="line-104">    <span class="n">base_names</span> <span class="o">=</span> <span class="p">{</span>
+</span><span id="line-105">        <span class="s2">&quot;residuals&quot;</span><span class="p">:</span> <span class="s2">&quot;residuals_hist&quot;</span><span class="p">,</span>
+</span><span id="line-106">        <span class="s2">&quot;wd&quot;</span><span class="p">:</span> <span class="s2">&quot;wd_hist&quot;</span><span class="p">,</span>
+</span><span id="line-107">    <span class="p">}</span>
+</span><span id="line-108">
+</span><span id="line-109">    <span class="c1"># Create output dir &amp; figure</span>
+</span><span id="line-110">    <span class="n">plot_dir</span> <span class="o">=</span> <span class="n">_dir_path_finder</span><span class="p">(</span><span class="n">data</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+</span><span id="line-111">    <span class="n">filename</span> <span class="o">=</span> <span class="n">plot_dir</span> <span class="o">/</span> <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">base_names</span><span class="p">[</span><span class="n">mode</span><span class="p">]</span><span class="si">}</span><span class="s2">_</span><span class="si">{</span><span class="n">suffix</span><span class="si">}</span><span class="s2">.pdf&quot;</span>
+</span><span id="line-112">    <span class="n">plt</span><span class="o">.</span><span class="n">figure</span><span class="p">(</span><span class="n">figsize</span><span class="o">=</span><span class="p">(</span><span class="mi">10</span><span class="p">,</span> <span class="mi">6</span><span class="p">),</span> <span class="n">dpi</span><span class="o">=</span><span class="mi">1200</span><span class="p">)</span>
+</span><span id="line-113">
+</span><span id="line-114">    <span class="c1"># Plot.</span>
+</span><span id="line-115">    <span class="n">plt</span><span class="o">.</span><span class="n">hist</span><span class="p">(</span>
+</span><span id="line-116">        <span class="n">data</span><span class="p">,</span>
+</span><span id="line-117">        <span class="n">bins</span><span class="o">=</span><span class="n">bins</span><span class="p">,</span>
+</span><span id="line-118">        <span class="n">color</span><span class="o">=</span><span class="s2">&quot;lightgreen&quot;</span><span class="p">,</span>
+</span><span id="line-119">        <span class="n">edgecolor</span><span class="o">=</span><span class="s2">&quot;black&quot;</span><span class="p">,</span>
+</span><span id="line-120">        <span class="n">alpha</span><span class="o">=</span><span class="mf">0.7</span><span class="p">,</span>
+</span><span id="line-121">        <span class="n">log</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+</span><span id="line-122">    <span class="p">)</span>
+</span><span id="line-123">    <span class="k">if</span> <span class="n">mode</span> <span class="o">==</span> <span class="s2">&quot;residuals&quot;</span><span class="p">:</span>
+</span><span id="line-124">        <span class="n">plt</span><span class="o">.</span><span class="n">axvline</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="n">color</span><span class="o">=</span><span class="s2">&quot;red&quot;</span><span class="p">,</span> <span class="n">linestyle</span><span class="o">=</span><span class="s2">&quot;--&quot;</span><span class="p">,</span> <span class="n">label</span><span class="o">=</span><span class="s2">&quot;Zero Error&quot;</span><span class="p">)</span>
+</span><span id="line-125">
+</span><span id="line-126">    <span class="n">plt</span><span class="o">.</span><span class="n">xlabel</span><span class="p">(</span><span class="n">xlabels</span><span class="p">[</span><span class="n">mode</span><span class="p">])</span>
+</span><span id="line-127">    <span class="n">plt</span><span class="o">.</span><span class="n">ylabel</span><span class="p">(</span><span class="s2">&quot;Counts&quot;</span><span class="p">)</span>
+</span><span id="line-128">    <span class="n">plt</span><span class="o">.</span><span class="n">title</span><span class="p">(</span><span class="n">titles</span><span class="p">[</span><span class="n">mode</span><span class="p">])</span>
+</span><span id="line-129">    <span class="n">plt</span><span class="o">.</span><span class="n">grid</span><span class="p">(</span><span class="kc">True</span><span class="p">,</span> <span class="n">alpha</span><span class="o">=</span><span class="mf">0.3</span><span class="p">)</span>
+</span><span id="line-130">    <span class="n">plt</span><span class="o">.</span><span class="n">tight_layout</span><span class="p">()</span>
+</span><span id="line-131">    <span class="n">plt</span><span class="o">.</span><span class="n">savefig</span><span class="p">(</span><span class="n">filename</span><span class="p">,</span> <span class="n">dpi</span><span class="o">=</span><span class="mi">1200</span><span class="p">)</span>
+</span><span id="line-132">    <span class="n">plt</span><span class="o">.</span><span class="n">close</span><span class="p">()</span>
+</span><span id="line-133">    <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;histogram saved to </span><span class="si">{</span><span class="n">filename</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span></div>
+
+</span><span id="line-134">
+</span><span id="line-135">
+<div class="viewcode-block" id="plot_pt_hist">
+<a class="viewcode-back" href="../../_api/pythiatransformer.inference.html#pythiatransformer.inference.plot_pt_hist">[docs]</a>
+</span><span id="line-136"><span class="k">def</span><span class="w"> </span><span class="nf">plot_pt_hist</span><span class="p">(</span><span class="n">generated_tokens</span><span class="p">,</span> <span class="n">target_tokens</span><span class="p">,</span> <span class="n">suffix</span><span class="p">,</span> <span class="n">bins</span><span class="o">=</span><span class="mi">100</span><span class="p">):</span>
+</span><span id="line-137"><span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+</span><span id="line-138"><span class="sd">    Plot tokens `pT` for all the particles from all events.</span>
+</span><span id="line-139">
+</span><span id="line-140"><span class="sd">    Plot ``generated_tokens`` vs ``target_tokens``, on the same axes.</span>
+</span><span id="line-141">
+</span><span id="line-142"><span class="sd">    Parameters</span>
+</span><span id="line-143"><span class="sd">    ----------</span>
+</span><span id="line-144"><span class="sd">    generated_tokens : numpy.ndarray</span>
+</span><span id="line-145"><span class="sd">        All generated tokens `pT` from all events concatenated.</span>
+</span><span id="line-146"><span class="sd">    target_tokens : numpy.ndarray</span>
+</span><span id="line-147"><span class="sd">        All target tokens `pT` from all events concatenated.</span>
+</span><span id="line-148"><span class="sd">    suffix : str</span>
+</span><span id="line-149"><span class="sd">        Tag appended to the output filename.</span>
+</span><span id="line-150"><span class="sd">    bins : int</span>
+</span><span id="line-151"><span class="sd">        Number of bins for the histogram.</span>
+</span><span id="line-152">
+</span><span id="line-153"><span class="sd">    &quot;&quot;&quot;</span>
+</span><span id="line-154">    <span class="c1"># Build a common set of bin edges based on the combined data.</span>
+</span><span id="line-155">    <span class="c1"># This ensures both histograms share identical bin boundaries.</span>
+</span><span id="line-156">    <span class="n">lo</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">nanmin</span><span class="p">([</span><span class="n">np</span><span class="o">.</span><span class="n">nanmin</span><span class="p">(</span><span class="n">generated_tokens</span><span class="p">),</span> <span class="n">np</span><span class="o">.</span><span class="n">nanmin</span><span class="p">(</span><span class="n">target_tokens</span><span class="p">)])</span>
+</span><span id="line-157">    <span class="n">hi</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">nanmax</span><span class="p">([</span><span class="n">np</span><span class="o">.</span><span class="n">nanmax</span><span class="p">(</span><span class="n">generated_tokens</span><span class="p">),</span> <span class="n">np</span><span class="o">.</span><span class="n">nanmax</span><span class="p">(</span><span class="n">target_tokens</span><span class="p">)])</span>
+</span><span id="line-158">    <span class="n">rng</span> <span class="o">=</span> <span class="p">(</span><span class="n">lo</span><span class="p">,</span> <span class="n">hi</span><span class="p">)</span>
+</span><span id="line-159">    <span class="n">bin_edges</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">histogram_bin_edges</span><span class="p">(</span>
+</span><span id="line-160">        <span class="n">np</span><span class="o">.</span><span class="n">concatenate</span><span class="p">([</span><span class="n">generated_tokens</span><span class="p">,</span> <span class="n">target_tokens</span><span class="p">]),</span>
+</span><span id="line-161">        <span class="n">bins</span><span class="o">=</span><span class="n">bins</span><span class="p">,</span>
+</span><span id="line-162">        <span class="nb">range</span><span class="o">=</span><span class="n">rng</span><span class="p">,</span>
+</span><span id="line-163">    <span class="p">)</span><span class="o">.</span><span class="n">tolist</span><span class="p">()</span>
+</span><span id="line-164">
+</span><span id="line-165">    <span class="c1"># Create output dir.</span>
+</span><span id="line-166">    <span class="n">plot_dir</span> <span class="o">=</span> <span class="n">_dir_path_finder</span><span class="p">(</span><span class="n">data</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+</span><span id="line-167">    <span class="n">filename</span> <span class="o">=</span> <span class="n">plot_dir</span> <span class="o">/</span> <span class="sa">f</span><span class="s2">&quot;pt_hist_</span><span class="si">{</span><span class="n">suffix</span><span class="si">}</span><span class="s2">.pdf&quot;</span>
+</span><span id="line-168">
+</span><span id="line-169">    <span class="c1"># Plot.</span>
+</span><span id="line-170">    <span class="n">plt</span><span class="o">.</span><span class="n">figure</span><span class="p">(</span><span class="n">figsize</span><span class="o">=</span><span class="p">(</span><span class="mi">10</span><span class="p">,</span> <span class="mi">6</span><span class="p">),</span> <span class="n">dpi</span><span class="o">=</span><span class="mi">1200</span><span class="p">)</span>
+</span><span id="line-171">    <span class="n">plt</span><span class="o">.</span><span class="n">hist</span><span class="p">(</span>
+</span><span id="line-172">        <span class="n">target_tokens</span><span class="p">,</span>
+</span><span id="line-173">        <span class="n">bins</span><span class="o">=</span><span class="n">bin_edges</span><span class="p">,</span>
+</span><span id="line-174">        <span class="n">histtype</span><span class="o">=</span><span class="s2">&quot;step&quot;</span><span class="p">,</span>
+</span><span id="line-175">        <span class="n">color</span><span class="o">=</span><span class="s2">&quot;steelblue&quot;</span><span class="p">,</span>
+</span><span id="line-176">        <span class="n">linewidth</span><span class="o">=</span><span class="mi">2</span><span class="p">,</span>
+</span><span id="line-177">        <span class="n">label</span><span class="o">=</span><span class="s2">&quot;Target particles&quot;</span><span class="p">,</span>
+</span><span id="line-178">        <span class="n">log</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+</span><span id="line-179">    <span class="p">)</span>
+</span><span id="line-180">    <span class="n">plt</span><span class="o">.</span><span class="n">hist</span><span class="p">(</span>
+</span><span id="line-181">        <span class="n">generated_tokens</span><span class="p">,</span>
+</span><span id="line-182">        <span class="n">bins</span><span class="o">=</span><span class="n">bin_edges</span><span class="p">,</span>
+</span><span id="line-183">        <span class="n">histtype</span><span class="o">=</span><span class="s2">&quot;stepfilled&quot;</span><span class="p">,</span>
+</span><span id="line-184">        <span class="n">color</span><span class="o">=</span><span class="s2">&quot;coral&quot;</span><span class="p">,</span>
+</span><span id="line-185">        <span class="n">alpha</span><span class="o">=</span><span class="mf">0.5</span><span class="p">,</span>
+</span><span id="line-186">        <span class="n">edgecolor</span><span class="o">=</span><span class="s2">&quot;black&quot;</span><span class="p">,</span>
+</span><span id="line-187">        <span class="n">label</span><span class="o">=</span><span class="s2">&quot;Generated particles&quot;</span><span class="p">,</span>
+</span><span id="line-188">        <span class="n">log</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+</span><span id="line-189">    <span class="p">)</span>
+</span><span id="line-190">    <span class="n">plt</span><span class="o">.</span><span class="n">legend</span><span class="p">(</span><span class="n">fontsize</span><span class="o">=</span><span class="mi">12</span><span class="p">)</span>
+</span><span id="line-191">    <span class="n">plt</span><span class="o">.</span><span class="n">xlabel</span><span class="p">(</span><span class="s2">&quot;$p_T$ [GeV]&quot;</span><span class="p">)</span>
+</span><span id="line-192">    <span class="n">plt</span><span class="o">.</span><span class="n">ylabel</span><span class="p">(</span><span class="s2">&quot;Counts&quot;</span><span class="p">)</span>
+</span><span id="line-193">    <span class="n">plt</span><span class="o">.</span><span class="n">title</span><span class="p">(</span><span class="s2">&quot;Distribution of particles $p_T$ for all the events&quot;</span><span class="p">)</span>
+</span><span id="line-194">    <span class="n">plt</span><span class="o">.</span><span class="n">grid</span><span class="p">(</span><span class="kc">True</span><span class="p">,</span> <span class="n">alpha</span><span class="o">=</span><span class="mf">0.3</span><span class="p">)</span>
+</span><span id="line-195">    <span class="n">plt</span><span class="o">.</span><span class="n">tight_layout</span><span class="p">()</span>
+</span><span id="line-196">    <span class="n">plt</span><span class="o">.</span><span class="n">savefig</span><span class="p">(</span><span class="n">filename</span><span class="p">,</span> <span class="n">dpi</span><span class="o">=</span><span class="mi">1200</span><span class="p">)</span>
+</span><span id="line-197">    <span class="n">plt</span><span class="o">.</span><span class="n">close</span><span class="p">()</span>
+</span><span id="line-198">    <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;histogram saved to </span><span class="si">{</span><span class="n">filename</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span></div>
+
+</span><span id="line-199">
+</span><span id="line-200">
+<div class="viewcode-block" id="plot_token_hist">
+<a class="viewcode-back" href="../../_api/pythiatransformer.inference.html#pythiatransformer.inference.plot_token_hist">[docs]</a>
+</span><span id="line-201"><span class="k">def</span><span class="w"> </span><span class="nf">plot_token_hist</span><span class="p">(</span>
+</span><span id="line-202">    <span class="n">generated_tokens_per_event</span><span class="p">,</span> <span class="n">target_tokens_per_event</span><span class="p">,</span> <span class="n">suffix</span>
+</span><span id="line-203"><span class="p">):</span>
+</span><span id="line-204"><span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+</span><span id="line-205"><span class="sd">    Plot histogram of number of particles per event.</span>
+</span><span id="line-206">
+</span><span id="line-207"><span class="sd">    Plot ``generated_tokens_per_event`` vs ``target_tokens_per_event``,</span>
+</span><span id="line-208"><span class="sd">    on the same axes.</span>
+</span><span id="line-209">
+</span><span id="line-210"><span class="sd">    Parameters</span>
+</span><span id="line-211"><span class="sd">    ----------</span>
+</span><span id="line-212"><span class="sd">    generated_tokens_per_event : list[int]</span>
+</span><span id="line-213"><span class="sd">        Number of non-padded generated tokens per event.</span>
+</span><span id="line-214"><span class="sd">    target_tokens_per_event : list[int]</span>
+</span><span id="line-215"><span class="sd">        Number of non-padded target tokens per event.</span>
+</span><span id="line-216"><span class="sd">    suffix : str</span>
+</span><span id="line-217"><span class="sd">        Tag appended to the output filename.</span>
+</span><span id="line-218"><span class="sd">    &quot;&quot;&quot;</span>
+</span><span id="line-219">    <span class="c1"># Define bin edges centered on integer values.</span>
+</span><span id="line-220">    <span class="n">gen</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">generated_tokens_per_event</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="nb">int</span><span class="p">)</span>
+</span><span id="line-221">    <span class="n">tgt</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">target_tokens_per_event</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="nb">int</span><span class="p">)</span>
+</span><span id="line-222">    <span class="n">lo</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="nb">min</span><span class="p">(</span><span class="n">gen</span><span class="o">.</span><span class="n">min</span><span class="p">(),</span> <span class="n">tgt</span><span class="o">.</span><span class="n">min</span><span class="p">()))</span>
+</span><span id="line-223">    <span class="n">hi</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="nb">max</span><span class="p">(</span><span class="n">gen</span><span class="o">.</span><span class="n">max</span><span class="p">(),</span> <span class="n">tgt</span><span class="o">.</span><span class="n">max</span><span class="p">()))</span>
+</span><span id="line-224">    <span class="n">bin_edges</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="n">lo</span> <span class="o">-</span> <span class="mf">0.5</span><span class="p">,</span> <span class="n">hi</span> <span class="o">+</span> <span class="mf">1.5</span><span class="p">,</span> <span class="mi">1</span><span class="p">)</span><span class="o">.</span><span class="n">tolist</span><span class="p">()</span>
+</span><span id="line-225">
+</span><span id="line-226">    <span class="c1"># Create output dir.</span>
+</span><span id="line-227">    <span class="n">plot_dir</span> <span class="o">=</span> <span class="n">_dir_path_finder</span><span class="p">(</span><span class="n">data</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+</span><span id="line-228">    <span class="n">filename</span> <span class="o">=</span> <span class="n">plot_dir</span> <span class="o">/</span> <span class="sa">f</span><span class="s2">&quot;token_hist_</span><span class="si">{</span><span class="n">suffix</span><span class="si">}</span><span class="s2">.pdf&quot;</span>
+</span><span id="line-229">
+</span><span id="line-230">    <span class="c1"># Plot.</span>
+</span><span id="line-231">    <span class="n">plt</span><span class="o">.</span><span class="n">figure</span><span class="p">(</span><span class="n">figsize</span><span class="o">=</span><span class="p">(</span><span class="mi">10</span><span class="p">,</span> <span class="mi">6</span><span class="p">),</span> <span class="n">dpi</span><span class="o">=</span><span class="mi">1200</span><span class="p">)</span>
+</span><span id="line-232">    <span class="n">plt</span><span class="o">.</span><span class="n">hist</span><span class="p">(</span>
+</span><span id="line-233">        <span class="n">generated_tokens_per_event</span><span class="p">,</span>
+</span><span id="line-234">        <span class="n">bins</span><span class="o">=</span><span class="n">bin_edges</span><span class="p">,</span>
+</span><span id="line-235">        <span class="n">color</span><span class="o">=</span><span class="s2">&quot;coral&quot;</span><span class="p">,</span>
+</span><span id="line-236">        <span class="n">alpha</span><span class="o">=</span><span class="mf">0.6</span><span class="p">,</span>
+</span><span id="line-237">        <span class="n">edgecolor</span><span class="o">=</span><span class="s2">&quot;black&quot;</span><span class="p">,</span>
+</span><span id="line-238">        <span class="n">linewidth</span><span class="o">=</span><span class="mf">1.2</span><span class="p">,</span>
+</span><span id="line-239">        <span class="n">label</span><span class="o">=</span><span class="s2">&quot;generated particles&quot;</span><span class="p">,</span>
+</span><span id="line-240">        <span class="n">log</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+</span><span id="line-241">    <span class="p">)</span>
+</span><span id="line-242">    <span class="n">plt</span><span class="o">.</span><span class="n">hist</span><span class="p">(</span>
+</span><span id="line-243">        <span class="n">target_tokens_per_event</span><span class="p">,</span>
+</span><span id="line-244">        <span class="n">bins</span><span class="o">=</span><span class="n">bin_edges</span><span class="p">,</span>
+</span><span id="line-245">        <span class="n">color</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+</span><span id="line-246">        <span class="n">edgecolor</span><span class="o">=</span><span class="s2">&quot;black&quot;</span><span class="p">,</span>
+</span><span id="line-247">        <span class="n">alpha</span><span class="o">=</span><span class="mf">0.4</span><span class="p">,</span>
+</span><span id="line-248">        <span class="n">log</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+</span><span id="line-249">        <span class="n">label</span><span class="o">=</span><span class="s2">&quot;target particles&quot;</span><span class="p">,</span>
+</span><span id="line-250">    <span class="p">)</span>
+</span><span id="line-251">    <span class="n">plt</span><span class="o">.</span><span class="n">legend</span><span class="p">()</span>
+</span><span id="line-252">    <span class="n">plt</span><span class="o">.</span><span class="n">xlabel</span><span class="p">(</span><span class="s2">&quot;Per-event number of particles&quot;</span><span class="p">)</span>
+</span><span id="line-253">    <span class="n">plt</span><span class="o">.</span><span class="n">ylabel</span><span class="p">(</span><span class="s2">&quot;Counts&quot;</span><span class="p">)</span>
+</span><span id="line-254">    <span class="n">plt</span><span class="o">.</span><span class="n">title</span><span class="p">(</span><span class="s2">&quot;Distribution of number of particles per event&quot;</span><span class="p">)</span>
+</span><span id="line-255">    <span class="n">plt</span><span class="o">.</span><span class="n">grid</span><span class="p">(</span><span class="kc">True</span><span class="p">,</span> <span class="n">alpha</span><span class="o">=</span><span class="mf">0.3</span><span class="p">)</span>
+</span><span id="line-256">    <span class="n">plt</span><span class="o">.</span><span class="n">tight_layout</span><span class="p">()</span>
+</span><span id="line-257">    <span class="n">plt</span><span class="o">.</span><span class="n">savefig</span><span class="p">(</span><span class="n">filename</span><span class="p">,</span> <span class="n">dpi</span><span class="o">=</span><span class="mi">1200</span><span class="p">)</span>
+</span><span id="line-258">    <span class="n">plt</span><span class="o">.</span><span class="n">close</span><span class="p">()</span>
+</span><span id="line-259">    <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;histogram saved to </span><span class="si">{</span><span class="n">filename</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span></div>
+
+</span><span id="line-260">
+</span><span id="line-261">
+<div class="viewcode-block" id="run_inference">
+<a class="viewcode-back" href="../../_api/pythiatransformer.inference.html#pythiatransformer.inference.run_inference">[docs]</a>
+</span><span id="line-262"><span class="k">def</span><span class="w"> </span><span class="nf">run_inference</span><span class="p">(</span><span class="n">batch_size</span><span class="p">,</span> <span class="n">model_suffix</span><span class="p">):</span>
+</span><span id="line-263"><span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+</span><span id="line-264"><span class="sd">    Run autoregressive inference using a trained Transformer model.</span>
+</span><span id="line-265">
+</span><span id="line-266"><span class="sd">    Rebuild the model architecture with the same configuration used</span>
+</span><span id="line-267"><span class="sd">    during training, loads the pretrained weights, and performs</span>
+</span><span id="line-268"><span class="sd">    autoregressive target generation.</span>
+</span><span id="line-269">
+</span><span id="line-270"><span class="sd">    Parameters</span>
+</span><span id="line-271"><span class="sd">    ----------</span>
+</span><span id="line-272"><span class="sd">    model_path : str</span>
+</span><span id="line-273"><span class="sd">        Path to the pretrained model checkpoint (.pt file).</span>
+</span><span id="line-274"><span class="sd">    batch_size : int</span>
+</span><span id="line-275"><span class="sd">        Batch size for dataloader reconstruction.</span>
+</span><span id="line-276"><span class="sd">    model_suffix : str</span>
+</span><span id="line-277"><span class="sd">        String appended to the ParticleTransformer trained model to be</span>
+</span><span id="line-278"><span class="sd">        loaded.</span>
+</span><span id="line-279">
+</span><span id="line-280"><span class="sd">    Returns</span>
+</span><span id="line-281"><span class="sd">    -------</span>
+</span><span id="line-282"><span class="sd">    results : tuple</span>
+</span><span id="line-283"><span class="sd">        Tuple containing all computed quantities:</span>
+</span><span id="line-284"><span class="sd">        residuals, Wasserstein distances, generated tokens,</span>
+</span><span id="line-285"><span class="sd">        target tokens, global WD, KS statistics and per-event token</span>
+</span><span id="line-286"><span class="sd">        lists.</span>
+</span><span id="line-287"><span class="sd">    config : dict</span>
+</span><span id="line-288"><span class="sd">        Dictionary with model configuration parameters.</span>
+</span><span id="line-289"><span class="sd">    &quot;&quot;&quot;</span>
+</span><span id="line-290">    <span class="n">data_dir</span> <span class="o">=</span> <span class="n">_dir_path_finder</span><span class="p">(</span><span class="n">data</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+</span><span id="line-291">    <span class="n">model_path</span> <span class="o">=</span> <span class="n">data_dir</span> <span class="o">/</span> <span class="sa">f</span><span class="s2">&quot;transformer_model_</span><span class="si">{</span><span class="n">model_suffix</span><span class="si">}</span><span class="s2">.pt&quot;</span>
+</span><span id="line-292">    <span class="c1"># Identify the nr of events in the suffix as a string to correctly</span>
+</span><span id="line-293">    <span class="c1"># load the dataset with build_model.</span>
+</span><span id="line-294">    <span class="n">match</span> <span class="o">=</span> <span class="n">re</span><span class="o">.</span><span class="n">search</span><span class="p">(</span><span class="sa">r</span><span class="s2">&quot;transformer_model_(\d+)&quot;</span><span class="p">,</span> <span class="nb">str</span><span class="p">(</span><span class="n">model_path</span><span class="p">))</span>
+</span><span id="line-295">    <span class="k">if</span> <span class="n">match</span><span class="p">:</span>
+</span><span id="line-296">        <span class="n">data_suffix</span> <span class="o">=</span> <span class="n">match</span><span class="o">.</span><span class="n">group</span><span class="p">(</span><span class="mi">1</span><span class="p">)</span>
+</span><span id="line-297">    <span class="k">else</span><span class="p">:</span>
+</span><span id="line-298">        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+</span><span id="line-299">            <span class="sa">f</span><span class="s2">&quot;Could not extract numeric suffix from </span><span class="si">{</span><span class="n">model_path</span><span class="si">}</span><span class="s2">&quot;</span>
+</span><span id="line-300">        <span class="p">)</span>
+</span><span id="line-301">    <span class="n">model</span><span class="p">,</span> <span class="n">_</span> <span class="o">=</span> <span class="n">build_model</span><span class="p">(</span><span class="n">batch_size</span><span class="p">,</span> <span class="n">data_suffix</span><span class="p">)</span>
+</span><span id="line-302">    <span class="n">model</span><span class="o">.</span><span class="n">load_state_dict</span><span class="p">(</span><span class="n">torch</span><span class="o">.</span><span class="n">load</span><span class="p">(</span><span class="n">model_path</span><span class="p">,</span> <span class="n">map_location</span><span class="o">=</span><span class="n">device</span><span class="p">))</span>
+</span><span id="line-303">    <span class="n">model</span><span class="o">.</span><span class="n">to</span><span class="p">(</span><span class="n">device</span><span class="p">)</span>
+</span><span id="line-304">    <span class="n">model</span><span class="o">.</span><span class="n">device</span> <span class="o">=</span> <span class="n">device</span>
+</span><span id="line-305">
+</span><span id="line-306">    <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">&quot;Starting autoregressive inference&quot;</span><span class="p">)</span>
+</span><span id="line-307">    <span class="n">results</span> <span class="o">=</span> <span class="n">model</span><span class="o">.</span><span class="n">generate_targets</span><span class="p">()</span>
+</span><span id="line-308">
+</span><span id="line-309">    <span class="k">return</span> <span class="n">results</span></div>
+
+</span><span id="line-310">
+</span><span id="line-311">
+<div class="viewcode-block" id="save_data">
+<a class="viewcode-back" href="../../_api/pythiatransformer.inference.html#pythiatransformer.inference.save_data">[docs]</a>
+</span><span id="line-312"><span class="k">def</span><span class="w"> </span><span class="nf">save_data</span><span class="p">(</span>
+</span><span id="line-313">    <span class="n">suffix</span><span class="p">,</span>
+</span><span id="line-314">    <span class="n">residual</span><span class="p">,</span>
+</span><span id="line-315">    <span class="n">wd_per_event</span><span class="p">,</span>
+</span><span id="line-316">    <span class="n">generated_tokens</span><span class="p">,</span>
+</span><span id="line-317">    <span class="n">target_tokens</span><span class="p">,</span>
+</span><span id="line-318">    <span class="n">wd_global</span><span class="p">,</span>
+</span><span id="line-319">    <span class="n">ks_stat</span><span class="p">,</span>
+</span><span id="line-320">    <span class="n">ks_pvalue</span><span class="p">,</span>
+</span><span id="line-321">    <span class="n">generated_tokens_per_event</span><span class="p">,</span>
+</span><span id="line-322">    <span class="n">target_tokens_per_event</span><span class="p">,</span>
+</span><span id="line-323"><span class="p">):</span>
+</span><span id="line-324"><span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+</span><span id="line-325"><span class="sd">    Save inference results and metadata to the ``data/`` directory.</span>
+</span><span id="line-326">
+</span><span id="line-327"><span class="sd">    All computed results (residuals, Wasserstein distances, predicted</span>
+</span><span id="line-328"><span class="sd">    and target tokens, etc.) are serialized to a single ``.pt`` file.</span>
+</span><span id="line-329">
+</span><span id="line-330"><span class="sd">    Parameters</span>
+</span><span id="line-331"><span class="sd">    ----------</span>
+</span><span id="line-332"><span class="sd">    suffix : str</span>
+</span><span id="line-333"><span class="sd">        String appended to the output filenames. Files are saved as</span>
+</span><span id="line-334"><span class="sd">        ``data/results_&lt;suffix&gt;.pt`` and ``data/meta_&lt;suffix&gt;.json``.</span>
+</span><span id="line-335"><span class="sd">    residuals : list[float]</span>
+</span><span id="line-336"><span class="sd">        Event-wise relative difference between the total `pT` of target</span>
+</span><span id="line-337"><span class="sd">        and generated particles. For each event:</span>
+</span><span id="line-338"><span class="sd">        ``(sum(target) - sum(pred)) / sum(target)``.</span>
+</span><span id="line-339"><span class="sd">    wd_per_event : list[float]</span>
+</span><span id="line-340"><span class="sd">        Per-event Wasserstein distances between generated and target</span>
+</span><span id="line-341"><span class="sd">        tokens distributions.</span>
+</span><span id="line-342"><span class="sd">    generated_tokens : numpy.ndarray</span>
+</span><span id="line-343"><span class="sd">        All generated tokens `pT` from all events concatenated.</span>
+</span><span id="line-344"><span class="sd">    target_tokens : numpy.ndarray</span>
+</span><span id="line-345"><span class="sd">        All target tokens `pT` from all events concatenated.</span>
+</span><span id="line-346"><span class="sd">    wd_global : float</span>
+</span><span id="line-347"><span class="sd">        Wasserstein distance between the global generated vs target</span>
+</span><span id="line-348"><span class="sd">        tokens distributions (concatenated over events).</span>
+</span><span id="line-349"><span class="sd">    ks_stat : float</span>
+</span><span id="line-350"><span class="sd">        Kolmogorov-Smirnov test statistic between global generated vs</span>
+</span><span id="line-351"><span class="sd">        target tokens distributions.</span>
+</span><span id="line-352"><span class="sd">    ks_p : float</span>
+</span><span id="line-353"><span class="sd">        Kolmogorov-Smirnov two-sided p-value.</span>
+</span><span id="line-354"><span class="sd">    generated_tokens_per_event : list[int]</span>
+</span><span id="line-355"><span class="sd">        Number of non-padded generated tokens per event.</span>
+</span><span id="line-356"><span class="sd">    target_tokens_per_event : list[int]</span>
+</span><span id="line-357"><span class="sd">        Number of non-padded target tokens per event.</span>
+</span><span id="line-358"><span class="sd">    &quot;&quot;&quot;</span>
+</span><span id="line-359">    <span class="n">data_dir</span> <span class="o">=</span> <span class="n">_dir_path_finder</span><span class="p">(</span><span class="n">data</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+</span><span id="line-360">    <span class="nb">dict</span> <span class="o">=</span> <span class="p">{</span>
+</span><span id="line-361">        <span class="s2">&quot;residual&quot;</span><span class="p">:</span> <span class="n">residual</span><span class="p">,</span>
+</span><span id="line-362">        <span class="s2">&quot;wd_per_event&quot;</span><span class="p">:</span> <span class="n">wd_per_event</span><span class="p">,</span>
+</span><span id="line-363">        <span class="s2">&quot;generated_tokens&quot;</span><span class="p">:</span> <span class="n">generated_tokens</span><span class="p">,</span>
+</span><span id="line-364">        <span class="s2">&quot;target_tokens&quot;</span><span class="p">:</span> <span class="n">target_tokens</span><span class="p">,</span>
+</span><span id="line-365">        <span class="s2">&quot;wd_global&quot;</span><span class="p">:</span> <span class="n">wd_global</span><span class="p">,</span>
+</span><span id="line-366">        <span class="s2">&quot;ks_stat&quot;</span><span class="p">:</span> <span class="n">ks_stat</span><span class="p">,</span>
+</span><span id="line-367">        <span class="s2">&quot;ks_pvalue&quot;</span><span class="p">:</span> <span class="n">ks_pvalue</span><span class="p">,</span>
+</span><span id="line-368">        <span class="s2">&quot;generated_tokens_per_event&quot;</span><span class="p">:</span> <span class="n">generated_tokens_per_event</span><span class="p">,</span>
+</span><span id="line-369">        <span class="s2">&quot;target_tokens_per_event&quot;</span><span class="p">:</span> <span class="n">target_tokens_per_event</span><span class="p">,</span>
+</span><span id="line-370">    <span class="p">}</span>
+</span><span id="line-371">    <span class="n">np</span><span class="o">.</span><span class="n">savez</span><span class="p">(</span><span class="n">data_dir</span> <span class="o">/</span> <span class="sa">f</span><span class="s2">&quot;results_</span><span class="si">{</span><span class="n">suffix</span><span class="si">}</span><span class="s2">.npz&quot;</span><span class="p">,</span> <span class="o">**</span><span class="nb">dict</span><span class="p">)</span>
+</span><span id="line-372">    <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Saved data to </span><span class="si">{</span><span class="n">data_dir</span><span class="si">}</span><span class="s2">/results_</span><span class="si">{</span><span class="n">suffix</span><span class="si">}</span><span class="s2">.npz&quot;</span><span class="p">)</span></div>
+
+</span><span id="line-373">
+</span><span id="line-374">
+<div class="viewcode-block" id="load_data">
+<a class="viewcode-back" href="../../_api/pythiatransformer.inference.html#pythiatransformer.inference.load_data">[docs]</a>
+</span><span id="line-375"><span class="k">def</span><span class="w"> </span><span class="nf">load_data</span><span class="p">(</span><span class="n">suffix</span><span class="p">):</span>
+</span><span id="line-376"><span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+</span><span id="line-377"><span class="sd">    Load previously saved inference results.</span>
+</span><span id="line-378">
+</span><span id="line-379"><span class="sd">    Parameters</span>
+</span><span id="line-380"><span class="sd">    ----------</span>
+</span><span id="line-381"><span class="sd">    suffix : str</span>
+</span><span id="line-382"><span class="sd">        Suffix identifying which result files to load.</span>
+</span><span id="line-383">
+</span><span id="line-384"><span class="sd">    Returns</span>
+</span><span id="line-385"><span class="sd">    -------</span>
+</span><span id="line-386"><span class="sd">    tuple</span>
+</span><span id="line-387"><span class="sd">        Tuple containing all stored results:</span>
+</span><span id="line-388"><span class="sd">        (residual, wd_per_event, generated_tokens, target_tokens,</span>
+</span><span id="line-389"><span class="sd">        wd_global, ks_stat, ks_pvalue, generated_tokens_per_event,</span>
+</span><span id="line-390"><span class="sd">        target_tokens_per_event).</span>
+</span><span id="line-391"><span class="sd">    &quot;&quot;&quot;</span>
+</span><span id="line-392">    <span class="n">data_dir</span> <span class="o">=</span> <span class="n">_dir_path_finder</span><span class="p">(</span><span class="n">data</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+</span><span id="line-393">    <span class="n">filename</span> <span class="o">=</span> <span class="n">data_dir</span> <span class="o">/</span> <span class="sa">f</span><span class="s2">&quot;results_</span><span class="si">{</span><span class="n">suffix</span><span class="si">}</span><span class="s2">.npz&quot;</span>
+</span><span id="line-394">    <span class="n">d</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">load</span><span class="p">(</span><span class="n">filename</span><span class="p">,</span> <span class="n">allow_pickle</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+</span><span id="line-395">    <span class="k">return</span> <span class="p">(</span>
+</span><span id="line-396">        <span class="n">d</span><span class="p">[</span><span class="s2">&quot;residual&quot;</span><span class="p">],</span>
+</span><span id="line-397">        <span class="n">d</span><span class="p">[</span><span class="s2">&quot;wd_per_event&quot;</span><span class="p">],</span>
+</span><span id="line-398">        <span class="n">d</span><span class="p">[</span><span class="s2">&quot;generated_tokens&quot;</span><span class="p">],</span>
+</span><span id="line-399">        <span class="n">d</span><span class="p">[</span><span class="s2">&quot;target_tokens&quot;</span><span class="p">],</span>
+</span><span id="line-400">        <span class="n">d</span><span class="p">[</span><span class="s2">&quot;wd_global&quot;</span><span class="p">],</span>
+</span><span id="line-401">        <span class="n">d</span><span class="p">[</span><span class="s2">&quot;ks_stat&quot;</span><span class="p">],</span>
+</span><span id="line-402">        <span class="n">d</span><span class="p">[</span><span class="s2">&quot;ks_pvalue&quot;</span><span class="p">],</span>
+</span><span id="line-403">        <span class="n">d</span><span class="p">[</span><span class="s2">&quot;generated_tokens_per_event&quot;</span><span class="p">],</span>
+</span><span id="line-404">        <span class="n">d</span><span class="p">[</span><span class="s2">&quot;target_tokens_per_event&quot;</span><span class="p">],</span>
+</span><span id="line-405">    <span class="p">)</span></div>
+
+</span><span id="line-406">
+</span><span id="line-407">
+<div class="viewcode-block" id="make_plots">
+<a class="viewcode-back" href="../../_api/pythiatransformer.inference.html#pythiatransformer.inference.make_plots">[docs]</a>
+</span><span id="line-408"><span class="k">def</span><span class="w"> </span><span class="nf">make_plots</span><span class="p">(</span>
+</span><span id="line-409">    <span class="n">residuals</span><span class="p">,</span>
+</span><span id="line-410">    <span class="n">wd_per_event</span><span class="p">,</span>
+</span><span id="line-411">    <span class="n">generated_tokens</span><span class="p">,</span>
+</span><span id="line-412">    <span class="n">target_tokens</span><span class="p">,</span>
+</span><span id="line-413">    <span class="n">generated_tokens_per_event</span><span class="p">,</span>
+</span><span id="line-414">    <span class="n">target_tokens_per_event</span><span class="p">,</span>
+</span><span id="line-415">    <span class="n">suffix</span><span class="p">,</span>
+</span><span id="line-416"><span class="p">):</span>
+</span><span id="line-417"><span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+</span><span id="line-418"><span class="sd">    Generate and save summary plots of inference results.</span>
+</span><span id="line-419">
+</span><span id="line-420"><span class="sd">    Create all diagnostic plots:</span>
+</span><span id="line-421">
+</span><span id="line-422"><span class="sd">    - histogram of event-wise residuals between the total `pT` of</span>
+</span><span id="line-423"><span class="sd">      target and generated particles;</span>
+</span><span id="line-424"><span class="sd">    - histogram of Wasserstein distances per event;</span>
+</span><span id="line-425"><span class="sd">    - histogram of transverse momentum (pT) distributions for generated</span>
+</span><span id="line-426"><span class="sd">      particles and target particles.</span>
+</span><span id="line-427"><span class="sd">    - histogram of number of generated and target particles for each</span>
+</span><span id="line-428"><span class="sd">      event.</span>
+</span><span id="line-429">
+</span><span id="line-430"><span class="sd">    Parameters</span>
+</span><span id="line-431"><span class="sd">    ----------</span>
+</span><span id="line-432"><span class="sd">    residuals : list[float]</span>
+</span><span id="line-433"><span class="sd">        Event-wise relative difference between the total `pT` of target</span>
+</span><span id="line-434"><span class="sd">        and generated particles. For each event:</span>
+</span><span id="line-435"><span class="sd">        ``(sum(target) - sum(pred)) / sum(target)``.</span>
+</span><span id="line-436"><span class="sd">    wd_per_event : list[float]</span>
+</span><span id="line-437"><span class="sd">        Per-event Wasserstein distances between generated and target</span>
+</span><span id="line-438"><span class="sd">        tokens distributions.</span>
+</span><span id="line-439"><span class="sd">    generated_tokens : numpy.ndarray</span>
+</span><span id="line-440"><span class="sd">        All generated tokens `pT` from all events concatenated.</span>
+</span><span id="line-441"><span class="sd">    target_tokens : numpy.ndarray</span>
+</span><span id="line-442"><span class="sd">        All target tokens `pT` from all events concatenated.</span>
+</span><span id="line-443"><span class="sd">    generated_tokens_per_event : list[int]</span>
+</span><span id="line-444"><span class="sd">        Number of non-padded generated tokens per event.</span>
+</span><span id="line-445"><span class="sd">    target_tokens_per_event : list[int]</span>
+</span><span id="line-446"><span class="sd">        Number of non-padded target tokens per event.</span>
+</span><span id="line-447"><span class="sd">    suffix : str</span>
+</span><span id="line-448"><span class="sd">        String appended to output filenames in ``plots/``.</span>
+</span><span id="line-449"><span class="sd">    &quot;&quot;&quot;</span>
+</span><span id="line-450">    <span class="n">plot_1hist</span><span class="p">(</span><span class="n">residuals</span><span class="p">,</span> <span class="n">suffix</span><span class="p">,</span> <span class="n">residuals</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+</span><span id="line-451">    <span class="n">plot_1hist</span><span class="p">(</span><span class="n">wd_per_event</span><span class="p">,</span> <span class="n">suffix</span><span class="p">,</span> <span class="n">wd</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+</span><span id="line-452">    <span class="n">plot_pt_hist</span><span class="p">(</span><span class="n">generated_tokens</span><span class="p">,</span> <span class="n">target_tokens</span><span class="p">,</span> <span class="n">suffix</span><span class="p">)</span>
+</span><span id="line-453">    <span class="n">plot_token_hist</span><span class="p">(</span>
+</span><span id="line-454">        <span class="n">generated_tokens_per_event</span><span class="p">,</span>
+</span><span id="line-455">        <span class="n">target_tokens_per_event</span><span class="p">,</span>
+</span><span id="line-456">        <span class="n">suffix</span><span class="p">,</span>
+</span><span id="line-457">    <span class="p">)</span></div>
+
+</span><span id="line-458">
+</span><span id="line-459">
+<div class="viewcode-block" id="main">
+<a class="viewcode-back" href="../../_api/pythiatransformer.inference.html#pythiatransformer.inference.main">[docs]</a>
+</span><span id="line-460"><span class="k">def</span><span class="w"> </span><span class="nf">main</span><span class="p">():</span>
+</span><span id="line-461"><span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+</span><span id="line-462"><span class="sd">    Control model inference and plotting modes.</span>
+</span><span id="line-463">
+</span><span id="line-464"><span class="sd">    Depending on the selected mode, either:</span>
+</span><span id="line-465">
+</span><span id="line-466"><span class="sd">    - rebuild and run the model to generate new inference results,</span>
+</span><span id="line-467"><span class="sd">      saving outputs and metadata to ``data/``;</span>
+</span><span id="line-468"><span class="sd">    - or load existing results and regenerate the plots.</span>
+</span><span id="line-469">
+</span><span id="line-470"><span class="sd">    CLI Parameters</span>
+</span><span id="line-471"><span class="sd">    --------------</span>
+</span><span id="line-472"><span class="sd">    mode : {&#39;infer&#39;, &#39;plot&#39;}</span>
+</span><span id="line-473"><span class="sd">        Operation mode. ``infer`` runs inference and saves results;</span>
+</span><span id="line-474"><span class="sd">        ``plot`` loads saved results and regenerates plots.</span>
+</span><span id="line-475"><span class="sd">    --suffix : str, required</span>
+</span><span id="line-476"><span class="sd">        Suffix identifying both loaded model and output files.</span>
+</span><span id="line-477"><span class="sd">    --batch : int, optional, default=64</span>
+</span><span id="line-478"><span class="sd">        Batch size used to load datasets.</span>
+</span><span id="line-479"><span class="sd">    &quot;&quot;&quot;</span>
+</span><span id="line-480">    <span class="n">parser</span> <span class="o">=</span> <span class="n">argparse</span><span class="o">.</span><span class="n">ArgumentParser</span><span class="p">()</span>
+</span><span id="line-481">    <span class="n">parser</span><span class="o">.</span><span class="n">add_argument</span><span class="p">(</span>
+</span><span id="line-482">        <span class="s2">&quot;mode&quot;</span><span class="p">,</span>
+</span><span id="line-483">        <span class="n">choices</span><span class="o">=</span><span class="p">[</span><span class="s2">&quot;infer&quot;</span><span class="p">,</span> <span class="s2">&quot;plot&quot;</span><span class="p">],</span>
+</span><span id="line-484">        <span class="n">help</span><span class="o">=</span><span class="s2">&quot;infer: run model and save results; plot: load results and plot&quot;</span><span class="p">,</span>
+</span><span id="line-485">    <span class="p">)</span>
+</span><span id="line-486">    <span class="n">parser</span><span class="o">.</span><span class="n">add_argument</span><span class="p">(</span>
+</span><span id="line-487">        <span class="s2">&quot;--suffix&quot;</span><span class="p">,</span>
+</span><span id="line-488">        <span class="n">required</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+</span><span id="line-489">        <span class="n">help</span><span class="o">=</span><span class="s2">&quot;suffix identifying both loaded model and output files&quot;</span><span class="p">,</span>
+</span><span id="line-490">    <span class="p">)</span>
+</span><span id="line-491">    <span class="n">parser</span><span class="o">.</span><span class="n">add_argument</span><span class="p">(</span>
+</span><span id="line-492">        <span class="s2">&quot;--batch_size&quot;</span><span class="p">,</span> <span class="nb">type</span><span class="o">=</span><span class="nb">int</span><span class="p">,</span> <span class="n">default</span><span class="o">=</span><span class="mi">64</span><span class="p">,</span> <span class="n">help</span><span class="o">=</span><span class="s2">&quot;test set batch size&quot;</span>
+</span><span id="line-493">    <span class="p">)</span>
+</span><span id="line-494">    <span class="n">args</span> <span class="o">=</span> <span class="n">parser</span><span class="o">.</span><span class="n">parse_args</span><span class="p">()</span>
+</span><span id="line-495">
+</span><span id="line-496">    <span class="k">if</span> <span class="n">args</span><span class="o">.</span><span class="n">mode</span> <span class="o">==</span> <span class="s2">&quot;infer&quot;</span><span class="p">:</span>
+</span><span id="line-497">        <span class="p">(</span><span class="n">results</span><span class="p">)</span> <span class="o">=</span> <span class="n">run_inference</span><span class="p">(</span><span class="n">args</span><span class="o">.</span><span class="n">batch_size</span><span class="p">,</span> <span class="n">args</span><span class="o">.</span><span class="n">suffix</span><span class="p">)</span>
+</span><span id="line-498">        <span class="p">(</span>
+</span><span id="line-499">            <span class="n">residual</span><span class="p">,</span>
+</span><span id="line-500">            <span class="n">wd_per_event</span><span class="p">,</span>
+</span><span id="line-501">            <span class="n">generated_tokens</span><span class="p">,</span>
+</span><span id="line-502">            <span class="n">target_tokens</span><span class="p">,</span>
+</span><span id="line-503">            <span class="n">wd_global</span><span class="p">,</span>
+</span><span id="line-504">            <span class="n">ks_stat</span><span class="p">,</span>
+</span><span id="line-505">            <span class="n">ks_pvalue</span><span class="p">,</span>
+</span><span id="line-506">            <span class="n">generated_tokens_per_event</span><span class="p">,</span>
+</span><span id="line-507">            <span class="n">target_tokens_per_event</span><span class="p">,</span>
+</span><span id="line-508">        <span class="p">)</span> <span class="o">=</span> <span class="n">results</span>
+</span><span id="line-509">
+</span><span id="line-510">        <span class="n">save_data</span><span class="p">(</span>
+</span><span id="line-511">            <span class="n">args</span><span class="o">.</span><span class="n">suffix</span><span class="p">,</span>
+</span><span id="line-512">            <span class="n">residual</span><span class="p">,</span>
+</span><span id="line-513">            <span class="n">wd_per_event</span><span class="p">,</span>
+</span><span id="line-514">            <span class="n">generated_tokens</span><span class="p">,</span>
+</span><span id="line-515">            <span class="n">target_tokens</span><span class="p">,</span>
+</span><span id="line-516">            <span class="n">wd_global</span><span class="p">,</span>
+</span><span id="line-517">            <span class="n">ks_stat</span><span class="p">,</span>
+</span><span id="line-518">            <span class="n">ks_pvalue</span><span class="p">,</span>
+</span><span id="line-519">            <span class="n">generated_tokens_per_event</span><span class="p">,</span>
+</span><span id="line-520">            <span class="n">target_tokens_per_event</span><span class="p">,</span>
+</span><span id="line-521">        <span class="p">)</span>
+</span><span id="line-522">        <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span>
+</span><span id="line-523">            <span class="sa">f</span><span class="s2">&quot;WD_global=</span><span class="si">{</span><span class="n">wd_global</span><span class="si">}</span><span class="s2"> GeV, KS_stat=</span><span class="si">{</span><span class="n">ks_stat</span><span class="si">}</span><span class="s2">,&quot;</span>
+</span><span id="line-524">            <span class="sa">f</span><span class="s2">&quot; KS_pvalue=</span><span class="si">{</span><span class="n">ks_pvalue</span><span class="si">}</span><span class="s2">&quot;</span>
+</span><span id="line-525">        <span class="p">)</span>
+</span><span id="line-526">    <span class="k">else</span><span class="p">:</span>
+</span><span id="line-527">        <span class="p">(</span>
+</span><span id="line-528">            <span class="n">residual</span><span class="p">,</span>
+</span><span id="line-529">            <span class="n">wd_per_event</span><span class="p">,</span>
+</span><span id="line-530">            <span class="n">generated_tokens</span><span class="p">,</span>
+</span><span id="line-531">            <span class="n">target_tokens</span><span class="p">,</span>
+</span><span id="line-532">            <span class="n">wd_global</span><span class="p">,</span>
+</span><span id="line-533">            <span class="n">ks_stat</span><span class="p">,</span>
+</span><span id="line-534">            <span class="n">ks_pvalue</span><span class="p">,</span>
+</span><span id="line-535">            <span class="n">generated_tokens_per_event</span><span class="p">,</span>
+</span><span id="line-536">            <span class="n">target_tokens_per_event</span><span class="p">,</span>
+</span><span id="line-537">        <span class="p">)</span> <span class="o">=</span> <span class="n">load_data</span><span class="p">(</span><span class="n">args</span><span class="o">.</span><span class="n">suffix</span><span class="p">)</span>
+</span><span id="line-538">        <span class="n">make_plots</span><span class="p">(</span>
+</span><span id="line-539">            <span class="n">residual</span><span class="p">,</span>
+</span><span id="line-540">            <span class="n">wd_per_event</span><span class="p">,</span>
+</span><span id="line-541">            <span class="n">generated_tokens</span><span class="p">,</span>
+</span><span id="line-542">            <span class="n">target_tokens</span><span class="p">,</span>
+</span><span id="line-543">            <span class="n">generated_tokens_per_event</span><span class="p">,</span>
+</span><span id="line-544">            <span class="n">target_tokens_per_event</span><span class="p">,</span>
+</span><span id="line-545">            <span class="n">args</span><span class="o">.</span><span class="n">suffix</span><span class="p">,</span>
+</span><span id="line-546">        <span class="p">)</span>
+</span><span id="line-547">        <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span>
+</span><span id="line-548">            <span class="sa">f</span><span class="s2">&quot;WD_global=</span><span class="si">{</span><span class="n">wd_global</span><span class="si">}</span><span class="s2"> GeV, KS_stat=</span><span class="si">{</span><span class="n">ks_stat</span><span class="si">}</span><span class="s2">,&quot;</span>
+</span><span id="line-549">            <span class="sa">f</span><span class="s2">&quot; KS_pvalue=</span><span class="si">{</span><span class="n">ks_pvalue</span><span class="si">}</span><span class="s2">&quot;</span>
+</span><span id="line-550">        <span class="p">)</span></div>
+
+</span><span id="line-551">
+</span><span id="line-552">
+</span><span id="line-553"><span class="k">if</span> <span class="vm">__name__</span> <span class="o">==</span> <span class="s2">&quot;__main__&quot;</span><span class="p">:</span>
+</span><span id="line-554">    <span class="n">main</span><span class="p">()</span>
+</span></code></pre></div>
+    </div></div>
+        </main>
+      </div>
+    </div><footer class="py-6 border-t border-border md:py-0">
+    <div class="container flex flex-col items-center justify-between gap-4 md:h-24 md:flex-row">
+      <div class="flex flex-col items-center gap-4 px-8 md:flex-row md:gap-2 md:px-0">
+        <p class="text-sm leading-loose text-center text-muted-foreground md:text-left">Built with <a class="font-medium underline underline-offset-4"
+    href="https://www.sphinx-doc.org"
+    rel="noreferrer">Sphinx 7.4.7</a></p>
+</div>
+</div>
+</footer>
+  </div>
+  
+    <script src="../../_static/documentation_options.js?v=01f34227"></script>
+    <script src="../../_static/doctools.js?v=9a2dae69"></script>
+    <script src="../../_static/sphinx_highlight.js?v=dc90522c"></script>
+    <script defer="defer" src="../../_static/theme.js?v=073f68d9"></script>
+  
+</body>
+</html>
