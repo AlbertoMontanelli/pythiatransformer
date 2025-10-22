@@ -1,46 +1,50 @@
-"""This script implements a simple regression task using a transformer
-architecture. Given a single float input `x`, the model learns to
-generate a sequence of values [y_1, y_2, ..., y_k] such that the sum of
-the sequence equals `x`, with optional zero-padding up to a fixed
-maximum length.
 """
-import random
+Custom transformer model and training script for a toy regression task.
 
-from loguru import logger
+This script implements a simple regression task using a transformer
+architecture. Given a single float input ``x``, the model learns to
+generate a sequence of values ``[y_1, y_2, ..., y_k]`` such that the
+sum of the sequence equals ``x``, with optional zero-padding up to a
+fixed maximum length.
+"""
+
+import random
+from pathlib import Path
+
 import matplotlib.pyplot as plt
 import torch
+from loguru import logger
 from torch import nn
 from torch.utils.data import DataLoader, Dataset
 
 
 def _check_type(var, name, t):
-    """
-    Checks whether a variable is of the expected type.
-
-    Args:
-        var: The variable to check.
-        name (str): The name of the variable.
-        t: The expected type of the variable.
-    """
+    """Check whether a variable is of the expected type."""
     if not isinstance(var, t):
-        raise TypeError(f"{name} must be of type {t.__name__}, got {type(var).__name__}")
+        raise TypeError(
+            f"{name} must be of type {t.__name__}, got {type(var).__name__}"
+        )
+
 
 def plot_learning_curve(
     train_loss,
     filename="toy_learning_curve.pdf",
     title="Learning Curve",
-    dpi=1200
+    dpi=1200,
 ):
     """
-    Plots and saves the training and validation loss curves over
-    epochs.
+    Plot and save the training and validation loss curves over epochs.
 
-    Args:
-        train_loss (list): Training loss values.
-        filename (str): File name to save the plot. Default is
-                        "learning_curve.pdf".
-        title (str): Title of the plot. Default is "Learning Curve".
-        dpi (int): Resolution of the saved figure.
+    Parameters
+    ----------
+    train_loss : list[float]
+        Training loss values.
+    filename: str
+        File name to save the plot.
+    title: str
+        Title of the plot.
+    dpi: int
+        Resolution of the saved figure.
     """
     plt.figure()
     plt.plot(range(1, len(train_loss) + 1), train_loss, label="Training Loss")
@@ -49,35 +53,40 @@ def plot_learning_curve(
     plt.title(title)
     plt.legend()
     plt.grid(True)
-    plt.savefig(filename, dpi=dpi)
+    base_dir = Path(__file__).resolve().parent
+    plt.savefig(base_dir / filename, dpi=dpi)
     plt.close()
     logger.info(f"Learning curve saved as {filename}")
 
 
 class ToyDataset(Dataset):
     """
-    This class prepares the dataset for the toy regression task.
-    Each data sample consists of:
-    - An input scalar x, sampled uniformly from (0, 10).
-    - A target sequence of k floats (y_1, ..., y_k) such that their
-        sum is equal to x. Here k is a random integer between 1 and
-        max_len. The sequence is zero-padded to a fixed maximum
-        lenght.
-    - A boolean mask indicating the valid (non-padded) elements of
-        the sequence.
-    
-    The purpose of this dataset is to train models to decompose a
-    scalar into a sequence of positive numbers that sum to it.
+    Prepare the dataset for a toy regression task.
 
+    Each sample consists of:
+
+    - input scalar ``x`` sampled uniformly from (0, 10);
+    - target sequence ``(y_1, ..., y_k)`` whose sum equals ``x``, with
+      random length ``k`` in ``[1, max_len]``; zero-padded
+      to ``max_len``;
+    - boolean mask for valid (non-padded) elements.
+
+    The goal is to teach models to decompose a scalar into a positive
+    sequence that sums to it.
     """
+
     def __init__(self, n_samples=10000, max_len=10, seed=42):
         """
-        Args:
-            n_samples (int): Number of samples to generate. Default is
-                             10000.
-            max_len (int): Maximum sequence length for the target y.
-                           Default is 10.
-            seed (int): Random seed for reproducibility. Default is 42.
+        Class constructor.
+
+        Parameters
+        ----------
+        n_samples: int
+            Number of samples to generate.
+        max_len: int
+            Maximum sequence length for the target y.
+        seed: int
+            Random seed for reproducibility.
         """
         random.seed(seed)
         torch.manual_seed(seed)
@@ -86,9 +95,14 @@ class ToyDataset(Dataset):
         for _ in range(n_samples):
             x = random.uniform(0.0, 1.0) * 10
             k = random.randint(1, max_len)
+
+            # Create a tensor 1D of length k with values in [0,1].
             v = torch.rand(k)
+            # Normalize v to sum=1, then scale by x to decompose it
+            # into y.
             v = v / v.sum()
             y = v * x
+            # Create padded data tensor and padding mask.
             y_pad = torch.zeros(max_len)
             mask = torch.zeros(max_len, dtype=torch.bool)
             y_pad[:k] = y
@@ -97,27 +111,34 @@ class ToyDataset(Dataset):
 
     def __len__(self):
         """
-        Returns the total number of samples in the dataset.
+        Return the total number of samples in the dataset.
 
-        Returns:
-            int: The number of samples.
+        Returns
+        -------
+        len: int
+            The number of samples.
         """
         return len(self.data)
 
     def __getitem__(self, idx):
         """
-        Retrieves the sample at the given index.
+        Retrieve the sample at the given index.
 
-        Args:
-            idx (int): Index of the sample to retrieve.
+        Parameters
+        ----------
+        idx: int
+            Index of the sample to retrieve.
 
-        Returns:
-            Tuple[torch.Tensor, torch.Tensor, torch.Tensor, int]:
-                - x (torch.Tensor): Scalar input.
-                - y_pad (torch.Tensor): Target sequence.
-                - mask (torch.Tensor): Boolean mask indicating valid
-                                       (non-padded) elements.
-                - length (int): Actual sequence length before padding.
+        Returns
+        -------
+        x: torch.Tensor
+            Scalar input.
+        y_pad: torch.Tensor
+            Target sequence.
+        mask: torch.Tensor
+            Boolean mask indicating valid (non-padded) elements.
+        length: int
+            Actual sequence length before padding.
         """
         x, y_pad, mask, length = self.data[idx]
         return torch.tensor(x, dtype=torch.float32), y_pad, mask, length
@@ -125,11 +146,14 @@ class ToyDataset(Dataset):
 
 class ToyTransformer(nn.Module):
     """
+    Custom transformer model for the toy regression task.
+
     Implements a toy transformer model for sequential regression.
     The model takes as input a scalar x and learns to generate a
     sequence of positive values that sum approximately to x. It uses
     a transformer architecture with encoder-decoder structure.
     """
+
     def __init__(
         self,
         d_model=64,
@@ -141,26 +165,32 @@ class ToyTransformer(nn.Module):
         max_len=10,
     ):
         """
-        Args:
-        d_model (int): Dimensionality of the internal representation.
-                       Default is 64.
-        nhead (int): Number of attention heads. Default is 8.
-        num_encoder_layers (int): Number of encoder layers. Default
-                                  is 2.
-        num_decoder_layers (int): Number of decoder layers. Default
-                                  is 2.
-        dim_feedforward (int): Dimension of the feedforward network.
-                               Default is 256.
-        dropout (float): Dropout probability. Default is 0.1.
-        max_len (int): Maximum output sequence length. Default is 10.
+        Class constructor.
+
+        Parameters
+        ----------
+        d_model: int
+            Dimensionality of the internal representation.
+        nhead: int
+            Number of attention heads.
+        num_encoder_layers: int
+            Number of encoder layers.
+        num_decoder_layers: int
+            Number of decoder layers.
+        dim_feedforward: int,
+            Dimension of the feedforward network.
+        dropout: float
+            Dropout probability.
+        max_len: int
+            Maximum output sequence length.
         """
         super().__init__()
         self.d_model = d_model
         self.nhead = nhead
-        self.num_encoder_layers=num_encoder_layers
-        self.num_decoder_layers=num_decoder_layers
-        self.dim_feedforward=dim_feedforward
-        self.dropout=dropout
+        self.num_encoder_layers = num_encoder_layers
+        self.num_decoder_layers = num_decoder_layers
+        self.dim_feedforward = dim_feedforward
+        self.dropout = dropout
         self.max_len = max_len
 
         _check_type(d_model, "d_model", int)
@@ -172,15 +202,13 @@ class ToyTransformer(nn.Module):
         _check_type(max_len, "max_len", int)
 
         if d_model % nhead != 0:
-            raise ValueError(
-                "d_model must be a multiple of nhead."
-            )
+            raise ValueError("d_model must be a multiple of nhead.")
         if not 0.0 <= dropout <= 1.0:
             raise ValueError("Dropout must be between 0.0 and 1.0")
         if max_len <= 0:
             raise ValueError(f"max_len must be > 0, got {max_len}")
 
-        self.in_proj = nn.Linear(1, d_model) # Embedding in d_model.
+        self.in_proj = nn.Linear(1, d_model)  # Embedding in d_model.
         # Learnable start-of-sequence token.
         self.sos_token = nn.Parameter(torch.randn(1, 1, d_model))
         self.transformer = nn.Transformer(
@@ -198,22 +226,30 @@ class ToyTransformer(nn.Module):
 
     def forward_teacher(self, x, y, mask):
         """
-        Forward pass in teacher forcing mode. The model receives a
-        scalar input x, a padded target sequence y and the corresponding
-        padding mask. The decoder receives the target sequence with a special start of
-        sequence (SOS) token. It predicts the output sequence and a
-        stop signal for each step.
+        Forward pass in teacher forcing mode.
 
-        Args:
-            x (torch.Tensor): Input tensor of shape (B,).
-            y (torch.Tensor): Target padded sequences of shape (B, T).
-            mask (torch.Tensor): Boolean mask of shape (B, T), where
-                                 True indicates non-padded elements.
+        The model receives a scalar input ``x``, a padded target
+        sequence ``y`` and the corresponding padding mask.
+        The decoder receives the target sequence with a special start
+        of sequence (``SOS``) token. It predicts the output sequence
+        and a stop signal for each step.
 
-        Returns:
-            y_hat (torch.Tensor): Predicted sequence of shape (B, T+1).
-            stop_logits (torch,Tensor): Logits for stop signalof shape
-                                        (B, T+1).
+        Parameters
+        ----------
+        x: torch.Tensor
+            Input tensor of shape ``(B,)``.
+        y: torch.Tensor
+            Target padded sequences of shape ``(B, T)``.
+        mask: torch.Tensor
+            Boolean mask of shape ``(B, T)``, where ``True`` indicates
+            non-padded elements.
+
+        Returns
+        -------
+        y_hat: torch.Tensor
+            Predicted sequence of shape ``(B, T+1)``.
+        stop_logits: torch.Tensor
+            Logits for stop signalof shape ``(B, T+1)``.
         """
         if x.dim() != 1:
             raise ValueError(
@@ -230,10 +266,10 @@ class ToyTransformer(nn.Module):
 
         b, t = y.size()
         device = x.device
-        src = self.in_proj(x.unsqueeze(-1)).unsqueeze(1) # shape [B,1,d]
-        sos = self.sos_token.expand(b, -1, -1) # shape [B,1,d]
-        tgt_emb = self.in_proj(y.unsqueeze(-1)) # shape [B,T,d]
-        tgt = torch.cat([sos, tgt_emb], dim=1) # shape [B,T+1,d]
+        src = self.in_proj(x.unsqueeze(-1)).unsqueeze(1)  # shape [B,1,d].
+        sos = self.sos_token.expand(b, -1, -1)  # shape [B,1,d].
+        tgt_emb = self.in_proj(y.unsqueeze(-1))  # shape [B,T,d].
+        tgt = torch.cat([sos, tgt_emb], dim=1)  # shape [B,T+1,d].
         tgt_mask = nn.Transformer.generate_square_subsequent_mask(t + 1).to(
             device
         )
@@ -251,30 +287,36 @@ class ToyTransformer(nn.Module):
             tgt_mask=tgt_mask,
             src_key_padding_mask=src_key_padding_mask,
             tgt_key_padding_mask=tgt_key_padding_mask,
-        ) # shape [B,T+1,d]
-        y_hat = self.out_proj(out).squeeze(-1) # shape [B,T+1]
-        stop_logits = self.stop_head(out).squeeze(-1) # shape [B,T+1]
+        )  # shape [B,T+1,d].
+        y_hat = self.out_proj(out).squeeze(-1)  # shape [B,T+1].
+        stop_logits = self.stop_head(out).squeeze(-1)  # shape [B,T+1].
         return y_hat, stop_logits
 
     def generate(self, x, max_len=None, stop_thresh=0.5):
         """
-        Autoregressive inference for sequence generation. Starts
-        with a special start of sequence (SOS) token and generates
-        outputs one step at a time using the model's own predictions.
+        Autoregressive inference for sequence generation.
+
+        Starts with a special start of sequence (``SOS``) token and
+        generates outputs one step at a time using the model's own
+        predictions.
         Generation continues until either the maximum sequence length
         is reached or all stop probabilities exceed the given threshold.
 
-        Args:
-            x (torch.Tensor): Input tensor of shape (B,).
-            max_len (int): Maximum number of steps to generate.
-                           Optional, if None uses self.max_len.
-                           Default None.
-            stop_thresh (float): Threshold for the stop probability to
-                                 end generation.
+        Parameters
+        ----------
+        x: torch.Tensor
+            Input tensor of shape ``(B,)``.
+        max_len: int, default=None
+            Maximum number of steps to generate. Optional, if ``None``
+            uses ``self.max_len``.
+        stop_thresh: float, default=0.5
+            Threshold for the stop probability to end generation.
 
-        Returns:
-            y_seq (torch.Tensor): Generated sequence of shape (B, T),
-                                  where T ≤ max_len.
+        Returns
+        -------
+        y_seq: torch.Tensor
+            Generated sequence of shape ``(B, T)``, where
+            ``T ≤ max_len``.
         """
         if not 0.0 <= stop_thresh <= 1.0:
             raise ValueError(
@@ -313,13 +355,14 @@ class ToyTransformer(nn.Module):
         return y_seq
 
 
-if __name__ == "__main__":
+def main():
     """
-    Main training script for the ToyTransformer model.
-    - Generates a toy dataset of scalar inputs and target sequences.
-    - Defines and trains a transformer model.
-    - Trains for a fixed number of epochs
-    - Saves the learning curve and the trained model.
+    Execute the training script for the ToyTransformer model.
+
+    - generates a toy dataset of scalar inputs and target sequences;
+    - defines and trains a transformer model;
+    - trains for a fixed number of epochs;
+    - saves the learning curve and the trained model.
     """
     # Set hyperparameters
     N_SAMPLES = 5000
@@ -344,21 +387,28 @@ if __name__ == "__main__":
     model.to(device)
 
     optim = torch.optim.Adam(model.parameters(), lr=LR)
-    mse_loss = nn.MSELoss()
+    mse_loss = nn.MSELoss(reduction="none")
     bce_loss = nn.BCEWithLogitsLoss()
 
     loss_history = []
     for ep in range(EPOCHS):
         model.train()
         total_loss = 0.0
-        for x, y_pad, mask, length in loader:
-            x, y_pad, mask = x.to(device), y_pad.to(device), mask.to(device)
+        for x_loader, y_pad_loader, mask_loader, length in loader:
+            x, y_pad, mask = (
+                x_loader.to(device),
+                y_pad_loader.to(device),
+                mask_loader.to(device),
+            )
             stop_target = torch.zeros(x.size(0), MAX_LEN + 1, device=device)
             for i, L in enumerate(length):
                 stop_target[i, L] = 1.0
             optim.zero_grad()
             y_hat, stop_logits = model.forward_teacher(x, y_pad, mask)
-            mse = mse_loss(y_hat[:, :-1] * mask.float(), y_pad * mask.float())
+            mse_elements = mse_loss(y_hat[:, :-1], y_pad)
+            mask_f = mask.float()
+            valid = mask_f.sum()
+            mse = (mse_elements * mask_f).sum() / valid
             stop = bce_loss(stop_logits, stop_target)
             loss = mse + stop
             loss.backward()
@@ -366,8 +416,13 @@ if __name__ == "__main__":
             total_loss += loss.item()
         avg_loss = total_loss / len(loader)
         loss_history.append(avg_loss)
-        logger.info(f"Epoch: {ep+1}/{EPOCHS}, Loss: {avg_loss:.4f}")
+        logger.info(f"Epoch: {ep + 1}/{EPOCHS}, Loss: {avg_loss:.4f}")
 
     plot_learning_curve(loss_history)
-    torch.save(model.state_dict(), "toy_model.pt")
-    logger.info("Model saved in toy_model.pt")
+    base_dir = Path(__file__).resolve().parent
+    torch.save(model.state_dict(), f"{base_dir}/toy_model.pt")
+    logger.info(f"Model saved in {base_dir}/toy_model.pt")
+
+
+if __name__ == "__main__":
+    main()
