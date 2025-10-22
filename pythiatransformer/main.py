@@ -1,51 +1,80 @@
 """
-This script builds, trains, evaluates and saves a transformer based
-model designed to predict stable particles from status 23 particles.
-The main steps are:
-- Load the preprocessed datasets from data_processing.py
-- Define and build the transformer model.
-- Train and validate the model.
-- Plot training and validation loss curves.
-- Save the trained model.
-"""
-import os
+Build, train, evaluate and save a transformer based model.
 
-from loguru import logger
+The model is designed to predict stable particles from status 23
+particles.
+The main steps are:
+
+- load the preprocessed datasets from
+  ``pythiatransformer.data_processing``;
+- define and build the transformer model;
+- train and validate the model;
+- plot training and validation loss curves;
+- save the trained model.
+
+Notes
+-----
+All input, output, and plot filenames follow a default naming
+convention unique for all ``pythiatransformer`` package.
+Each file name includes a unique ``_{suffix}`` tag identifying the
+specific dataset/plot/filename depending on the number of events.
+This suffix is the only user-controlled identifier, and it must remain
+consistent across all stages of the workflow (data generation,
+preprocessing, training, inference, and plotting).
+File names themselves should **not be changed manually**, as they are
+managed automatically by the pipeline and ensure consistent data
+linkage.
+"""
+
+import argparse
+import json
+import os
+from datetime import datetime
+
 import matplotlib.pyplot as plt
 import torch
-from torch import nn
 import torch.optim as optimizer
+from loguru import logger
+from torch import nn
 
-from data_processing import load_saved_dataloaders
-from transformer import ParticleTransformer
-
-(
-    loader_train,
-    loader_val,
-    loader_test,
-    loader_padding_train,
-    loader_padding_val,
-    loader_padding_test,
-    subset,
-) = load_saved_dataloaders(batch_size=256)
+from pythiatransformer.data_processing import load_saved_dataloaders
+from pythiatransformer.pythia_generator import _dir_path_finder
+from pythiatransformer.transformer import ParticleTransformer
 
 os.environ["PYTORCH_CUDA_ALLOC_CONF"] = "expandable_segments:True"
 device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
-EPOCHS = 100
+EPOCHS = 20
 
-def plot_losses(
-    train_loss, val_loss, filename="learning_curve.pdf", dpi=1200
-):
-    """
-    Plots and saves the training and validation loss curves over
-    epochs.
 
-    Args:
-        train_loss (list): Training loss values.
-        val_loss (list): Validation loss values.
-        filename (string): Output file name for the saved plot.
-        dpi (int): Resolution of the saved figure.
+def plot_losses(train_loss, val_loss, ev_suffix, plot_suffix=None, dpi=1200):
     """
+    Plot and save the training and validation loss curves over epochs.
+
+    Parameters
+    ----------
+    train_loss: list[float]
+        Training loss values.
+    val_loss: list[float]
+        Validation loss values.
+    ev_suffix: str
+        String appended to the output filename identifying the number
+        of events of the dataset. The file is saved as
+        ``plots/learning_curve_<suffix>.pdf``
+    plot_suffix: str
+        Default ``None``. Additional string appended to the output
+        filename to give additional identification apart from number of
+        events. If not ``None`` the file is saved as
+        ``plots/learning_curve_<suffix>_<plot_suffix>.pdf``
+    dpi: int
+        Resolution of the saved figure.
+    """
+    plot_dir = _dir_path_finder(data=False)
+
+    if plot_suffix is None:
+        filename = plot_dir / f"learning_curve_{ev_suffix}.pdf"
+    else:
+        filename = plot_dir / f"learning_curve_{ev_suffix}_{plot_suffix}.pdf"
+
     plt.figure()
     plt.plot(train_loss, label="Training Loss")
     plt.plot(val_loss, label="Validation Loss")
@@ -58,35 +87,88 @@ def plot_losses(
     plt.close()
 
 
-def build_model():
+def build_model(batch_size, suffix):
     """
-    Build a unique istance of ParticleTransformer class.
+    Build and configure a ParticleTransformer instance.
 
-    Returns:
-        ParticleTransformer: A model ready for training or inference.
+    Load the saved dataloaders for the given batch size and dataset
+    suffix, build the Transformer architecture, and return both the
+    model and its configuration dictionary.
+
+    Parameters
+    ----------
+    batch_size : int
+        Batch size to be used for loading the datasets.
+    suffix : str
+        Suffix identifying the dataset files to be loaded.
+
+    Returns
+    -------
+    model : ParticleTransformer
+        A model ready for training or inference.
+    config : dict
+        Dictionary containing model hyperparameters and metadata
+        (batch size, layers, units, dropout, activation, suffix, etc.).
     """
-    return ParticleTransformer(
+    config = {
+        "batch_size": batch_size,
+        "num_heads": 8,
+        "num_encoder_layers": 2,
+        "num_decoder_layers": 4,
+        "num_units": 128,
+        "dropout": 0.1,
+        "activation": "ReLU",
+        "suffix": suffix,
+    }
+
+    (
+        loader_train,
+        loader_val,
+        loader_test,
+        loader_padding_train,
+        loader_padding_val,
+        loader_padding_test,
+    ) = load_saved_dataloaders(
+        batch_size=config["batch_size"], suffix=config["suffix"]
+    )
+
+    model = ParticleTransformer(
         train_data=loader_train,
         val_data=loader_val,
         test_data=loader_test,
         train_data_pad_mask=loader_padding_train,
         val_data_pad_mask=loader_padding_val,
         test_data_pad_mask=loader_padding_test,
-        dim_features=subset.shape[0],
-        num_heads=8,
-        num_encoder_layers=2,
-        num_decoder_layers=4,
-        num_units=128,
-        dropout=0.1,
+        num_heads=config["num_heads"],
+        num_encoder_layers=config["num_encoder_layers"],
+        num_decoder_layers=config["num_decoder_layers"],
+        num_units=config["num_units"],
+        dropout=config["dropout"],
         activation=nn.ReLU(),
     )
+    return model, config
 
-def train_and_save_model():
+
+def train_and_save_model(batch_size, suffix, info_suffix):
     """
-    Trains the ParticleTransformer model and saves the trained
-    weights to a `.pt` file.
+    Train and save the weights of the ParticleTransformer model.
+
+    Model configuration and metadata are also saved in JSON format.
+
+    Params
+    ------
+    batch_size : int
+        Batch size to be used for loading the datasets.
+    suffix : str
+        String appended to the data tensor filename identifying the
+        number of events in the dataset to be loaded. The same string
+        is appendend to the output plot and model filenames saved.
+    info_suffix: str
+        Additional string appended to the output plot and model
+        filename to give additional identification apart from number of
+        events.
     """
-    transformer = build_model()
+    transformer, config = build_model(batch_size, suffix)
     transformer.to(device)
     transformer.device = device
 
@@ -105,11 +187,74 @@ def train_and_save_model():
         num_epochs=EPOCHS, optim=optim
     )
 
-    plot_losses(train_loss, val_loss)
+    plot_losses(train_loss, val_loss, suffix, info_suffix)
 
-    torch.save(transformer.state_dict(), "transformer_model.pt")
-    logger.info("Model saved: transformer_model.pt")
+    data_dir = _dir_path_finder(data=True)
+    if info_suffix:
+        filename = data_dir / f"transformer_model_{suffix}_{info_suffix}.pt"
+        torch.save(transformer.state_dict(), filename)
+        logger.info(
+            f"Model saved: data/transformer_model_{suffix}_{info_suffix}.pt"
+        )
+        meta_path = data_dir / f"meta_{suffix}_{info_suffix}.json"
+    else:
+        filename = data_dir / f"transformer_model_{suffix}.pt"
+        torch.save(transformer.state_dict(), filename)
+        logger.info(f"Model saved: data/transformer_model_{suffix}.pt")
+        meta_path = data_dir / f"meta_{suffix}.json"
+    meta = {
+        "model_path": filename,
+        "model_config": config,
+        "timestamp": datetime.now().isoformat(),
+    }
+    (meta_path).write_text(json.dumps(meta, indent=2))
+
+
+def main():
+    """
+    Call ``train_and_save_model`` with parser arguments.
+
+    CLI Parameters
+    --------------
+    batch_size : int, optional, default=256
+        Batch size to be used for loading the datasets.
+    suffix : str, required
+        String appended to the data tensor filename identifying the
+        number of events in the dataset to be loaded. The same string
+        is appendend to output plot and model filenames saved.
+    info_suffix: str, optional, default=None
+        Additional string appended to the plot and model output
+        filename to give additional identification apart from number of
+        events.
+    """
+    parser = argparse.ArgumentParser()
+    parser.add_argument(
+        "--batch_size",
+        type=int,
+        default=256,
+        help="batch size",
+    )
+    parser.add_argument(
+        "--suffix",
+        required=True,
+        help=(
+            "String appended to the data tensor filename identifying the"
+            " number of events in the dataset to be loaded. The same string"
+            " is appendend to output plot and model filenames saved."
+        ),
+    )
+    parser.add_argument(
+        "--info_suffix",
+        default=None,
+        help=(
+            "Additional string appended to the output plot and model filename"
+            " to give additional identification apart from number of events"
+        ),
+    )
+    args = parser.parse_args()
+
+    train_and_save_model(args.batch_size, args.suffix, args.info_suffix)
 
 
 if __name__ == "__main__":
-    train_and_save_model()
+    main()
