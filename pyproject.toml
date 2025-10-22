@@ -24,6 +24,15 @@ dependencies = [
   "awkward"
 ]
 
+[project.optional-dependencies]
+dev = ["ruff>=0.5"]
+docs = [
+  "sphinx>=7.0",
+  "myst-parser>=2.0",
+  "sphinxawesome-theme>=5.0",
+  "sphinx-autodoc-typehints>=2.1"
+]
+
 [tool.setuptools.packages.find]
 where = ["."]
 include = ["pythiatransformer*"]
