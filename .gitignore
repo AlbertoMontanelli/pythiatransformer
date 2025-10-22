@@ -1,7 +1,13 @@
 __pycache__/
 tests/__pycache__
-CMEPDA_project.egg-info/
+pythiatransformer.egg-info/
 .ipynb_checkpoints/
+pythiatransformer/1M_events/
+pythiatransformer/data/*
+# Don't ignore the transformer model.
+!pythiatransformer/data/transformer_model_*.pt
+# Don't ignore the directory itself if empty.
+!pythiatransformer/data/
 
 
 
