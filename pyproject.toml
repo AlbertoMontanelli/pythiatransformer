@@ -1,29 +1,48 @@
+[build-system]
+requires = ["setuptools>=69", "wheel"]
+build-backend = "setuptools.build_meta"
+
 [project]
-name = "CMEPDA-project"
+name = "pythiatransformer" 
 version = "0.1.0"
-description = "Add description"
+description = "Transformer trained on Pythia8 events"
+readme = "README.md"
+requires-python = ">=3.9"
+license = { file = "LICENSE" }
 authors = [
     { name = "Leonardo Bandiera Marlia", email = "l.bandieramarlia@studenti.unipi.it" },
     { name = "Irene Bini", email = "i.bini3@studenti.unipi.it" },
     { name = "Alberto Montanelli", email = "a.montanelli@studenti.unipi.it" }
 ]
 dependencies = [
-    "numpy",
-    "uproot",
-    "loguru",
+  "numpy",
+  "uproot",
+  "loguru"
 ]
 
-[project.optional-dependencies]
-dev = ["pytest"]
+[tool.setuptools.packages.find]
+where = ["."]
+include = ["pythiatransformer*"]
 
-[build-system]
-requires = ["setuptools>=42", "wheel"]
-build-backend = "setuptools.build_meta"
+[tool.ruff]
+line-length = 78
+indent-width = 4
 
-[tool.pytest.ini_options]
-addopts = "--maxfail=3 --disable-warnings"
+[tool.ruff.format]
+quote-style = "double"
+indent-style = "space"
+skip-magic-trailing-comma = false
 
-[tool.black]
-line-length = 79
-target-version = ['py39']
-skip-string-normalization = false
+[tool.ruff.lint]
+select = ["E", "F", "W", "I", "UP", "B", "PL", "D"]
+ignore = ["D203", "D213"]
+
+[tool.ruff.lint.pydocstyle]
+convention = "pep257"
+
+[tool.ruff.lint.per-file-ignores]
+"pythiatransformer/transformer.py" = ["PLR0913"]
+"pythiatransformer/inference.py" = ["PLR0913", "PLR2004"]
+"pythiatransformer/toy/toy_model.py" = ["PLR0913", "PLR2004"]
+"pythiatransformer/toy/evaluate_toy.py" = ["PLR0913", "PLR2004"]
+
