@@ -29,11 +29,11 @@ jobs:
           conda activate myrootenv
           conda install -y -c conda-forge root
           python - <<'PY'
-            import ROOT
-            print("ROOT OK")
-            import pythia8
-            print("Pythia8 OK")
-            PY
+          import ROOT
+          print("ROOT OK")
+          import pythia8
+          print("Pythia8 OK")
+          PY
 
       - name: Install Python deps via pip (torch + package deps from pyproject)
         shell: bash -l {0}
