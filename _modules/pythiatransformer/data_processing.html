@@ -102,9 +102,9 @@
   <p class="caption" role="heading"><span class="caption-text">Contents:</span></p>
 <ul>
 <li class="toctree-l1"><a class="reference internal" href="../../installation.html">Installation</a></li>
-</ul>
-<p class="caption" role="heading"><span class="caption-text">API</span></p>
-<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../usage.html">Usage</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../name_convention.html">Naming conventions</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../rep_structure.html">Repository structure</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../api.html">API Reference</a><ul>
 <li class="toctree-l2"><a class="reference internal" href="../../_api/modules.html">pythiatransformer</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../../_api/tests_index.html">tests</a></li>
@@ -165,511 +165,498 @@
 </span><span id="line-11"><span class="sd">- the batching of the data;</span>
 </span><span id="line-12"><span class="sd">- the splitting of the data into training, validation and test sets;</span>
 </span><span id="line-13"><span class="sd">- the saving of the tensors and the loaders.</span>
-</span><span id="line-14">
-</span><span id="line-15"><span class="sd">Notes</span>
-</span><span id="line-16"><span class="sd">-----</span>
-</span><span id="line-17"><span class="sd">All input, output, and plot filenames follow a default naming</span>
-</span><span id="line-18"><span class="sd">convention unique for all ``pythiatransformer`` package.</span>
-</span><span id="line-19"><span class="sd">Each file name includes a unique ``_{suffix}`` tag identifying the</span>
-</span><span id="line-20"><span class="sd">specific dataset/plot/filename depending on the number of events.</span>
-</span><span id="line-21"><span class="sd">This suffix is the only user-controlled identifier, and it must remain</span>
-</span><span id="line-22"><span class="sd">consistent across all stages of the workflow (data generation,</span>
-</span><span id="line-23"><span class="sd">preprocessing, training, inference, and plotting).</span>
-</span><span id="line-24"><span class="sd">File names themselves should **not be changed manually**, as they are</span>
-</span><span id="line-25"><span class="sd">managed automatically by the pipeline and ensure consistent data</span>
-</span><span id="line-26"><span class="sd">linkage.</span>
-</span><span id="line-27"><span class="sd">&quot;&quot;&quot;</span>
+</span><span id="line-14"><span class="sd">&quot;&quot;&quot;</span>
+</span><span id="line-15">
+</span><span id="line-16"><span class="kn">import</span><span class="w"> </span><span class="nn">argparse</span>
+</span><span id="line-17"><span class="kn">import</span><span class="w"> </span><span class="nn">math</span>
+</span><span id="line-18">
+</span><span id="line-19"><span class="kn">import</span><span class="w"> </span><span class="nn">awkward</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">ak</span>
+</span><span id="line-20"><span class="kn">import</span><span class="w"> </span><span class="nn">numpy</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">np</span>
+</span><span id="line-21"><span class="kn">import</span><span class="w"> </span><span class="nn">torch</span>
+</span><span id="line-22"><span class="kn">import</span><span class="w"> </span><span class="nn">uproot</span>
+</span><span id="line-23"><span class="kn">from</span><span class="w"> </span><span class="nn">loguru</span><span class="w"> </span><span class="kn">import</span> <span class="n">logger</span>
+</span><span id="line-24"><span class="kn">from</span><span class="w"> </span><span class="nn">torch.utils.data</span><span class="w"> </span><span class="kn">import</span> <span class="n">DataLoader</span><span class="p">,</span> <span class="n">TensorDataset</span>
+</span><span id="line-25">
+</span><span id="line-26"><span class="kn">from</span><span class="w"> </span><span class="nn">pythiatransformer.pythia_generator</span><span class="w"> </span><span class="kn">import</span> <span class="n">_dir_path_finder</span>
+</span><span id="line-27">
 </span><span id="line-28">
-</span><span id="line-29"><span class="kn">import</span><span class="w"> </span><span class="nn">argparse</span>
-</span><span id="line-30"><span class="kn">import</span><span class="w"> </span><span class="nn">math</span>
-</span><span id="line-31">
-</span><span id="line-32"><span class="kn">import</span><span class="w"> </span><span class="nn">awkward</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">ak</span>
-</span><span id="line-33"><span class="kn">import</span><span class="w"> </span><span class="nn">numpy</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">np</span>
-</span><span id="line-34"><span class="kn">import</span><span class="w"> </span><span class="nn">torch</span>
-</span><span id="line-35"><span class="kn">import</span><span class="w"> </span><span class="nn">uproot</span>
-</span><span id="line-36"><span class="kn">from</span><span class="w"> </span><span class="nn">loguru</span><span class="w"> </span><span class="kn">import</span> <span class="n">logger</span>
-</span><span id="line-37"><span class="kn">from</span><span class="w"> </span><span class="nn">torch.utils.data</span><span class="w"> </span><span class="kn">import</span> <span class="n">DataLoader</span><span class="p">,</span> <span class="n">TensorDataset</span>
-</span><span id="line-38">
-</span><span id="line-39"><span class="kn">from</span><span class="w"> </span><span class="nn">pythiatransformer.pythia_generator</span><span class="w"> </span><span class="kn">import</span> <span class="n">_dir_path_finder</span>
-</span><span id="line-40">
-</span><span id="line-41">
-</span><span id="line-42"><span class="k">def</span><span class="w"> </span><span class="nf">_validate_args</span><span class="p">(</span><span class="n">data</span><span class="p">,</span> <span class="n">features</span><span class="p">):</span>
-</span><span id="line-43">    <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">data</span><span class="p">,</span> <span class="n">ak</span><span class="o">.</span><span class="n">Array</span><span class="p">):</span>
-</span><span id="line-44">        <span class="k">raise</span> <span class="ne">TypeError</span><span class="p">(</span>
-</span><span id="line-45">            <span class="sa">f</span><span class="s2">&quot;Parameter &#39;data&#39; must be of type &#39;ak.Array&#39;,&quot;</span>
-</span><span id="line-46">            <span class="sa">f</span><span class="s2">&quot; got &#39;</span><span class="si">{</span><span class="nb">type</span><span class="p">(</span><span class="n">data</span><span class="p">)</span><span class="si">}</span><span class="s2">&#39; instead.&quot;</span>
-</span><span id="line-47">        <span class="p">)</span>
-</span><span id="line-48">    <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">features</span><span class="p">,</span> <span class="nb">list</span><span class="p">):</span>
-</span><span id="line-49">        <span class="k">raise</span> <span class="ne">TypeError</span><span class="p">(</span>
-</span><span id="line-50">            <span class="s2">&quot;Parameter &#39;features&#39; must be of type &#39;list&#39;, &quot;</span>
-</span><span id="line-51">            <span class="sa">f</span><span class="s2">&quot;got &#39;</span><span class="si">{</span><span class="nb">type</span><span class="p">(</span><span class="n">features</span><span class="p">)</span><span class="si">}</span><span class="s2">&#39; instead.&quot;</span>
-</span><span id="line-52">        <span class="p">)</span>
-</span><span id="line-53">    <span class="k">if</span> <span class="ow">not</span> <span class="nb">all</span><span class="p">(</span><span class="nb">isinstance</span><span class="p">(</span><span class="n">f</span><span class="p">,</span> <span class="nb">str</span><span class="p">)</span> <span class="k">for</span> <span class="n">f</span> <span class="ow">in</span> <span class="n">features</span><span class="p">):</span>
-</span><span id="line-54">        <span class="k">raise</span> <span class="ne">TypeError</span><span class="p">(</span><span class="s2">&quot;Parameter &#39;features&#39; must be a list of strings.&quot;</span><span class="p">)</span>
-</span><span id="line-55">    <span class="n">missing_features</span> <span class="o">=</span> <span class="p">[</span><span class="n">f</span> <span class="k">for</span> <span class="n">f</span> <span class="ow">in</span> <span class="n">features</span> <span class="k">if</span> <span class="n">f</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">data</span><span class="o">.</span><span class="n">fields</span><span class="p">]</span>
-</span><span id="line-56">    <span class="k">if</span> <span class="n">missing_features</span><span class="p">:</span>
-</span><span id="line-57">        <span class="k">raise</span> <span class="ne">KeyError</span><span class="p">(</span>
-</span><span id="line-58">            <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">missing_features</span><span class="si">}</span><span class="s2"> are not features present in &#39;data&#39;.&quot;</span>
-</span><span id="line-59">        <span class="p">)</span>
-</span><span id="line-60">    <span class="n">event_particles</span> <span class="o">=</span> <span class="n">ak</span><span class="o">.</span><span class="n">num</span><span class="p">(</span><span class="n">data</span><span class="p">[</span><span class="n">features</span><span class="p">[</span><span class="mi">0</span><span class="p">]],</span> <span class="n">axis</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
-</span><span id="line-61">    <span class="n">max_particles</span> <span class="o">=</span> <span class="n">ak</span><span class="o">.</span><span class="n">max</span><span class="p">(</span><span class="n">event_particles</span><span class="p">)</span>
-</span><span id="line-62">    <span class="n">num_features</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">features</span><span class="p">)</span>
-</span><span id="line-63">    <span class="k">return</span> <span class="n">event_particles</span><span class="p">,</span> <span class="nb">int</span><span class="p">(</span><span class="n">max_particles</span><span class="p">),</span> <span class="n">num_features</span>
-</span><span id="line-64">
-</span><span id="line-65">
-</span><span id="line-66"><span class="k">def</span><span class="w"> </span><span class="nf">_pad_and_sort_by_pt</span><span class="p">(</span><span class="n">data</span><span class="p">,</span> <span class="n">features</span><span class="p">,</span> <span class="n">max_particles</span><span class="p">,</span> <span class="n">list_pt</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
-</span><span id="line-67">    <span class="n">padded_events</span> <span class="o">=</span> <span class="p">{</span>
-</span><span id="line-68">        <span class="n">f</span><span class="p">:</span> <span class="n">ak</span><span class="o">.</span><span class="n">fill_none</span><span class="p">(</span><span class="n">ak</span><span class="o">.</span><span class="n">pad_none</span><span class="p">(</span><span class="n">data</span><span class="p">[</span><span class="n">f</span><span class="p">],</span> <span class="n">target</span><span class="o">=</span><span class="n">max_particles</span><span class="p">,</span> <span class="n">axis</span><span class="o">=</span><span class="mi">1</span><span class="p">),</span> <span class="mi">0</span><span class="p">)</span>
-</span><span id="line-69">        <span class="k">for</span> <span class="n">f</span> <span class="ow">in</span> <span class="n">features</span>
-</span><span id="line-70">    <span class="p">}</span>
-</span><span id="line-71">    <span class="n">base</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">tensor</span><span class="p">(</span>
-</span><span id="line-72">        <span class="n">np</span><span class="o">.</span><span class="n">stack</span><span class="p">([</span><span class="n">ak</span><span class="o">.</span><span class="n">to_numpy</span><span class="p">(</span><span class="n">padded_events</span><span class="p">[</span><span class="n">f</span><span class="p">])</span> <span class="k">for</span> <span class="n">f</span> <span class="ow">in</span> <span class="n">features</span><span class="p">],</span> <span class="n">axis</span><span class="o">=-</span><span class="mi">1</span><span class="p">),</span>
-</span><span id="line-73">        <span class="n">dtype</span><span class="o">=</span><span class="n">torch</span><span class="o">.</span><span class="n">float32</span><span class="p">,</span>
-</span><span id="line-74">    <span class="p">)</span>  <span class="c1"># shape (nr_events, max_particles, num_features).</span>
-</span><span id="line-75">
-</span><span id="line-76">    <span class="c1"># dictionary to find &quot;pT&quot; feature index.</span>
-</span><span id="line-77">    <span class="n">feat2idx</span> <span class="o">=</span> <span class="p">{</span><span class="n">f</span><span class="p">:</span> <span class="n">i</span> <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">f</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">features</span><span class="p">)}</span>
-</span><span id="line-78">    <span class="k">if</span> <span class="p">((</span><span class="n">list_pt</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">)</span> <span class="ow">and</span> <span class="p">(</span><span class="s2">&quot;pT_23&quot;</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">feat2idx</span><span class="p">))</span> <span class="ow">or</span> <span class="p">(</span>
-</span><span id="line-79">        <span class="p">(</span><span class="n">list_pt</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">)</span> <span class="ow">and</span> <span class="p">(</span><span class="s2">&quot;pT_final&quot;</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">feat2idx</span><span class="p">)</span>
-</span><span id="line-80">    <span class="p">):</span>
-</span><span id="line-81">        <span class="k">raise</span> <span class="ne">KeyError</span><span class="p">(</span><span class="s2">&quot;Feature &#39;pT&#39; is not in &#39;features&#39;.&quot;</span><span class="p">)</span>
-</span><span id="line-82">    <span class="k">if</span> <span class="n">list_pt</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
-</span><span id="line-83">        <span class="n">pt_idx</span> <span class="o">=</span> <span class="n">feat2idx</span><span class="p">[</span><span class="s2">&quot;pT_23&quot;</span><span class="p">]</span>
-</span><span id="line-84">    <span class="k">else</span><span class="p">:</span>
-</span><span id="line-85">        <span class="n">pt_idx</span> <span class="o">=</span> <span class="n">feat2idx</span><span class="p">[</span><span class="s2">&quot;pT_final&quot;</span><span class="p">]</span>
-</span><span id="line-86">    <span class="n">pt_tensor</span> <span class="o">=</span> <span class="n">base</span><span class="p">[:,</span> <span class="p">:,</span> <span class="n">pt_idx</span><span class="p">]</span>  <span class="c1"># shape (nr_events, max_particles).</span>
-</span><span id="line-87">
-</span><span id="line-88">    <span class="n">indices</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">argsort</span><span class="p">(</span><span class="n">pt_tensor</span><span class="p">,</span> <span class="n">dim</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">descending</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
-</span><span id="line-89">    <span class="n">padded_tensor</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">gather</span><span class="p">(</span>
-</span><span id="line-90">        <span class="n">base</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="n">indices</span><span class="o">.</span><span class="n">unsqueeze</span><span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">)</span><span class="o">.</span><span class="n">expand</span><span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">,</span> <span class="o">-</span><span class="mi">1</span><span class="p">,</span> <span class="n">base</span><span class="o">.</span><span class="n">size</span><span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">))</span>
-</span><span id="line-91">    <span class="p">)</span>  <span class="c1"># shape (nr_events, max_particles, num_features).</span>
-</span><span id="line-92">    <span class="k">return</span> <span class="n">padded_tensor</span><span class="p">,</span> <span class="n">pt_idx</span>
-</span><span id="line-93">
-</span><span id="line-94">
+</span><span id="line-29"><span class="k">def</span><span class="w"> </span><span class="nf">_validate_args</span><span class="p">(</span><span class="n">data</span><span class="p">,</span> <span class="n">features</span><span class="p">):</span>
+</span><span id="line-30">    <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">data</span><span class="p">,</span> <span class="n">ak</span><span class="o">.</span><span class="n">Array</span><span class="p">):</span>
+</span><span id="line-31">        <span class="k">raise</span> <span class="ne">TypeError</span><span class="p">(</span>
+</span><span id="line-32">            <span class="sa">f</span><span class="s2">&quot;Parameter &#39;data&#39; must be of type &#39;ak.Array&#39;,&quot;</span>
+</span><span id="line-33">            <span class="sa">f</span><span class="s2">&quot; got &#39;</span><span class="si">{</span><span class="nb">type</span><span class="p">(</span><span class="n">data</span><span class="p">)</span><span class="si">}</span><span class="s2">&#39; instead.&quot;</span>
+</span><span id="line-34">        <span class="p">)</span>
+</span><span id="line-35">    <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">features</span><span class="p">,</span> <span class="nb">list</span><span class="p">):</span>
+</span><span id="line-36">        <span class="k">raise</span> <span class="ne">TypeError</span><span class="p">(</span>
+</span><span id="line-37">            <span class="s2">&quot;Parameter &#39;features&#39; must be of type &#39;list&#39;, &quot;</span>
+</span><span id="line-38">            <span class="sa">f</span><span class="s2">&quot;got &#39;</span><span class="si">{</span><span class="nb">type</span><span class="p">(</span><span class="n">features</span><span class="p">)</span><span class="si">}</span><span class="s2">&#39; instead.&quot;</span>
+</span><span id="line-39">        <span class="p">)</span>
+</span><span id="line-40">    <span class="k">if</span> <span class="ow">not</span> <span class="nb">all</span><span class="p">(</span><span class="nb">isinstance</span><span class="p">(</span><span class="n">f</span><span class="p">,</span> <span class="nb">str</span><span class="p">)</span> <span class="k">for</span> <span class="n">f</span> <span class="ow">in</span> <span class="n">features</span><span class="p">):</span>
+</span><span id="line-41">        <span class="k">raise</span> <span class="ne">TypeError</span><span class="p">(</span><span class="s2">&quot;Parameter &#39;features&#39; must be a list of strings.&quot;</span><span class="p">)</span>
+</span><span id="line-42">    <span class="n">missing_features</span> <span class="o">=</span> <span class="p">[</span><span class="n">f</span> <span class="k">for</span> <span class="n">f</span> <span class="ow">in</span> <span class="n">features</span> <span class="k">if</span> <span class="n">f</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">data</span><span class="o">.</span><span class="n">fields</span><span class="p">]</span>
+</span><span id="line-43">    <span class="k">if</span> <span class="n">missing_features</span><span class="p">:</span>
+</span><span id="line-44">        <span class="k">raise</span> <span class="ne">KeyError</span><span class="p">(</span>
+</span><span id="line-45">            <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">missing_features</span><span class="si">}</span><span class="s2"> are not features present in &#39;data&#39;.&quot;</span>
+</span><span id="line-46">        <span class="p">)</span>
+</span><span id="line-47">    <span class="n">event_particles</span> <span class="o">=</span> <span class="n">ak</span><span class="o">.</span><span class="n">num</span><span class="p">(</span><span class="n">data</span><span class="p">[</span><span class="n">features</span><span class="p">[</span><span class="mi">0</span><span class="p">]],</span> <span class="n">axis</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
+</span><span id="line-48">    <span class="n">max_particles</span> <span class="o">=</span> <span class="n">ak</span><span class="o">.</span><span class="n">max</span><span class="p">(</span><span class="n">event_particles</span><span class="p">)</span>
+</span><span id="line-49">    <span class="n">num_features</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">features</span><span class="p">)</span>
+</span><span id="line-50">    <span class="k">return</span> <span class="n">event_particles</span><span class="p">,</span> <span class="nb">int</span><span class="p">(</span><span class="n">max_particles</span><span class="p">),</span> <span class="n">num_features</span>
+</span><span id="line-51">
+</span><span id="line-52">
+</span><span id="line-53"><span class="k">def</span><span class="w"> </span><span class="nf">_pad_and_sort_by_pt</span><span class="p">(</span><span class="n">data</span><span class="p">,</span> <span class="n">features</span><span class="p">,</span> <span class="n">max_particles</span><span class="p">,</span> <span class="n">list_pt</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+</span><span id="line-54">    <span class="n">padded_events</span> <span class="o">=</span> <span class="p">{</span>
+</span><span id="line-55">        <span class="n">f</span><span class="p">:</span> <span class="n">ak</span><span class="o">.</span><span class="n">fill_none</span><span class="p">(</span><span class="n">ak</span><span class="o">.</span><span class="n">pad_none</span><span class="p">(</span><span class="n">data</span><span class="p">[</span><span class="n">f</span><span class="p">],</span> <span class="n">target</span><span class="o">=</span><span class="n">max_particles</span><span class="p">,</span> <span class="n">axis</span><span class="o">=</span><span class="mi">1</span><span class="p">),</span> <span class="mi">0</span><span class="p">)</span>
+</span><span id="line-56">        <span class="k">for</span> <span class="n">f</span> <span class="ow">in</span> <span class="n">features</span>
+</span><span id="line-57">    <span class="p">}</span>
+</span><span id="line-58">    <span class="n">base</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">tensor</span><span class="p">(</span>
+</span><span id="line-59">        <span class="n">np</span><span class="o">.</span><span class="n">stack</span><span class="p">([</span><span class="n">ak</span><span class="o">.</span><span class="n">to_numpy</span><span class="p">(</span><span class="n">padded_events</span><span class="p">[</span><span class="n">f</span><span class="p">])</span> <span class="k">for</span> <span class="n">f</span> <span class="ow">in</span> <span class="n">features</span><span class="p">],</span> <span class="n">axis</span><span class="o">=-</span><span class="mi">1</span><span class="p">),</span>
+</span><span id="line-60">        <span class="n">dtype</span><span class="o">=</span><span class="n">torch</span><span class="o">.</span><span class="n">float32</span><span class="p">,</span>
+</span><span id="line-61">    <span class="p">)</span>  <span class="c1"># shape (nr_events, max_particles, num_features).</span>
+</span><span id="line-62">
+</span><span id="line-63">    <span class="c1"># dictionary to find &quot;pT&quot; feature index.</span>
+</span><span id="line-64">    <span class="n">feat2idx</span> <span class="o">=</span> <span class="p">{</span><span class="n">f</span><span class="p">:</span> <span class="n">i</span> <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">f</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">features</span><span class="p">)}</span>
+</span><span id="line-65">    <span class="k">if</span> <span class="p">((</span><span class="n">list_pt</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">)</span> <span class="ow">and</span> <span class="p">(</span><span class="s2">&quot;pT_23&quot;</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">feat2idx</span><span class="p">))</span> <span class="ow">or</span> <span class="p">(</span>
+</span><span id="line-66">        <span class="p">(</span><span class="n">list_pt</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">)</span> <span class="ow">and</span> <span class="p">(</span><span class="s2">&quot;pT_final&quot;</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">feat2idx</span><span class="p">)</span>
+</span><span id="line-67">    <span class="p">):</span>
+</span><span id="line-68">        <span class="k">raise</span> <span class="ne">KeyError</span><span class="p">(</span><span class="s2">&quot;Feature &#39;pT&#39; is not in &#39;features&#39;.&quot;</span><span class="p">)</span>
+</span><span id="line-69">    <span class="k">if</span> <span class="n">list_pt</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+</span><span id="line-70">        <span class="n">pt_idx</span> <span class="o">=</span> <span class="n">feat2idx</span><span class="p">[</span><span class="s2">&quot;pT_23&quot;</span><span class="p">]</span>
+</span><span id="line-71">    <span class="k">else</span><span class="p">:</span>
+</span><span id="line-72">        <span class="n">pt_idx</span> <span class="o">=</span> <span class="n">feat2idx</span><span class="p">[</span><span class="s2">&quot;pT_final&quot;</span><span class="p">]</span>
+</span><span id="line-73">    <span class="n">pt_tensor</span> <span class="o">=</span> <span class="n">base</span><span class="p">[:,</span> <span class="p">:,</span> <span class="n">pt_idx</span><span class="p">]</span>  <span class="c1"># shape (nr_events, max_particles).</span>
+</span><span id="line-74">
+</span><span id="line-75">    <span class="n">indices</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">argsort</span><span class="p">(</span><span class="n">pt_tensor</span><span class="p">,</span> <span class="n">dim</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">descending</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+</span><span id="line-76">    <span class="n">padded_tensor</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">gather</span><span class="p">(</span>
+</span><span id="line-77">        <span class="n">base</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="n">indices</span><span class="o">.</span><span class="n">unsqueeze</span><span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">)</span><span class="o">.</span><span class="n">expand</span><span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">,</span> <span class="o">-</span><span class="mi">1</span><span class="p">,</span> <span class="n">base</span><span class="o">.</span><span class="n">size</span><span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">))</span>
+</span><span id="line-78">    <span class="p">)</span>  <span class="c1"># shape (nr_events, max_particles, num_features).</span>
+</span><span id="line-79">    <span class="k">return</span> <span class="n">padded_tensor</span><span class="p">,</span> <span class="n">pt_idx</span>
+</span><span id="line-80">
+</span><span id="line-81">
 <div class="viewcode-block" id="awkward_to_padded_tensor">
 <a class="viewcode-back" href="../../_api/pythiatransformer.data_processing.html#pythiatransformer.data_processing.awkward_to_padded_tensor">[docs]</a>
-</span><span id="line-95"><span class="k">def</span><span class="w"> </span><span class="nf">awkward_to_padded_tensor</span><span class="p">(</span><span class="n">data</span><span class="p">,</span> <span class="n">features</span><span class="p">,</span> <span class="n">list_pt</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
-</span><span id="line-96"><span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
-</span><span id="line-97"><span class="sd">    Convert an Awkward Array to a padded PyTorch tensor.</span>
-</span><span id="line-98">
-</span><span id="line-99"><span class="sd">    Optionally truncate each event based on the cumulative transverse</span>
-</span><span id="line-100"><span class="sd">    momentum (pT).</span>
-</span><span id="line-101">
-</span><span id="line-102"><span class="sd">    Parameters</span>
-</span><span id="line-103"><span class="sd">    ----------</span>
-</span><span id="line-104"><span class="sd">    data : ak.Array</span>
-</span><span id="line-105"><span class="sd">        Input Awkward Array.</span>
-</span><span id="line-106"><span class="sd">    features : list[str]</span>
-</span><span id="line-107"><span class="sd">        Feature names to extract. The last feature is assumed to be</span>
-</span><span id="line-108"><span class="sd">        ``pT``.</span>
-</span><span id="line-109"><span class="sd">    list_pt : torch.Tensor or None</span>
-</span><span id="line-110"><span class="sd">        Event-wise total transverse momentum. Required when building</span>
-</span><span id="line-111"><span class="sd">        the final particle truncated tensors so that the cumulative</span>
-</span><span id="line-112"><span class="sd">        `pT` first exceeding 50% of ``list_pt`` is kept.</span>
-</span><span id="line-113">
-</span><span id="line-114"><span class="sd">    Returns</span>
-</span><span id="line-115"><span class="sd">    -------</span>
-</span><span id="line-116"><span class="sd">    padded_tensor : torch.Tensor</span>
-</span><span id="line-117"><span class="sd">        Padded (and possibly truncated) tensor of shape</span>
-</span><span id="line-118"><span class="sd">        ``[nr_events, max_len, num_features]``.</span>
-</span><span id="line-119"><span class="sd">    padding_mask : torch.Tensor</span>
-</span><span id="line-120"><span class="sd">        Boolean mask of shape ``[nr_events, max_len]`` with 0 for real</span>
-</span><span id="line-121"><span class="sd">        tokens and 1 for padding.</span>
-</span><span id="line-122"><span class="sd">    total_pt : torch.Tensor or None</span>
-</span><span id="line-123"><span class="sd">        Total pT per event of shape ``[nr_events]`` when not truncated,</span>
-</span><span id="line-124"><span class="sd">        otherwise ``None`` when truncation was applied.</span>
-</span><span id="line-125"><span class="sd">    &quot;&quot;&quot;</span>
-</span><span id="line-126">    <span class="n">event_particles</span><span class="p">,</span> <span class="n">max_particles</span><span class="p">,</span> <span class="n">num_features</span> <span class="o">=</span> <span class="n">_validate_args</span><span class="p">(</span>
-</span><span id="line-127">        <span class="n">data</span><span class="p">,</span> <span class="n">features</span>
-</span><span id="line-128">    <span class="p">)</span>
-</span><span id="line-129">
-</span><span id="line-130">    <span class="n">padded_tensor</span><span class="p">,</span> <span class="n">pt_idx</span> <span class="o">=</span> <span class="n">_pad_and_sort_by_pt</span><span class="p">(</span>
-</span><span id="line-131">        <span class="n">data</span><span class="p">,</span> <span class="n">features</span><span class="p">,</span> <span class="n">max_particles</span><span class="p">,</span> <span class="n">list_pt</span>
-</span><span id="line-132">    <span class="p">)</span>
-</span><span id="line-133">    <span class="n">pt_padded_tensor</span> <span class="o">=</span> <span class="n">padded_tensor</span><span class="p">[</span>
-</span><span id="line-134">        <span class="p">:,</span> <span class="p">:,</span> <span class="n">pt_idx</span>
-</span><span id="line-135">    <span class="p">]</span>  <span class="c1"># shape (nr_events, max_particles).</span>
-</span><span id="line-136">
-</span><span id="line-137">    <span class="k">if</span> <span class="n">list_pt</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
-</span><span id="line-138">        <span class="c1"># This part of the function is used for the data processing of</span>
-</span><span id="line-139">        <span class="c1"># the final particles, for which truncation is applicated.</span>
-</span><span id="line-140">        <span class="k">if</span> <span class="n">list_pt</span> <span class="o">==</span> <span class="p">[]:</span>
-</span><span id="line-141">            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;Parameter &#39;list_pt&#39; can not be an empty list.&quot;</span><span class="p">)</span>
-</span><span id="line-142">        <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">list_pt</span><span class="p">,</span> <span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">):</span>
-</span><span id="line-143">            <span class="k">raise</span> <span class="ne">TypeError</span><span class="p">(</span>
-</span><span id="line-144">                <span class="s2">&quot;Parameter &#39;list_pt&#39; must be of type &#39;torch.Tensor&#39;, &quot;</span>
-</span><span id="line-145">                <span class="sa">f</span><span class="s2">&quot;got &#39;</span><span class="si">{</span><span class="nb">type</span><span class="p">(</span><span class="n">list_pt</span><span class="p">)</span><span class="si">}</span><span class="s2">&#39; instead.&quot;</span>
-</span><span id="line-146">            <span class="p">)</span>
-</span><span id="line-147">        <span class="k">if</span> <span class="ow">not</span> <span class="nb">all</span><span class="p">(</span><span class="nb">isinstance</span><span class="p">(</span><span class="n">pt</span><span class="p">,</span> <span class="p">(</span><span class="nb">int</span><span class="p">,</span> <span class="nb">float</span><span class="p">))</span> <span class="k">for</span> <span class="n">pt</span> <span class="ow">in</span> <span class="n">list_pt</span><span class="o">.</span><span class="n">tolist</span><span class="p">()):</span>
-</span><span id="line-148">            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;Parameter &#39;list_pt&#39; must be a list of numbers.&quot;</span><span class="p">)</span>
-</span><span id="line-149">        <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">list_pt</span><span class="p">)</span> <span class="o">!=</span> <span class="nb">len</span><span class="p">(</span><span class="n">data</span><span class="p">):</span>
-</span><span id="line-150">            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
-</span><span id="line-151">                <span class="sa">f</span><span class="s2">&quot;&#39;list_pt&#39; must have length equal to number of events &quot;</span>
-</span><span id="line-152">                <span class="sa">f</span><span class="s2">&quot;(</span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">data</span><span class="p">)</span><span class="si">}</span><span class="s2">), got </span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">list_pt</span><span class="p">)</span><span class="si">}</span><span class="s2"> instead.&quot;</span>
-</span><span id="line-153">            <span class="p">)</span>
-</span><span id="line-154">        <span class="n">nr_events</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">event_particles</span><span class="p">)</span>
-</span><span id="line-155">
-</span><span id="line-156">        <span class="c1"># Establish an arbitrary threshold to truncate the particles in</span>
-</span><span id="line-157">        <span class="c1"># each event.</span>
-</span><span id="line-158">        <span class="n">threshold</span> <span class="o">=</span> <span class="mf">0.5</span> <span class="o">*</span> <span class="n">list_pt</span>  <span class="c1"># shape (nr_events,).</span>
-</span><span id="line-159">        <span class="n">cum_pt</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">cumsum</span><span class="p">(</span>
-</span><span id="line-160">            <span class="n">pt_padded_tensor</span><span class="p">,</span> <span class="n">dim</span><span class="o">=</span><span class="mi">1</span>
-</span><span id="line-161">        <span class="p">)</span>  <span class="c1"># cumulative sum of pT. Shape (nr_events, max_particles).</span>
-</span><span id="line-162">
-</span><span id="line-163">        <span class="c1"># The index s.t. cum_pt &lt; threshold is found for each event.</span>
-</span><span id="line-164">        <span class="n">keep_lengths</span> <span class="o">=</span> <span class="p">(</span><span class="n">cum_pt</span> <span class="o">&lt;</span> <span class="n">threshold</span><span class="o">.</span><span class="n">unsqueeze</span><span class="p">(</span><span class="mi">1</span><span class="p">))</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span>
-</span><span id="line-165">            <span class="n">dim</span><span class="o">=</span><span class="mi">1</span>
-</span><span id="line-166">        <span class="p">)</span> <span class="o">+</span> <span class="mi">1</span>  <span class="c1"># + 1 in order to consider the particle above 50%.</span>
-</span><span id="line-167">        <span class="n">keep_lengths</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">clamp</span><span class="p">(</span>
-</span><span id="line-168">            <span class="n">keep_lengths</span><span class="p">,</span> <span class="nb">max</span><span class="o">=</span><span class="n">max_particles</span>
-</span><span id="line-169">        <span class="p">)</span>  <span class="c1"># shape (nr_events,).</span>
-</span><span id="line-170">
-</span><span id="line-171">        <span class="n">new_max_len</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">keep_lengths</span><span class="o">.</span><span class="n">max</span><span class="p">()</span><span class="o">.</span><span class="n">item</span><span class="p">())</span>  <span class="c1"># scalar.</span>
-</span><span id="line-172">
-</span><span id="line-173">        <span class="n">padded_tensor_trunc</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">zeros</span><span class="p">(</span>
-</span><span id="line-174">            <span class="p">(</span><span class="n">nr_events</span><span class="p">,</span> <span class="n">new_max_len</span><span class="p">,</span> <span class="n">num_features</span><span class="p">),</span> <span class="n">dtype</span><span class="o">=</span><span class="n">torch</span><span class="o">.</span><span class="n">float32</span>
-</span><span id="line-175">        <span class="p">)</span>  <span class="c1"># shape (nr_events, new_max_len, num_features).</span>
-</span><span id="line-176">        <span class="n">padding_mask</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">ones</span><span class="p">(</span>
-</span><span id="line-177">            <span class="p">(</span><span class="n">nr_events</span><span class="p">,</span> <span class="n">new_max_len</span><span class="p">),</span> <span class="n">dtype</span><span class="o">=</span><span class="n">torch</span><span class="o">.</span><span class="n">bool</span>
-</span><span id="line-178">        <span class="p">)</span>  <span class="c1"># shape (nr_events, new_max_len).</span>
-</span><span id="line-179">
-</span><span id="line-180">        <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">nr_events</span><span class="p">):</span>
-</span><span id="line-181">            <span class="n">k</span> <span class="o">=</span> <span class="n">keep_lengths</span><span class="p">[</span>
-</span><span id="line-182">                <span class="n">i</span>
-</span><span id="line-183">            <span class="p">]</span><span class="o">.</span><span class="n">item</span><span class="p">()</span>  <span class="c1"># the index for which the batch is truncated.</span>
-</span><span id="line-184">            <span class="n">padded_tensor_trunc</span><span class="p">[</span><span class="n">i</span><span class="p">,</span> <span class="p">:</span><span class="n">k</span><span class="p">,</span> <span class="p">:]</span> <span class="o">=</span> <span class="n">padded_tensor</span><span class="p">[</span><span class="n">i</span><span class="p">,</span> <span class="p">:</span><span class="n">k</span><span class="p">,</span> <span class="p">:]</span>
-</span><span id="line-185">            <span class="n">padding_mask</span><span class="p">[</span><span class="n">i</span><span class="p">,</span> <span class="p">:</span><span class="n">k</span><span class="p">]</span> <span class="o">=</span> <span class="mi">0</span>
-</span><span id="line-186">
-</span><span id="line-187">        <span class="n">total_pt</span> <span class="o">=</span> <span class="kc">None</span>
-</span><span id="line-188">        <span class="k">return</span> <span class="n">padded_tensor_trunc</span><span class="p">,</span> <span class="n">padding_mask</span><span class="p">,</span> <span class="n">total_pt</span>
-</span><span id="line-189">
-</span><span id="line-190">    <span class="k">else</span><span class="p">:</span>
-</span><span id="line-191">        <span class="c1"># This part of the function is used for the data processing of</span>
-</span><span id="line-192">        <span class="c1"># status 23 particles, for which no truncation is necessary.</span>
-</span><span id="line-193">        <span class="n">padding_mask</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">tensor</span><span class="p">(</span>
-</span><span id="line-194">            <span class="p">[[</span><span class="mi">0</span><span class="p">]</span> <span class="o">*</span> <span class="n">n</span> <span class="o">+</span> <span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="o">*</span> <span class="p">(</span><span class="n">max_particles</span> <span class="o">-</span> <span class="n">n</span><span class="p">)</span> <span class="k">for</span> <span class="n">n</span> <span class="ow">in</span> <span class="n">event_particles</span><span class="p">],</span>
-</span><span id="line-195">            <span class="n">dtype</span><span class="o">=</span><span class="n">torch</span><span class="o">.</span><span class="n">bool</span><span class="p">,</span>
-</span><span id="line-196">        <span class="p">)</span>
-</span><span id="line-197">        <span class="n">total_pt</span> <span class="o">=</span> <span class="n">pt_padded_tensor</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="n">dim</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>  <span class="c1"># shape (nr_events,).</span>
-</span><span id="line-198">        <span class="k">return</span> <span class="n">padded_tensor</span><span class="p">,</span> <span class="n">padding_mask</span><span class="p">,</span> <span class="n">total_pt</span></div>
+</span><span id="line-82"><span class="k">def</span><span class="w"> </span><span class="nf">awkward_to_padded_tensor</span><span class="p">(</span><span class="n">data</span><span class="p">,</span> <span class="n">features</span><span class="p">,</span> <span class="n">list_pt</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+</span><span id="line-83"><span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+</span><span id="line-84"><span class="sd">    Convert an Awkward Array to a padded PyTorch tensor.</span>
+</span><span id="line-85">
+</span><span id="line-86"><span class="sd">    Optionally truncate each event based on the cumulative transverse</span>
+</span><span id="line-87"><span class="sd">    momentum (pT).</span>
+</span><span id="line-88">
+</span><span id="line-89"><span class="sd">    Parameters</span>
+</span><span id="line-90"><span class="sd">    ----------</span>
+</span><span id="line-91"><span class="sd">    data : ak.Array</span>
+</span><span id="line-92"><span class="sd">        Input Awkward Array.</span>
+</span><span id="line-93"><span class="sd">    features : list[str]</span>
+</span><span id="line-94"><span class="sd">        Feature names to extract. The last feature is assumed to be</span>
+</span><span id="line-95"><span class="sd">        ``pT``.</span>
+</span><span id="line-96"><span class="sd">    list_pt : torch.Tensor or None</span>
+</span><span id="line-97"><span class="sd">        Event-wise total transverse momentum. Required when building</span>
+</span><span id="line-98"><span class="sd">        the final particle truncated tensors so that the cumulative</span>
+</span><span id="line-99"><span class="sd">        `pT` first exceeding 50% of ``list_pt`` is kept.</span>
+</span><span id="line-100">
+</span><span id="line-101"><span class="sd">    Returns</span>
+</span><span id="line-102"><span class="sd">    -------</span>
+</span><span id="line-103"><span class="sd">    padded_tensor : torch.Tensor</span>
+</span><span id="line-104"><span class="sd">        Padded (and possibly truncated) tensor of shape</span>
+</span><span id="line-105"><span class="sd">        ``[nr_events, max_len, num_features]``.</span>
+</span><span id="line-106"><span class="sd">    padding_mask : torch.Tensor</span>
+</span><span id="line-107"><span class="sd">        Boolean mask of shape ``[nr_events, max_len]`` with 0 for real</span>
+</span><span id="line-108"><span class="sd">        tokens and 1 for padding.</span>
+</span><span id="line-109"><span class="sd">    total_pt : torch.Tensor or None</span>
+</span><span id="line-110"><span class="sd">        Total pT per event of shape ``[nr_events]`` when not truncated,</span>
+</span><span id="line-111"><span class="sd">        otherwise ``None`` when truncation was applied.</span>
+</span><span id="line-112"><span class="sd">    &quot;&quot;&quot;</span>
+</span><span id="line-113">    <span class="n">event_particles</span><span class="p">,</span> <span class="n">max_particles</span><span class="p">,</span> <span class="n">num_features</span> <span class="o">=</span> <span class="n">_validate_args</span><span class="p">(</span>
+</span><span id="line-114">        <span class="n">data</span><span class="p">,</span> <span class="n">features</span>
+</span><span id="line-115">    <span class="p">)</span>
+</span><span id="line-116">
+</span><span id="line-117">    <span class="n">padded_tensor</span><span class="p">,</span> <span class="n">pt_idx</span> <span class="o">=</span> <span class="n">_pad_and_sort_by_pt</span><span class="p">(</span>
+</span><span id="line-118">        <span class="n">data</span><span class="p">,</span> <span class="n">features</span><span class="p">,</span> <span class="n">max_particles</span><span class="p">,</span> <span class="n">list_pt</span>
+</span><span id="line-119">    <span class="p">)</span>
+</span><span id="line-120">    <span class="n">pt_padded_tensor</span> <span class="o">=</span> <span class="n">padded_tensor</span><span class="p">[</span>
+</span><span id="line-121">        <span class="p">:,</span> <span class="p">:,</span> <span class="n">pt_idx</span>
+</span><span id="line-122">    <span class="p">]</span>  <span class="c1"># shape (nr_events, max_particles).</span>
+</span><span id="line-123">
+</span><span id="line-124">    <span class="k">if</span> <span class="n">list_pt</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+</span><span id="line-125">        <span class="c1"># This part of the function is used for the data processing of</span>
+</span><span id="line-126">        <span class="c1"># the final particles, for which truncation is applicated.</span>
+</span><span id="line-127">        <span class="k">if</span> <span class="n">list_pt</span> <span class="o">==</span> <span class="p">[]:</span>
+</span><span id="line-128">            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;Parameter &#39;list_pt&#39; can not be an empty list.&quot;</span><span class="p">)</span>
+</span><span id="line-129">        <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">list_pt</span><span class="p">,</span> <span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">):</span>
+</span><span id="line-130">            <span class="k">raise</span> <span class="ne">TypeError</span><span class="p">(</span>
+</span><span id="line-131">                <span class="s2">&quot;Parameter &#39;list_pt&#39; must be of type &#39;torch.Tensor&#39;, &quot;</span>
+</span><span id="line-132">                <span class="sa">f</span><span class="s2">&quot;got &#39;</span><span class="si">{</span><span class="nb">type</span><span class="p">(</span><span class="n">list_pt</span><span class="p">)</span><span class="si">}</span><span class="s2">&#39; instead.&quot;</span>
+</span><span id="line-133">            <span class="p">)</span>
+</span><span id="line-134">        <span class="k">if</span> <span class="ow">not</span> <span class="nb">all</span><span class="p">(</span><span class="nb">isinstance</span><span class="p">(</span><span class="n">pt</span><span class="p">,</span> <span class="p">(</span><span class="nb">int</span><span class="p">,</span> <span class="nb">float</span><span class="p">))</span> <span class="k">for</span> <span class="n">pt</span> <span class="ow">in</span> <span class="n">list_pt</span><span class="o">.</span><span class="n">tolist</span><span class="p">()):</span>
+</span><span id="line-135">            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;Parameter &#39;list_pt&#39; must be a list of numbers.&quot;</span><span class="p">)</span>
+</span><span id="line-136">        <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">list_pt</span><span class="p">)</span> <span class="o">!=</span> <span class="nb">len</span><span class="p">(</span><span class="n">data</span><span class="p">):</span>
+</span><span id="line-137">            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+</span><span id="line-138">                <span class="sa">f</span><span class="s2">&quot;&#39;list_pt&#39; must have length equal to number of events &quot;</span>
+</span><span id="line-139">                <span class="sa">f</span><span class="s2">&quot;(</span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">data</span><span class="p">)</span><span class="si">}</span><span class="s2">), got </span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">list_pt</span><span class="p">)</span><span class="si">}</span><span class="s2"> instead.&quot;</span>
+</span><span id="line-140">            <span class="p">)</span>
+</span><span id="line-141">        <span class="n">nr_events</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">event_particles</span><span class="p">)</span>
+</span><span id="line-142">
+</span><span id="line-143">        <span class="c1"># Establish an arbitrary threshold to truncate the particles in</span>
+</span><span id="line-144">        <span class="c1"># each event.</span>
+</span><span id="line-145">        <span class="n">threshold</span> <span class="o">=</span> <span class="mf">0.5</span> <span class="o">*</span> <span class="n">list_pt</span>  <span class="c1"># shape (nr_events,).</span>
+</span><span id="line-146">        <span class="n">cum_pt</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">cumsum</span><span class="p">(</span>
+</span><span id="line-147">            <span class="n">pt_padded_tensor</span><span class="p">,</span> <span class="n">dim</span><span class="o">=</span><span class="mi">1</span>
+</span><span id="line-148">        <span class="p">)</span>  <span class="c1"># cumulative sum of pT. Shape (nr_events, max_particles).</span>
+</span><span id="line-149">
+</span><span id="line-150">        <span class="c1"># The index s.t. cum_pt &lt; threshold is found for each event.</span>
+</span><span id="line-151">        <span class="n">keep_lengths</span> <span class="o">=</span> <span class="p">(</span><span class="n">cum_pt</span> <span class="o">&lt;</span> <span class="n">threshold</span><span class="o">.</span><span class="n">unsqueeze</span><span class="p">(</span><span class="mi">1</span><span class="p">))</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span>
+</span><span id="line-152">            <span class="n">dim</span><span class="o">=</span><span class="mi">1</span>
+</span><span id="line-153">        <span class="p">)</span> <span class="o">+</span> <span class="mi">1</span>  <span class="c1"># + 1 in order to consider the particle above 50%.</span>
+</span><span id="line-154">        <span class="n">keep_lengths</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">clamp</span><span class="p">(</span>
+</span><span id="line-155">            <span class="n">keep_lengths</span><span class="p">,</span> <span class="nb">max</span><span class="o">=</span><span class="n">max_particles</span>
+</span><span id="line-156">        <span class="p">)</span>  <span class="c1"># shape (nr_events,).</span>
+</span><span id="line-157">
+</span><span id="line-158">        <span class="n">new_max_len</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">keep_lengths</span><span class="o">.</span><span class="n">max</span><span class="p">()</span><span class="o">.</span><span class="n">item</span><span class="p">())</span>  <span class="c1"># scalar.</span>
+</span><span id="line-159">
+</span><span id="line-160">        <span class="n">padded_tensor_trunc</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">zeros</span><span class="p">(</span>
+</span><span id="line-161">            <span class="p">(</span><span class="n">nr_events</span><span class="p">,</span> <span class="n">new_max_len</span><span class="p">,</span> <span class="n">num_features</span><span class="p">),</span> <span class="n">dtype</span><span class="o">=</span><span class="n">torch</span><span class="o">.</span><span class="n">float32</span>
+</span><span id="line-162">        <span class="p">)</span>  <span class="c1"># shape (nr_events, new_max_len, num_features).</span>
+</span><span id="line-163">        <span class="n">padding_mask</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">ones</span><span class="p">(</span>
+</span><span id="line-164">            <span class="p">(</span><span class="n">nr_events</span><span class="p">,</span> <span class="n">new_max_len</span><span class="p">),</span> <span class="n">dtype</span><span class="o">=</span><span class="n">torch</span><span class="o">.</span><span class="n">bool</span>
+</span><span id="line-165">        <span class="p">)</span>  <span class="c1"># shape (nr_events, new_max_len).</span>
+</span><span id="line-166">
+</span><span id="line-167">        <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">nr_events</span><span class="p">):</span>
+</span><span id="line-168">            <span class="n">k</span> <span class="o">=</span> <span class="n">keep_lengths</span><span class="p">[</span>
+</span><span id="line-169">                <span class="n">i</span>
+</span><span id="line-170">            <span class="p">]</span><span class="o">.</span><span class="n">item</span><span class="p">()</span>  <span class="c1"># the index for which the batch is truncated.</span>
+</span><span id="line-171">            <span class="n">padded_tensor_trunc</span><span class="p">[</span><span class="n">i</span><span class="p">,</span> <span class="p">:</span><span class="n">k</span><span class="p">,</span> <span class="p">:]</span> <span class="o">=</span> <span class="n">padded_tensor</span><span class="p">[</span><span class="n">i</span><span class="p">,</span> <span class="p">:</span><span class="n">k</span><span class="p">,</span> <span class="p">:]</span>
+</span><span id="line-172">            <span class="n">padding_mask</span><span class="p">[</span><span class="n">i</span><span class="p">,</span> <span class="p">:</span><span class="n">k</span><span class="p">]</span> <span class="o">=</span> <span class="mi">0</span>
+</span><span id="line-173">
+</span><span id="line-174">        <span class="n">total_pt</span> <span class="o">=</span> <span class="kc">None</span>
+</span><span id="line-175">        <span class="k">return</span> <span class="n">padded_tensor_trunc</span><span class="p">,</span> <span class="n">padding_mask</span><span class="p">,</span> <span class="n">total_pt</span>
+</span><span id="line-176">
+</span><span id="line-177">    <span class="k">else</span><span class="p">:</span>
+</span><span id="line-178">        <span class="c1"># This part of the function is used for the data processing of</span>
+</span><span id="line-179">        <span class="c1"># status 23 particles, for which no truncation is necessary.</span>
+</span><span id="line-180">        <span class="n">padding_mask</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">tensor</span><span class="p">(</span>
+</span><span id="line-181">            <span class="p">[[</span><span class="mi">0</span><span class="p">]</span> <span class="o">*</span> <span class="n">n</span> <span class="o">+</span> <span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="o">*</span> <span class="p">(</span><span class="n">max_particles</span> <span class="o">-</span> <span class="n">n</span><span class="p">)</span> <span class="k">for</span> <span class="n">n</span> <span class="ow">in</span> <span class="n">event_particles</span><span class="p">],</span>
+</span><span id="line-182">            <span class="n">dtype</span><span class="o">=</span><span class="n">torch</span><span class="o">.</span><span class="n">bool</span><span class="p">,</span>
+</span><span id="line-183">        <span class="p">)</span>
+</span><span id="line-184">        <span class="n">total_pt</span> <span class="o">=</span> <span class="n">pt_padded_tensor</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="n">dim</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>  <span class="c1"># shape (nr_events,).</span>
+</span><span id="line-185">        <span class="k">return</span> <span class="n">padded_tensor</span><span class="p">,</span> <span class="n">padding_mask</span><span class="p">,</span> <span class="n">total_pt</span></div>
 
-</span><span id="line-199">
-</span><span id="line-200">
+</span><span id="line-186">
+</span><span id="line-187">
 <div class="viewcode-block" id="batching">
 <a class="viewcode-back" href="../../_api/pythiatransformer.data_processing.html#pythiatransformer.data_processing.batching">[docs]</a>
-</span><span id="line-201"><span class="k">def</span><span class="w"> </span><span class="nf">batching</span><span class="p">(</span><span class="nb">input</span><span class="p">,</span> <span class="n">target</span><span class="p">,</span> <span class="n">batch_size</span><span class="p">,</span> <span class="n">shuffle</span><span class="o">=</span><span class="kc">True</span><span class="p">):</span>
-</span><span id="line-202"><span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
-</span><span id="line-203"><span class="sd">    Create a DataLoader for batching and shuffling input/target pairs.</span>
-</span><span id="line-204">
-</span><span id="line-205"><span class="sd">    Parameters</span>
-</span><span id="line-206"><span class="sd">    ----------</span>
-</span><span id="line-207"><span class="sd">    input : torch.Tensor</span>
-</span><span id="line-208"><span class="sd">        Input dataset.</span>
-</span><span id="line-209"><span class="sd">    target : torch.Tensor</span>
-</span><span id="line-210"><span class="sd">        Target dataset.</span>
-</span><span id="line-211"><span class="sd">    batch_size : int</span>
-</span><span id="line-212"><span class="sd">        Size of the mini-batches.</span>
-</span><span id="line-213"><span class="sd">    shuffle : bool</span>
-</span><span id="line-214"><span class="sd">        If ``True``, performs shuffling of the data.</span>
-</span><span id="line-215">
-</span><span id="line-216"><span class="sd">    Returns</span>
-</span><span id="line-217"><span class="sd">    -------</span>
-</span><span id="line-218"><span class="sd">    loader : torch.utils.data.DataLoader</span>
-</span><span id="line-219"><span class="sd">        ``DataLoader`` object containing the batched and shuffled</span>
-</span><span id="line-220"><span class="sd">        input-target pairs.</span>
-</span><span id="line-221"><span class="sd">    &quot;&quot;&quot;</span>
-</span><span id="line-222">    <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="nb">input</span><span class="p">,</span> <span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">):</span>
-</span><span id="line-223">        <span class="k">raise</span> <span class="ne">TypeError</span><span class="p">(</span>
-</span><span id="line-224">            <span class="sa">f</span><span class="s2">&quot;Parameter &#39;input&#39; must be a torch.Tensor, got &#39;</span><span class="si">{</span><span class="nb">type</span><span class="p">(</span><span class="nb">input</span><span class="p">)</span><span class="si">}</span><span class="s2">&#39; &quot;</span>
-</span><span id="line-225">            <span class="sa">f</span><span class="s2">&quot;instead&quot;</span>
-</span><span id="line-226">        <span class="p">)</span>
-</span><span id="line-227">    <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">target</span><span class="p">,</span> <span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">):</span>
-</span><span id="line-228">        <span class="k">raise</span> <span class="ne">TypeError</span><span class="p">(</span>
-</span><span id="line-229">            <span class="sa">f</span><span class="s2">&quot;Parameter &#39;target&#39; must be a torch.Tensor, got &#39;</span><span class="si">{</span><span class="nb">type</span><span class="p">(</span><span class="n">target</span><span class="p">)</span><span class="si">}</span><span class="s2">&#39;&quot;</span>
-</span><span id="line-230">            <span class="sa">f</span><span class="s2">&quot; instead&quot;</span>
-</span><span id="line-231">        <span class="p">)</span>
-</span><span id="line-232">    <span class="k">if</span> <span class="nb">input</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">!=</span> <span class="n">target</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">]:</span>
-</span><span id="line-233">        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
-</span><span id="line-234">            <span class="sa">f</span><span class="s2">&quot;Parameters &#39;input&#39; and &#39;target&#39; must have the same number of &quot;</span>
-</span><span id="line-235">            <span class="sa">f</span><span class="s2">&quot;samples. Got </span><span class="si">{</span><span class="nb">input</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="si">}</span><span class="s2"> and </span><span class="si">{</span><span class="n">target</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="si">}</span><span class="s2">&quot;</span>
-</span><span id="line-236">            <span class="sa">f</span><span class="s2">&quot; respectively.&quot;</span>
-</span><span id="line-237">        <span class="p">)</span>
-</span><span id="line-238">    <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">batch_size</span><span class="p">,</span> <span class="nb">int</span><span class="p">):</span>
-</span><span id="line-239">        <span class="k">raise</span> <span class="ne">TypeError</span><span class="p">(</span>
-</span><span id="line-240">            <span class="s2">&quot;Parameter &#39;batch_size&#39; must be of type &#39;int&#39;, &quot;</span>
-</span><span id="line-241">            <span class="sa">f</span><span class="s2">&quot;got &#39;</span><span class="si">{</span><span class="nb">type</span><span class="p">(</span><span class="n">batch_size</span><span class="p">)</span><span class="si">}</span><span class="s2">&#39; instead.&quot;</span>
-</span><span id="line-242">        <span class="p">)</span>
-</span><span id="line-243">    <span class="k">if</span> <span class="ow">not</span> <span class="n">batch_size</span> <span class="o">&lt;=</span> <span class="nb">input</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">]:</span>
-</span><span id="line-244">        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
-</span><span id="line-245">            <span class="s2">&quot;Parameter &#39;batch_size&#39; must be smaller than or equal &quot;</span>
-</span><span id="line-246">            <span class="sa">f</span><span class="s2">&quot;to the input dataset size </span><span class="si">{</span><span class="nb">input</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="si">}</span><span class="s2">, &quot;</span>
-</span><span id="line-247">            <span class="sa">f</span><span class="s2">&quot;got </span><span class="si">{</span><span class="n">batch_size</span><span class="si">}</span><span class="s2"> instead.&quot;</span>
-</span><span id="line-248">        <span class="p">)</span>
-</span><span id="line-249">    <span class="k">if</span> <span class="n">batch_size</span> <span class="o">&lt;</span> <span class="mi">1</span><span class="p">:</span>
-</span><span id="line-250">        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
-</span><span id="line-251">            <span class="sa">f</span><span class="s2">&quot;Parameter &#39;batch_size&#39; must be at least 1, got </span><span class="si">{</span><span class="n">batch_size</span><span class="si">}</span><span class="s2"> &quot;</span>
-</span><span id="line-252">            <span class="sa">f</span><span class="s2">&quot;instead.&quot;</span>
-</span><span id="line-253">        <span class="p">)</span>
-</span><span id="line-254">    <span class="n">generator</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">Generator</span><span class="p">()</span><span class="o">.</span><span class="n">manual_seed</span><span class="p">(</span><span class="mi">1</span><span class="p">)</span>
-</span><span id="line-255">    <span class="n">loader</span> <span class="o">=</span> <span class="n">DataLoader</span><span class="p">(</span>
-</span><span id="line-256">        <span class="n">TensorDataset</span><span class="p">(</span><span class="nb">input</span><span class="p">,</span> <span class="n">target</span><span class="p">),</span>
-</span><span id="line-257">        <span class="n">batch_size</span><span class="o">=</span><span class="n">batch_size</span><span class="p">,</span>
-</span><span id="line-258">        <span class="n">shuffle</span><span class="o">=</span><span class="n">shuffle</span><span class="p">,</span>
-</span><span id="line-259">        <span class="n">num_workers</span><span class="o">=</span><span class="mi">2</span><span class="p">,</span>
-</span><span id="line-260">        <span class="n">pin_memory</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
-</span><span id="line-261">        <span class="n">generator</span><span class="o">=</span><span class="n">generator</span> <span class="k">if</span> <span class="n">shuffle</span> <span class="k">else</span> <span class="kc">None</span><span class="p">,</span>
-</span><span id="line-262">    <span class="p">)</span>
-</span><span id="line-263">    <span class="k">return</span> <span class="n">loader</span></div>
+</span><span id="line-188"><span class="k">def</span><span class="w"> </span><span class="nf">batching</span><span class="p">(</span><span class="nb">input</span><span class="p">,</span> <span class="n">target</span><span class="p">,</span> <span class="n">batch_size</span><span class="p">,</span> <span class="n">shuffle</span><span class="o">=</span><span class="kc">True</span><span class="p">):</span>
+</span><span id="line-189"><span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+</span><span id="line-190"><span class="sd">    Create a DataLoader for batching and shuffling input/target pairs.</span>
+</span><span id="line-191">
+</span><span id="line-192"><span class="sd">    Parameters</span>
+</span><span id="line-193"><span class="sd">    ----------</span>
+</span><span id="line-194"><span class="sd">    input : torch.Tensor</span>
+</span><span id="line-195"><span class="sd">        Input dataset.</span>
+</span><span id="line-196"><span class="sd">    target : torch.Tensor</span>
+</span><span id="line-197"><span class="sd">        Target dataset.</span>
+</span><span id="line-198"><span class="sd">    batch_size : int</span>
+</span><span id="line-199"><span class="sd">        Size of the mini-batches.</span>
+</span><span id="line-200"><span class="sd">    shuffle : bool</span>
+</span><span id="line-201"><span class="sd">        If ``True``, performs shuffling of the data.</span>
+</span><span id="line-202">
+</span><span id="line-203"><span class="sd">    Returns</span>
+</span><span id="line-204"><span class="sd">    -------</span>
+</span><span id="line-205"><span class="sd">    loader : torch.utils.data.DataLoader</span>
+</span><span id="line-206"><span class="sd">        ``DataLoader`` object containing the batched and shuffled</span>
+</span><span id="line-207"><span class="sd">        input-target pairs.</span>
+</span><span id="line-208"><span class="sd">    &quot;&quot;&quot;</span>
+</span><span id="line-209">    <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="nb">input</span><span class="p">,</span> <span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">):</span>
+</span><span id="line-210">        <span class="k">raise</span> <span class="ne">TypeError</span><span class="p">(</span>
+</span><span id="line-211">            <span class="sa">f</span><span class="s2">&quot;Parameter &#39;input&#39; must be a torch.Tensor, got &#39;</span><span class="si">{</span><span class="nb">type</span><span class="p">(</span><span class="nb">input</span><span class="p">)</span><span class="si">}</span><span class="s2">&#39; &quot;</span>
+</span><span id="line-212">            <span class="sa">f</span><span class="s2">&quot;instead&quot;</span>
+</span><span id="line-213">        <span class="p">)</span>
+</span><span id="line-214">    <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">target</span><span class="p">,</span> <span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">):</span>
+</span><span id="line-215">        <span class="k">raise</span> <span class="ne">TypeError</span><span class="p">(</span>
+</span><span id="line-216">            <span class="sa">f</span><span class="s2">&quot;Parameter &#39;target&#39; must be a torch.Tensor, got &#39;</span><span class="si">{</span><span class="nb">type</span><span class="p">(</span><span class="n">target</span><span class="p">)</span><span class="si">}</span><span class="s2">&#39;&quot;</span>
+</span><span id="line-217">            <span class="sa">f</span><span class="s2">&quot; instead&quot;</span>
+</span><span id="line-218">        <span class="p">)</span>
+</span><span id="line-219">    <span class="k">if</span> <span class="nb">input</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">!=</span> <span class="n">target</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">]:</span>
+</span><span id="line-220">        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+</span><span id="line-221">            <span class="sa">f</span><span class="s2">&quot;Parameters &#39;input&#39; and &#39;target&#39; must have the same number of &quot;</span>
+</span><span id="line-222">            <span class="sa">f</span><span class="s2">&quot;samples. Got </span><span class="si">{</span><span class="nb">input</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="si">}</span><span class="s2"> and </span><span class="si">{</span><span class="n">target</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="si">}</span><span class="s2">&quot;</span>
+</span><span id="line-223">            <span class="sa">f</span><span class="s2">&quot; respectively.&quot;</span>
+</span><span id="line-224">        <span class="p">)</span>
+</span><span id="line-225">    <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">batch_size</span><span class="p">,</span> <span class="nb">int</span><span class="p">):</span>
+</span><span id="line-226">        <span class="k">raise</span> <span class="ne">TypeError</span><span class="p">(</span>
+</span><span id="line-227">            <span class="s2">&quot;Parameter &#39;batch_size&#39; must be of type &#39;int&#39;, &quot;</span>
+</span><span id="line-228">            <span class="sa">f</span><span class="s2">&quot;got &#39;</span><span class="si">{</span><span class="nb">type</span><span class="p">(</span><span class="n">batch_size</span><span class="p">)</span><span class="si">}</span><span class="s2">&#39; instead.&quot;</span>
+</span><span id="line-229">        <span class="p">)</span>
+</span><span id="line-230">    <span class="k">if</span> <span class="ow">not</span> <span class="n">batch_size</span> <span class="o">&lt;=</span> <span class="nb">input</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">]:</span>
+</span><span id="line-231">        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+</span><span id="line-232">            <span class="s2">&quot;Parameter &#39;batch_size&#39; must be smaller than or equal &quot;</span>
+</span><span id="line-233">            <span class="sa">f</span><span class="s2">&quot;to the input dataset size </span><span class="si">{</span><span class="nb">input</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="si">}</span><span class="s2">, &quot;</span>
+</span><span id="line-234">            <span class="sa">f</span><span class="s2">&quot;got </span><span class="si">{</span><span class="n">batch_size</span><span class="si">}</span><span class="s2"> instead.&quot;</span>
+</span><span id="line-235">        <span class="p">)</span>
+</span><span id="line-236">    <span class="k">if</span> <span class="n">batch_size</span> <span class="o">&lt;</span> <span class="mi">1</span><span class="p">:</span>
+</span><span id="line-237">        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+</span><span id="line-238">            <span class="sa">f</span><span class="s2">&quot;Parameter &#39;batch_size&#39; must be at least 1, got </span><span class="si">{</span><span class="n">batch_size</span><span class="si">}</span><span class="s2"> &quot;</span>
+</span><span id="line-239">            <span class="sa">f</span><span class="s2">&quot;instead.&quot;</span>
+</span><span id="line-240">        <span class="p">)</span>
+</span><span id="line-241">    <span class="n">generator</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">Generator</span><span class="p">()</span><span class="o">.</span><span class="n">manual_seed</span><span class="p">(</span><span class="mi">1</span><span class="p">)</span>
+</span><span id="line-242">    <span class="n">loader</span> <span class="o">=</span> <span class="n">DataLoader</span><span class="p">(</span>
+</span><span id="line-243">        <span class="n">TensorDataset</span><span class="p">(</span><span class="nb">input</span><span class="p">,</span> <span class="n">target</span><span class="p">),</span>
+</span><span id="line-244">        <span class="n">batch_size</span><span class="o">=</span><span class="n">batch_size</span><span class="p">,</span>
+</span><span id="line-245">        <span class="n">shuffle</span><span class="o">=</span><span class="n">shuffle</span><span class="p">,</span>
+</span><span id="line-246">        <span class="n">num_workers</span><span class="o">=</span><span class="mi">2</span><span class="p">,</span>
+</span><span id="line-247">        <span class="n">pin_memory</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+</span><span id="line-248">        <span class="n">generator</span><span class="o">=</span><span class="n">generator</span> <span class="k">if</span> <span class="n">shuffle</span> <span class="k">else</span> <span class="kc">None</span><span class="p">,</span>
+</span><span id="line-249">    <span class="p">)</span>
+</span><span id="line-250">    <span class="k">return</span> <span class="n">loader</span></div>
 
-</span><span id="line-264">
-</span><span id="line-265">
+</span><span id="line-251">
+</span><span id="line-252">
 <div class="viewcode-block" id="train_val_test_split">
 <a class="viewcode-back" href="../../_api/pythiatransformer.data_processing.html#pythiatransformer.data_processing.train_val_test_split">[docs]</a>
-</span><span id="line-266"><span class="k">def</span><span class="w"> </span><span class="nf">train_val_test_split</span><span class="p">(</span><span class="n">tensor</span><span class="p">,</span> <span class="n">train_perc</span><span class="o">=</span><span class="mf">0.8</span><span class="p">,</span> <span class="n">val_perc</span><span class="o">=</span><span class="mf">0.1</span><span class="p">,</span> <span class="n">test_perc</span><span class="o">=</span><span class="mf">0.1</span><span class="p">):</span>
-</span><span id="line-267"><span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
-</span><span id="line-268"><span class="sd">    Split a tensor into training, validation, and test sets.</span>
+</span><span id="line-253"><span class="k">def</span><span class="w"> </span><span class="nf">train_val_test_split</span><span class="p">(</span><span class="n">tensor</span><span class="p">,</span> <span class="n">train_perc</span><span class="o">=</span><span class="mf">0.8</span><span class="p">,</span> <span class="n">val_perc</span><span class="o">=</span><span class="mf">0.1</span><span class="p">,</span> <span class="n">test_perc</span><span class="o">=</span><span class="mf">0.1</span><span class="p">):</span>
+</span><span id="line-254"><span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+</span><span id="line-255"><span class="sd">    Split a tensor into training, validation, and test sets.</span>
+</span><span id="line-256">
+</span><span id="line-257"><span class="sd">    Parameters</span>
+</span><span id="line-258"><span class="sd">    ----------</span>
+</span><span id="line-259"><span class="sd">    tensor : torch.Tensor</span>
+</span><span id="line-260"><span class="sd">        Tensor to split into subsets.</span>
+</span><span id="line-261"><span class="sd">    train_perc : float</span>
+</span><span id="line-262"><span class="sd">        Fraction of the dataset to use for the training set.</span>
+</span><span id="line-263"><span class="sd">    val_perc : float</span>
+</span><span id="line-264"><span class="sd">        Fraction of the dataset to use for the validation set.</span>
+</span><span id="line-265"><span class="sd">    test_perc : float</span>
+</span><span id="line-266"><span class="sd">        Fraction of the dataset to use for the test set.</span>
+</span><span id="line-267"><span class="sd">    min_size : int</span>
+</span><span id="line-268"><span class="sd">        Minimum acceptable size for each subset.</span>
 </span><span id="line-269">
-</span><span id="line-270"><span class="sd">    Parameters</span>
-</span><span id="line-271"><span class="sd">    ----------</span>
-</span><span id="line-272"><span class="sd">    tensor : torch.Tensor</span>
-</span><span id="line-273"><span class="sd">        Tensor to split into subsets.</span>
-</span><span id="line-274"><span class="sd">    train_perc : float</span>
-</span><span id="line-275"><span class="sd">        Fraction of the dataset to use for the training set.</span>
-</span><span id="line-276"><span class="sd">    val_perc : float</span>
-</span><span id="line-277"><span class="sd">        Fraction of the dataset to use for the validation set.</span>
-</span><span id="line-278"><span class="sd">    test_perc : float</span>
-</span><span id="line-279"><span class="sd">        Fraction of the dataset to use for the test set.</span>
-</span><span id="line-280"><span class="sd">    min_size : int</span>
-</span><span id="line-281"><span class="sd">        Minimum acceptable size for each subset.</span>
-</span><span id="line-282">
-</span><span id="line-283"><span class="sd">    Returns</span>
-</span><span id="line-284"><span class="sd">    -------</span>
-</span><span id="line-285"><span class="sd">    tuple: torch.Tensor</span>
-</span><span id="line-286"><span class="sd">        A tuple ``(train_tensor, val_tensor, test_tensor)`` containing</span>
-</span><span id="line-287"><span class="sd">        the corresponding splits of the input tensor.</span>
-</span><span id="line-288"><span class="sd">    &quot;&quot;&quot;</span>
-</span><span id="line-289">    <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">tensor</span><span class="p">,</span> <span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">):</span>
-</span><span id="line-290">        <span class="k">raise</span> <span class="ne">TypeError</span><span class="p">(</span>
-</span><span id="line-291">            <span class="s2">&quot;Parameter &#39;tensor&#39; must be of type torch.Tensor, &quot;</span>
-</span><span id="line-292">            <span class="sa">f</span><span class="s2">&quot;got &#39;</span><span class="si">{</span><span class="nb">type</span><span class="p">(</span><span class="n">tensor</span><span class="p">)</span><span class="si">}</span><span class="s2">&#39; instead.&quot;</span>
-</span><span id="line-293">        <span class="p">)</span>
-</span><span id="line-294">    <span class="k">if</span> <span class="ow">not</span> <span class="n">math</span><span class="o">.</span><span class="n">isclose</span><span class="p">(</span>
-</span><span id="line-295">        <span class="n">train_perc</span> <span class="o">+</span> <span class="n">val_perc</span> <span class="o">+</span> <span class="n">test_perc</span><span class="p">,</span> <span class="mf">1.0</span><span class="p">,</span> <span class="n">rel_tol</span><span class="o">=</span><span class="mf">1e-9</span><span class="p">,</span> <span class="n">abs_tol</span><span class="o">=</span><span class="mf">1e-12</span>
-</span><span id="line-296">    <span class="p">):</span>
-</span><span id="line-297">        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
-</span><span id="line-298">            <span class="s2">&quot;Invalid values for split percentages. Must sum to 1.&quot;</span>
-</span><span id="line-299">        <span class="p">)</span>
-</span><span id="line-300">    <span class="k">if</span> <span class="ow">not</span> <span class="mi">0</span> <span class="o">&lt;=</span> <span class="n">train_perc</span> <span class="o">&lt;=</span> <span class="mi">1</span><span class="p">:</span>
-</span><span id="line-301">        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
-</span><span id="line-302">            <span class="sa">f</span><span class="s2">&quot;Invalid train_perc=</span><span class="si">{</span><span class="n">train_perc</span><span class="si">}</span><span class="s2">. Must be in [0,1].&quot;</span>
-</span><span id="line-303">        <span class="p">)</span>
-</span><span id="line-304">    <span class="k">if</span> <span class="ow">not</span> <span class="mi">0</span> <span class="o">&lt;=</span> <span class="n">val_perc</span> <span class="o">&lt;=</span> <span class="mi">1</span><span class="p">:</span>
-</span><span id="line-305">        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Invalid val_perc=</span><span class="si">{</span><span class="n">val_perc</span><span class="si">}</span><span class="s2">. Must be in [0,1].&quot;</span><span class="p">)</span>
-</span><span id="line-306">    <span class="k">if</span> <span class="ow">not</span> <span class="mi">0</span> <span class="o">&lt;=</span> <span class="n">test_perc</span> <span class="o">&lt;=</span> <span class="mi">1</span><span class="p">:</span>
-</span><span id="line-307">        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Invalid test_perc=</span><span class="si">{</span><span class="n">test_perc</span><span class="si">}</span><span class="s2">. Must be in [0,1].&quot;</span><span class="p">)</span>
-</span><span id="line-308">
-</span><span id="line-309">    <span class="n">n</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">tensor</span><span class="p">)</span>
-</span><span id="line-310">    <span class="n">i1</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">train_perc</span> <span class="o">*</span> <span class="n">n</span><span class="p">)</span>
-</span><span id="line-311">    <span class="n">i2</span> <span class="o">=</span> <span class="n">i1</span> <span class="o">+</span> <span class="nb">int</span><span class="p">(</span><span class="n">val_perc</span> <span class="o">*</span> <span class="n">n</span><span class="p">)</span>
-</span><span id="line-312">
-</span><span id="line-313">    <span class="k">return</span> <span class="n">tensor</span><span class="p">[:</span><span class="n">i1</span><span class="p">],</span> <span class="n">tensor</span><span class="p">[</span><span class="n">i1</span><span class="p">:</span><span class="n">i2</span><span class="p">],</span> <span class="n">tensor</span><span class="p">[</span><span class="n">i2</span><span class="p">:]</span></div>
+</span><span id="line-270"><span class="sd">    Returns</span>
+</span><span id="line-271"><span class="sd">    -------</span>
+</span><span id="line-272"><span class="sd">    tuple: torch.Tensor</span>
+</span><span id="line-273"><span class="sd">        A tuple ``(train_tensor, val_tensor, test_tensor)`` containing</span>
+</span><span id="line-274"><span class="sd">        the corresponding splits of the input tensor.</span>
+</span><span id="line-275"><span class="sd">    &quot;&quot;&quot;</span>
+</span><span id="line-276">    <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">tensor</span><span class="p">,</span> <span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">):</span>
+</span><span id="line-277">        <span class="k">raise</span> <span class="ne">TypeError</span><span class="p">(</span>
+</span><span id="line-278">            <span class="s2">&quot;Parameter &#39;tensor&#39; must be of type torch.Tensor, &quot;</span>
+</span><span id="line-279">            <span class="sa">f</span><span class="s2">&quot;got &#39;</span><span class="si">{</span><span class="nb">type</span><span class="p">(</span><span class="n">tensor</span><span class="p">)</span><span class="si">}</span><span class="s2">&#39; instead.&quot;</span>
+</span><span id="line-280">        <span class="p">)</span>
+</span><span id="line-281">    <span class="k">if</span> <span class="ow">not</span> <span class="n">math</span><span class="o">.</span><span class="n">isclose</span><span class="p">(</span>
+</span><span id="line-282">        <span class="n">train_perc</span> <span class="o">+</span> <span class="n">val_perc</span> <span class="o">+</span> <span class="n">test_perc</span><span class="p">,</span> <span class="mf">1.0</span><span class="p">,</span> <span class="n">rel_tol</span><span class="o">=</span><span class="mf">1e-9</span><span class="p">,</span> <span class="n">abs_tol</span><span class="o">=</span><span class="mf">1e-12</span>
+</span><span id="line-283">    <span class="p">):</span>
+</span><span id="line-284">        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+</span><span id="line-285">            <span class="s2">&quot;Invalid values for split percentages. Must sum to 1.&quot;</span>
+</span><span id="line-286">        <span class="p">)</span>
+</span><span id="line-287">    <span class="k">if</span> <span class="ow">not</span> <span class="mi">0</span> <span class="o">&lt;=</span> <span class="n">train_perc</span> <span class="o">&lt;=</span> <span class="mi">1</span><span class="p">:</span>
+</span><span id="line-288">        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+</span><span id="line-289">            <span class="sa">f</span><span class="s2">&quot;Invalid train_perc=</span><span class="si">{</span><span class="n">train_perc</span><span class="si">}</span><span class="s2">. Must be in [0,1].&quot;</span>
+</span><span id="line-290">        <span class="p">)</span>
+</span><span id="line-291">    <span class="k">if</span> <span class="ow">not</span> <span class="mi">0</span> <span class="o">&lt;=</span> <span class="n">val_perc</span> <span class="o">&lt;=</span> <span class="mi">1</span><span class="p">:</span>
+</span><span id="line-292">        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Invalid val_perc=</span><span class="si">{</span><span class="n">val_perc</span><span class="si">}</span><span class="s2">. Must be in [0,1].&quot;</span><span class="p">)</span>
+</span><span id="line-293">    <span class="k">if</span> <span class="ow">not</span> <span class="mi">0</span> <span class="o">&lt;=</span> <span class="n">test_perc</span> <span class="o">&lt;=</span> <span class="mi">1</span><span class="p">:</span>
+</span><span id="line-294">        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Invalid test_perc=</span><span class="si">{</span><span class="n">test_perc</span><span class="si">}</span><span class="s2">. Must be in [0,1].&quot;</span><span class="p">)</span>
+</span><span id="line-295">
+</span><span id="line-296">    <span class="n">n</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">tensor</span><span class="p">)</span>
+</span><span id="line-297">    <span class="n">i1</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">train_perc</span> <span class="o">*</span> <span class="n">n</span><span class="p">)</span>
+</span><span id="line-298">    <span class="n">i2</span> <span class="o">=</span> <span class="n">i1</span> <span class="o">+</span> <span class="nb">int</span><span class="p">(</span><span class="n">val_perc</span> <span class="o">*</span> <span class="n">n</span><span class="p">)</span>
+</span><span id="line-299">
+</span><span id="line-300">    <span class="k">return</span> <span class="n">tensor</span><span class="p">[:</span><span class="n">i1</span><span class="p">],</span> <span class="n">tensor</span><span class="p">[</span><span class="n">i1</span><span class="p">:</span><span class="n">i2</span><span class="p">],</span> <span class="n">tensor</span><span class="p">[</span><span class="n">i2</span><span class="p">:]</span></div>
 
-</span><span id="line-314">
-</span><span id="line-315">
+</span><span id="line-301">
+</span><span id="line-302">
 <div class="viewcode-block" id="load_and_save_tensor">
 <a class="viewcode-back" href="../../_api/pythiatransformer.data_processing.html#pythiatransformer.data_processing.load_and_save_tensor">[docs]</a>
-</span><span id="line-316"><span class="k">def</span><span class="w"> </span><span class="nf">load_and_save_tensor</span><span class="p">(</span><span class="n">suffix</span><span class="p">):</span>
-</span><span id="line-317"><span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
-</span><span id="line-318"><span class="sd">    Load the ak.Array data and save the Torch Tensors.</span>
-</span><span id="line-319">
-</span><span id="line-320"><span class="sd">    When the data is uploaded using uproot and converted back to an</span>
-</span><span id="line-321"><span class="sd">    Awkward Array, the original structure is preserved.</span>
-</span><span id="line-322"><span class="sd">    So the Awkward Array will look like:</span>
-</span><span id="line-323"><span class="sd">    ::</span>
-</span><span id="line-324">
-</span><span id="line-325"><span class="sd">        [</span>
-</span><span id="line-326"><span class="sd">        {feature_1: [...], feature_2: [...], ...},   # event 0</span>
-</span><span id="line-327"><span class="sd">        {feature_1: [...], feature_2: [...], ...},   # event 1</span>
-</span><span id="line-328"><span class="sd">        ...</span>
-</span><span id="line-329"><span class="sd">        ]</span>
-</span><span id="line-330">
-</span><span id="line-331"><span class="sd">    Parameters</span>
-</span><span id="line-332"><span class="sd">    ----------</span>
-</span><span id="line-333"><span class="sd">        suffix: str</span>
-</span><span id="line-334"><span class="sd">            String appended to the output data tensor filename</span>
-</span><span id="line-335"><span class="sd">            identifying the number of events in the dataset.</span>
-</span><span id="line-336"><span class="sd">    &quot;&quot;&quot;</span>
-</span><span id="line-337">    <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">&quot;Beginning data_processing.&quot;</span><span class="p">)</span>
-</span><span id="line-338">
-</span><span id="line-339">    <span class="n">data_dir</span> <span class="o">=</span> <span class="n">_dir_path_finder</span><span class="p">(</span><span class="n">data</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
-</span><span id="line-340">    <span class="n">file_path</span> <span class="o">=</span> <span class="n">data_dir</span> <span class="o">/</span> <span class="sa">f</span><span class="s2">&quot;events_</span><span class="si">{</span><span class="n">suffix</span><span class="si">}</span><span class="s2">.root&quot;</span>
-</span><span id="line-341">    <span class="n">file</span> <span class="o">=</span> <span class="n">uproot</span><span class="o">.</span><span class="n">open</span><span class="p">(</span><span class="n">file_path</span><span class="p">)</span>
-</span><span id="line-342">    <span class="k">if</span> <span class="s2">&quot;tree_23&quot;</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">file</span><span class="p">:</span>
-</span><span id="line-343">        <span class="k">raise</span> <span class="ne">KeyError</span><span class="p">(</span><span class="s2">&quot;&#39;tree_23&#39; not found in file.&quot;</span><span class="p">)</span>
-</span><span id="line-344">    <span class="k">if</span> <span class="s2">&quot;tree_final&quot;</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">file</span><span class="p">:</span>
-</span><span id="line-345">        <span class="k">raise</span> <span class="ne">KeyError</span><span class="p">(</span><span class="s2">&quot;&#39;tree_final&#39; not found in file.&quot;</span><span class="p">)</span>
-</span><span id="line-346">    <span class="n">data_23</span> <span class="o">=</span> <span class="n">file</span><span class="p">[</span><span class="s2">&quot;tree_23&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">arrays</span><span class="p">(</span><span class="n">library</span><span class="o">=</span><span class="s2">&quot;ak&quot;</span><span class="p">)</span>
-</span><span id="line-347">    <span class="n">data_final</span> <span class="o">=</span> <span class="n">file</span><span class="p">[</span><span class="s2">&quot;tree_final&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">arrays</span><span class="p">(</span><span class="n">library</span><span class="o">=</span><span class="s2">&quot;ak&quot;</span><span class="p">)</span>
-</span><span id="line-348">
-</span><span id="line-349">    <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">&quot;Opening of root file trees with uproot terminated.&quot;</span><span class="p">)</span>
-</span><span id="line-350">
-</span><span id="line-351">    <span class="n">padded_tensor_23</span><span class="p">,</span> <span class="n">padding_mask_23</span><span class="p">,</span> <span class="n">pt_23</span> <span class="o">=</span> <span class="n">awkward_to_padded_tensor</span><span class="p">(</span>
-</span><span id="line-352">        <span class="n">data_23</span><span class="p">,</span> <span class="p">[</span><span class="s2">&quot;pT_23&quot;</span><span class="p">]</span>
-</span><span id="line-353">    <span class="p">)</span>
-</span><span id="line-354">    <span class="n">padded_tensor_final</span><span class="p">,</span> <span class="n">padding_mask_final</span><span class="p">,</span> <span class="n">_</span> <span class="o">=</span> <span class="n">awkward_to_padded_tensor</span><span class="p">(</span>
-</span><span id="line-355">        <span class="n">data_final</span><span class="p">,</span> <span class="p">[</span><span class="s2">&quot;pT_final&quot;</span><span class="p">],</span> <span class="n">list_pt</span><span class="o">=</span><span class="n">pt_23</span>
-</span><span id="line-356">    <span class="p">)</span>
-</span><span id="line-357">    <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">&quot;Padded tensors created.&quot;</span><span class="p">)</span>
+</span><span id="line-303"><span class="k">def</span><span class="w"> </span><span class="nf">load_and_save_tensor</span><span class="p">(</span><span class="n">suffix</span><span class="p">):</span>
+</span><span id="line-304"><span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+</span><span id="line-305"><span class="sd">    Load the ak.Array data and save the Torch Tensors.</span>
+</span><span id="line-306">
+</span><span id="line-307"><span class="sd">    When the data is uploaded using uproot and converted back to an</span>
+</span><span id="line-308"><span class="sd">    Awkward Array, the original structure is preserved.</span>
+</span><span id="line-309"><span class="sd">    So the Awkward Array will look like:</span>
+</span><span id="line-310"><span class="sd">    ::</span>
+</span><span id="line-311">
+</span><span id="line-312"><span class="sd">        [</span>
+</span><span id="line-313"><span class="sd">        {feature_1: [...], feature_2: [...], ...},   # event 0</span>
+</span><span id="line-314"><span class="sd">        {feature_1: [...], feature_2: [...], ...},   # event 1</span>
+</span><span id="line-315"><span class="sd">        ...</span>
+</span><span id="line-316"><span class="sd">        ]</span>
+</span><span id="line-317">
+</span><span id="line-318"><span class="sd">    Parameters</span>
+</span><span id="line-319"><span class="sd">    ----------</span>
+</span><span id="line-320"><span class="sd">        suffix: str</span>
+</span><span id="line-321"><span class="sd">            String appended to the output data tensor filename</span>
+</span><span id="line-322"><span class="sd">            identifying the number of events in the dataset.</span>
+</span><span id="line-323"><span class="sd">    &quot;&quot;&quot;</span>
+</span><span id="line-324">    <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">&quot;Beginning data_processing.&quot;</span><span class="p">)</span>
+</span><span id="line-325">
+</span><span id="line-326">    <span class="n">data_dir</span> <span class="o">=</span> <span class="n">_dir_path_finder</span><span class="p">(</span><span class="n">data</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+</span><span id="line-327">    <span class="n">file_path</span> <span class="o">=</span> <span class="n">data_dir</span> <span class="o">/</span> <span class="sa">f</span><span class="s2">&quot;events_</span><span class="si">{</span><span class="n">suffix</span><span class="si">}</span><span class="s2">.root&quot;</span>
+</span><span id="line-328">    <span class="n">file</span> <span class="o">=</span> <span class="n">uproot</span><span class="o">.</span><span class="n">open</span><span class="p">(</span><span class="n">file_path</span><span class="p">)</span>
+</span><span id="line-329">    <span class="k">if</span> <span class="s2">&quot;tree_23&quot;</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">file</span><span class="p">:</span>
+</span><span id="line-330">        <span class="k">raise</span> <span class="ne">KeyError</span><span class="p">(</span><span class="s2">&quot;&#39;tree_23&#39; not found in file.&quot;</span><span class="p">)</span>
+</span><span id="line-331">    <span class="k">if</span> <span class="s2">&quot;tree_final&quot;</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">file</span><span class="p">:</span>
+</span><span id="line-332">        <span class="k">raise</span> <span class="ne">KeyError</span><span class="p">(</span><span class="s2">&quot;&#39;tree_final&#39; not found in file.&quot;</span><span class="p">)</span>
+</span><span id="line-333">    <span class="n">data_23</span> <span class="o">=</span> <span class="n">file</span><span class="p">[</span><span class="s2">&quot;tree_23&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">arrays</span><span class="p">(</span><span class="n">library</span><span class="o">=</span><span class="s2">&quot;ak&quot;</span><span class="p">)</span>
+</span><span id="line-334">    <span class="n">data_final</span> <span class="o">=</span> <span class="n">file</span><span class="p">[</span><span class="s2">&quot;tree_final&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">arrays</span><span class="p">(</span><span class="n">library</span><span class="o">=</span><span class="s2">&quot;ak&quot;</span><span class="p">)</span>
+</span><span id="line-335">
+</span><span id="line-336">    <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">&quot;Opening of root file trees with uproot terminated.&quot;</span><span class="p">)</span>
+</span><span id="line-337">
+</span><span id="line-338">    <span class="n">padded_tensor_23</span><span class="p">,</span> <span class="n">padding_mask_23</span><span class="p">,</span> <span class="n">pt_23</span> <span class="o">=</span> <span class="n">awkward_to_padded_tensor</span><span class="p">(</span>
+</span><span id="line-339">        <span class="n">data_23</span><span class="p">,</span> <span class="p">[</span><span class="s2">&quot;pT_23&quot;</span><span class="p">]</span>
+</span><span id="line-340">    <span class="p">)</span>
+</span><span id="line-341">    <span class="n">padded_tensor_final</span><span class="p">,</span> <span class="n">padding_mask_final</span><span class="p">,</span> <span class="n">_</span> <span class="o">=</span> <span class="n">awkward_to_padded_tensor</span><span class="p">(</span>
+</span><span id="line-342">        <span class="n">data_final</span><span class="p">,</span> <span class="p">[</span><span class="s2">&quot;pT_final&quot;</span><span class="p">],</span> <span class="n">list_pt</span><span class="o">=</span><span class="n">pt_23</span>
+</span><span id="line-343">    <span class="p">)</span>
+</span><span id="line-344">    <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">&quot;Padded tensors created.&quot;</span><span class="p">)</span>
+</span><span id="line-345">
+</span><span id="line-346">    <span class="n">train_23</span><span class="p">,</span> <span class="n">val_23</span><span class="p">,</span> <span class="n">test_23</span> <span class="o">=</span> <span class="n">train_val_test_split</span><span class="p">(</span><span class="n">padded_tensor_23</span><span class="p">)</span>
+</span><span id="line-347">    <span class="n">train_final</span><span class="p">,</span> <span class="n">val_final</span><span class="p">,</span> <span class="n">test_final</span> <span class="o">=</span> <span class="n">train_val_test_split</span><span class="p">(</span>
+</span><span id="line-348">        <span class="n">padded_tensor_final</span>
+</span><span id="line-349">    <span class="p">)</span>
+</span><span id="line-350">    <span class="n">mask_train_23</span><span class="p">,</span> <span class="n">mask_val_23</span><span class="p">,</span> <span class="n">mask_test_23</span> <span class="o">=</span> <span class="n">train_val_test_split</span><span class="p">(</span>
+</span><span id="line-351">        <span class="n">padding_mask_23</span>
+</span><span id="line-352">    <span class="p">)</span>
+</span><span id="line-353">    <span class="n">mask_train_final</span><span class="p">,</span> <span class="n">mask_val_final</span><span class="p">,</span> <span class="n">mask_test_final</span> <span class="o">=</span> <span class="n">train_val_test_split</span><span class="p">(</span>
+</span><span id="line-354">        <span class="n">padding_mask_final</span>
+</span><span id="line-355">    <span class="p">)</span>
+</span><span id="line-356">
+</span><span id="line-357">    <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">&quot;Train/Val/Test splitting terminated.&quot;</span><span class="p">)</span>
 </span><span id="line-358">
-</span><span id="line-359">    <span class="n">train_23</span><span class="p">,</span> <span class="n">val_23</span><span class="p">,</span> <span class="n">test_23</span> <span class="o">=</span> <span class="n">train_val_test_split</span><span class="p">(</span><span class="n">padded_tensor_23</span><span class="p">)</span>
-</span><span id="line-360">    <span class="n">train_final</span><span class="p">,</span> <span class="n">val_final</span><span class="p">,</span> <span class="n">test_final</span> <span class="o">=</span> <span class="n">train_val_test_split</span><span class="p">(</span>
-</span><span id="line-361">        <span class="n">padded_tensor_final</span>
-</span><span id="line-362">    <span class="p">)</span>
-</span><span id="line-363">    <span class="n">mask_train_23</span><span class="p">,</span> <span class="n">mask_val_23</span><span class="p">,</span> <span class="n">mask_test_23</span> <span class="o">=</span> <span class="n">train_val_test_split</span><span class="p">(</span>
-</span><span id="line-364">        <span class="n">padding_mask_23</span>
-</span><span id="line-365">    <span class="p">)</span>
-</span><span id="line-366">    <span class="n">mask_train_final</span><span class="p">,</span> <span class="n">mask_val_final</span><span class="p">,</span> <span class="n">mask_test_final</span> <span class="o">=</span> <span class="n">train_val_test_split</span><span class="p">(</span>
-</span><span id="line-367">        <span class="n">padding_mask_final</span>
-</span><span id="line-368">    <span class="p">)</span>
-</span><span id="line-369">
-</span><span id="line-370">    <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">&quot;Train/Val/Test splitting terminated.&quot;</span><span class="p">)</span>
-</span><span id="line-371">
-</span><span id="line-372">    <span class="c1"># Saving the tensors for future recovery.</span>
-</span><span id="line-373">    <span class="n">filename</span> <span class="o">=</span> <span class="n">data_dir</span> <span class="o">/</span> <span class="sa">f</span><span class="s2">&quot;dataset_</span><span class="si">{</span><span class="n">suffix</span><span class="si">}</span><span class="s2">.pt&quot;</span>
-</span><span id="line-374">    <span class="n">tensor_dict</span> <span class="o">=</span> <span class="p">{</span>
-</span><span id="line-375">        <span class="s2">&quot;train_23&quot;</span><span class="p">:</span> <span class="n">train_23</span><span class="p">,</span>
-</span><span id="line-376">        <span class="s2">&quot;train_final&quot;</span><span class="p">:</span> <span class="n">train_final</span><span class="p">,</span>
-</span><span id="line-377">        <span class="s2">&quot;val_23&quot;</span><span class="p">:</span> <span class="n">val_23</span><span class="p">,</span>
-</span><span id="line-378">        <span class="s2">&quot;val_final&quot;</span><span class="p">:</span> <span class="n">val_final</span><span class="p">,</span>
-</span><span id="line-379">        <span class="s2">&quot;test_23&quot;</span><span class="p">:</span> <span class="n">test_23</span><span class="p">,</span>
-</span><span id="line-380">        <span class="s2">&quot;test_final&quot;</span><span class="p">:</span> <span class="n">test_final</span><span class="p">,</span>
-</span><span id="line-381">        <span class="s2">&quot;mask_train_23&quot;</span><span class="p">:</span> <span class="n">mask_train_23</span><span class="p">,</span>
-</span><span id="line-382">        <span class="s2">&quot;mask_train_final&quot;</span><span class="p">:</span> <span class="n">mask_train_final</span><span class="p">,</span>
-</span><span id="line-383">        <span class="s2">&quot;mask_val_23&quot;</span><span class="p">:</span> <span class="n">mask_val_23</span><span class="p">,</span>
-</span><span id="line-384">        <span class="s2">&quot;mask_val_final&quot;</span><span class="p">:</span> <span class="n">mask_val_final</span><span class="p">,</span>
-</span><span id="line-385">        <span class="s2">&quot;mask_test_23&quot;</span><span class="p">:</span> <span class="n">mask_test_23</span><span class="p">,</span>
-</span><span id="line-386">        <span class="s2">&quot;mask_test_final&quot;</span><span class="p">:</span> <span class="n">mask_test_final</span><span class="p">,</span>
-</span><span id="line-387">    <span class="p">}</span>
-</span><span id="line-388">    <span class="n">torch</span><span class="o">.</span><span class="n">save</span><span class="p">(</span><span class="n">tensor_dict</span><span class="p">,</span> <span class="n">filename</span><span class="p">)</span>
-</span><span id="line-389">    <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Saved tensor dict to </span><span class="si">{</span><span class="n">filename</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span></div>
+</span><span id="line-359">    <span class="c1"># Saving the tensors for future recovery.</span>
+</span><span id="line-360">    <span class="n">filename</span> <span class="o">=</span> <span class="n">data_dir</span> <span class="o">/</span> <span class="sa">f</span><span class="s2">&quot;dataset_</span><span class="si">{</span><span class="n">suffix</span><span class="si">}</span><span class="s2">.pt&quot;</span>
+</span><span id="line-361">    <span class="n">tensor_dict</span> <span class="o">=</span> <span class="p">{</span>
+</span><span id="line-362">        <span class="s2">&quot;train_23&quot;</span><span class="p">:</span> <span class="n">train_23</span><span class="p">,</span>
+</span><span id="line-363">        <span class="s2">&quot;train_final&quot;</span><span class="p">:</span> <span class="n">train_final</span><span class="p">,</span>
+</span><span id="line-364">        <span class="s2">&quot;val_23&quot;</span><span class="p">:</span> <span class="n">val_23</span><span class="p">,</span>
+</span><span id="line-365">        <span class="s2">&quot;val_final&quot;</span><span class="p">:</span> <span class="n">val_final</span><span class="p">,</span>
+</span><span id="line-366">        <span class="s2">&quot;test_23&quot;</span><span class="p">:</span> <span class="n">test_23</span><span class="p">,</span>
+</span><span id="line-367">        <span class="s2">&quot;test_final&quot;</span><span class="p">:</span> <span class="n">test_final</span><span class="p">,</span>
+</span><span id="line-368">        <span class="s2">&quot;mask_train_23&quot;</span><span class="p">:</span> <span class="n">mask_train_23</span><span class="p">,</span>
+</span><span id="line-369">        <span class="s2">&quot;mask_train_final&quot;</span><span class="p">:</span> <span class="n">mask_train_final</span><span class="p">,</span>
+</span><span id="line-370">        <span class="s2">&quot;mask_val_23&quot;</span><span class="p">:</span> <span class="n">mask_val_23</span><span class="p">,</span>
+</span><span id="line-371">        <span class="s2">&quot;mask_val_final&quot;</span><span class="p">:</span> <span class="n">mask_val_final</span><span class="p">,</span>
+</span><span id="line-372">        <span class="s2">&quot;mask_test_23&quot;</span><span class="p">:</span> <span class="n">mask_test_23</span><span class="p">,</span>
+</span><span id="line-373">        <span class="s2">&quot;mask_test_final&quot;</span><span class="p">:</span> <span class="n">mask_test_final</span><span class="p">,</span>
+</span><span id="line-374">    <span class="p">}</span>
+</span><span id="line-375">    <span class="n">torch</span><span class="o">.</span><span class="n">save</span><span class="p">(</span><span class="n">tensor_dict</span><span class="p">,</span> <span class="n">filename</span><span class="p">)</span>
+</span><span id="line-376">    <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Saved tensor dict to </span><span class="si">{</span><span class="n">filename</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span></div>
 
-</span><span id="line-390">
-</span><span id="line-391">
+</span><span id="line-377">
+</span><span id="line-378">
 <div class="viewcode-block" id="load_saved_dataloaders">
 <a class="viewcode-back" href="../../_api/pythiatransformer.data_processing.html#pythiatransformer.data_processing.load_saved_dataloaders">[docs]</a>
-</span><span id="line-392"><span class="k">def</span><span class="w"> </span><span class="nf">load_saved_dataloaders</span><span class="p">(</span><span class="n">batch_size</span><span class="p">,</span> <span class="n">suffix</span><span class="p">):</span>
-</span><span id="line-393"><span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
-</span><span id="line-394"><span class="sd">    Load pre-saved tensors and build DataLoaders for train/val/test.</span>
-</span><span id="line-395">
-</span><span id="line-396"><span class="sd">    Parameters</span>
-</span><span id="line-397"><span class="sd">    ----------</span>
-</span><span id="line-398"><span class="sd">    batch_size : int</span>
-</span><span id="line-399"><span class="sd">        Number of samples per batch in each DataLoader.</span>
-</span><span id="line-400"><span class="sd">    suffix: str</span>
-</span><span id="line-401"><span class="sd">            String appended to the data tensor loaded filename</span>
-</span><span id="line-402"><span class="sd">            identyfing the number of events in the dataset.</span>
-</span><span id="line-403"><span class="sd">    Returns</span>
-</span><span id="line-404"><span class="sd">    -------</span>
-</span><span id="line-405"><span class="sd">    loader_train : torch.utils.data.DataLoader</span>
-</span><span id="line-406"><span class="sd">        Training DataLoader yielding ``(input_23, target_final)``</span>
-</span><span id="line-407"><span class="sd">        batches.</span>
-</span><span id="line-408"><span class="sd">    loader_val : torch.utils.data.DataLoader</span>
-</span><span id="line-409"><span class="sd">        Validation DataLoader.</span>
-</span><span id="line-410"><span class="sd">    loader_test : torch.utils.data.DataLoader</span>
-</span><span id="line-411"><span class="sd">        Test DataLoader.</span>
-</span><span id="line-412"><span class="sd">    loader_padding_train : torch.utils.data.DataLoader</span>
-</span><span id="line-413"><span class="sd">        Training mask DataLoader yielding ``(mask_23, mask_final)``</span>
-</span><span id="line-414"><span class="sd">        batches.</span>
-</span><span id="line-415"><span class="sd">    loader_padding_val : torch.utils.data.DataLoader</span>
-</span><span id="line-416"><span class="sd">        Validation mask DataLoader.</span>
-</span><span id="line-417"><span class="sd">    loader_padding_test : torch.utils.data.DataLoader</span>
-</span><span id="line-418"><span class="sd">        Test mask DataLoader.</span>
-</span><span id="line-419"><span class="sd">    &quot;&quot;&quot;</span>
-</span><span id="line-420">    <span class="c1"># Loading tensors.</span>
-</span><span id="line-421">    <span class="n">data_dir</span> <span class="o">=</span> <span class="n">_dir_path_finder</span><span class="p">(</span><span class="n">data</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
-</span><span id="line-422">    <span class="n">filename</span> <span class="o">=</span> <span class="n">data_dir</span> <span class="o">/</span> <span class="sa">f</span><span class="s2">&quot;dataset_</span><span class="si">{</span><span class="n">suffix</span><span class="si">}</span><span class="s2">.pt&quot;</span>
-</span><span id="line-423">    <span class="n">tensor_dict</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">load</span><span class="p">(</span><span class="n">filename</span><span class="p">,</span> <span class="n">weights_only</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+</span><span id="line-379"><span class="k">def</span><span class="w"> </span><span class="nf">load_saved_dataloaders</span><span class="p">(</span><span class="n">batch_size</span><span class="p">,</span> <span class="n">suffix</span><span class="p">):</span>
+</span><span id="line-380"><span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+</span><span id="line-381"><span class="sd">    Load pre-saved tensors and build DataLoaders for train/val/test.</span>
+</span><span id="line-382">
+</span><span id="line-383"><span class="sd">    Parameters</span>
+</span><span id="line-384"><span class="sd">    ----------</span>
+</span><span id="line-385"><span class="sd">    batch_size : int</span>
+</span><span id="line-386"><span class="sd">        Number of samples per batch in each DataLoader.</span>
+</span><span id="line-387"><span class="sd">    suffix: str</span>
+</span><span id="line-388"><span class="sd">            String appended to the data tensor loaded filename</span>
+</span><span id="line-389"><span class="sd">            identyfing the number of events in the dataset.</span>
+</span><span id="line-390"><span class="sd">    Returns</span>
+</span><span id="line-391"><span class="sd">    -------</span>
+</span><span id="line-392"><span class="sd">    loader_train : torch.utils.data.DataLoader</span>
+</span><span id="line-393"><span class="sd">        Training DataLoader yielding ``(input_23, target_final)``</span>
+</span><span id="line-394"><span class="sd">        batches.</span>
+</span><span id="line-395"><span class="sd">    loader_val : torch.utils.data.DataLoader</span>
+</span><span id="line-396"><span class="sd">        Validation DataLoader.</span>
+</span><span id="line-397"><span class="sd">    loader_test : torch.utils.data.DataLoader</span>
+</span><span id="line-398"><span class="sd">        Test DataLoader.</span>
+</span><span id="line-399"><span class="sd">    loader_padding_train : torch.utils.data.DataLoader</span>
+</span><span id="line-400"><span class="sd">        Training mask DataLoader yielding ``(mask_23, mask_final)``</span>
+</span><span id="line-401"><span class="sd">        batches.</span>
+</span><span id="line-402"><span class="sd">    loader_padding_val : torch.utils.data.DataLoader</span>
+</span><span id="line-403"><span class="sd">        Validation mask DataLoader.</span>
+</span><span id="line-404"><span class="sd">    loader_padding_test : torch.utils.data.DataLoader</span>
+</span><span id="line-405"><span class="sd">        Test mask DataLoader.</span>
+</span><span id="line-406"><span class="sd">    &quot;&quot;&quot;</span>
+</span><span id="line-407">    <span class="c1"># Loading tensors.</span>
+</span><span id="line-408">    <span class="n">data_dir</span> <span class="o">=</span> <span class="n">_dir_path_finder</span><span class="p">(</span><span class="n">data</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+</span><span id="line-409">    <span class="n">filename</span> <span class="o">=</span> <span class="n">data_dir</span> <span class="o">/</span> <span class="sa">f</span><span class="s2">&quot;dataset_</span><span class="si">{</span><span class="n">suffix</span><span class="si">}</span><span class="s2">.pt&quot;</span>
+</span><span id="line-410">    <span class="n">tensor_dict</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">load</span><span class="p">(</span><span class="n">filename</span><span class="p">,</span> <span class="n">weights_only</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+</span><span id="line-411">
+</span><span id="line-412">    <span class="n">train_23</span> <span class="o">=</span> <span class="n">tensor_dict</span><span class="p">[</span><span class="s2">&quot;train_23&quot;</span><span class="p">]</span>
+</span><span id="line-413">    <span class="n">train_final</span> <span class="o">=</span> <span class="n">tensor_dict</span><span class="p">[</span><span class="s2">&quot;train_final&quot;</span><span class="p">]</span>
+</span><span id="line-414">    <span class="n">val_23</span> <span class="o">=</span> <span class="n">tensor_dict</span><span class="p">[</span><span class="s2">&quot;val_23&quot;</span><span class="p">]</span>
+</span><span id="line-415">    <span class="n">val_final</span> <span class="o">=</span> <span class="n">tensor_dict</span><span class="p">[</span><span class="s2">&quot;val_final&quot;</span><span class="p">]</span>
+</span><span id="line-416">    <span class="n">test_23</span> <span class="o">=</span> <span class="n">tensor_dict</span><span class="p">[</span><span class="s2">&quot;test_23&quot;</span><span class="p">]</span>
+</span><span id="line-417">    <span class="n">test_final</span> <span class="o">=</span> <span class="n">tensor_dict</span><span class="p">[</span><span class="s2">&quot;test_final&quot;</span><span class="p">]</span>
+</span><span id="line-418">    <span class="n">mask_train_23</span> <span class="o">=</span> <span class="n">tensor_dict</span><span class="p">[</span><span class="s2">&quot;mask_train_23&quot;</span><span class="p">]</span>
+</span><span id="line-419">    <span class="n">mask_train_final</span> <span class="o">=</span> <span class="n">tensor_dict</span><span class="p">[</span><span class="s2">&quot;mask_train_final&quot;</span><span class="p">]</span>
+</span><span id="line-420">    <span class="n">mask_val_23</span> <span class="o">=</span> <span class="n">tensor_dict</span><span class="p">[</span><span class="s2">&quot;mask_val_23&quot;</span><span class="p">]</span>
+</span><span id="line-421">    <span class="n">mask_val_final</span> <span class="o">=</span> <span class="n">tensor_dict</span><span class="p">[</span><span class="s2">&quot;mask_val_final&quot;</span><span class="p">]</span>
+</span><span id="line-422">    <span class="n">mask_test_23</span> <span class="o">=</span> <span class="n">tensor_dict</span><span class="p">[</span><span class="s2">&quot;mask_test_23&quot;</span><span class="p">]</span>
+</span><span id="line-423">    <span class="n">mask_test_final</span> <span class="o">=</span> <span class="n">tensor_dict</span><span class="p">[</span><span class="s2">&quot;mask_test_final&quot;</span><span class="p">]</span>
 </span><span id="line-424">
-</span><span id="line-425">    <span class="n">train_23</span> <span class="o">=</span> <span class="n">tensor_dict</span><span class="p">[</span><span class="s2">&quot;train_23&quot;</span><span class="p">]</span>
-</span><span id="line-426">    <span class="n">train_final</span> <span class="o">=</span> <span class="n">tensor_dict</span><span class="p">[</span><span class="s2">&quot;train_final&quot;</span><span class="p">]</span>
-</span><span id="line-427">    <span class="n">val_23</span> <span class="o">=</span> <span class="n">tensor_dict</span><span class="p">[</span><span class="s2">&quot;val_23&quot;</span><span class="p">]</span>
-</span><span id="line-428">    <span class="n">val_final</span> <span class="o">=</span> <span class="n">tensor_dict</span><span class="p">[</span><span class="s2">&quot;val_final&quot;</span><span class="p">]</span>
-</span><span id="line-429">    <span class="n">test_23</span> <span class="o">=</span> <span class="n">tensor_dict</span><span class="p">[</span><span class="s2">&quot;test_23&quot;</span><span class="p">]</span>
-</span><span id="line-430">    <span class="n">test_final</span> <span class="o">=</span> <span class="n">tensor_dict</span><span class="p">[</span><span class="s2">&quot;test_final&quot;</span><span class="p">]</span>
-</span><span id="line-431">    <span class="n">mask_train_23</span> <span class="o">=</span> <span class="n">tensor_dict</span><span class="p">[</span><span class="s2">&quot;mask_train_23&quot;</span><span class="p">]</span>
-</span><span id="line-432">    <span class="n">mask_train_final</span> <span class="o">=</span> <span class="n">tensor_dict</span><span class="p">[</span><span class="s2">&quot;mask_train_final&quot;</span><span class="p">]</span>
-</span><span id="line-433">    <span class="n">mask_val_23</span> <span class="o">=</span> <span class="n">tensor_dict</span><span class="p">[</span><span class="s2">&quot;mask_val_23&quot;</span><span class="p">]</span>
-</span><span id="line-434">    <span class="n">mask_val_final</span> <span class="o">=</span> <span class="n">tensor_dict</span><span class="p">[</span><span class="s2">&quot;mask_val_final&quot;</span><span class="p">]</span>
-</span><span id="line-435">    <span class="n">mask_test_23</span> <span class="o">=</span> <span class="n">tensor_dict</span><span class="p">[</span><span class="s2">&quot;mask_test_23&quot;</span><span class="p">]</span>
-</span><span id="line-436">    <span class="n">mask_test_final</span> <span class="o">=</span> <span class="n">tensor_dict</span><span class="p">[</span><span class="s2">&quot;mask_test_final&quot;</span><span class="p">]</span>
-</span><span id="line-437">
-</span><span id="line-438">    <span class="k">if</span> <span class="n">train_23</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">!=</span> <span class="n">train_final</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">]:</span>
-</span><span id="line-439">        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
-</span><span id="line-440">            <span class="sa">f</span><span class="s2">&quot;Status 23 particles tensor and final particles tensor do not &quot;</span>
-</span><span id="line-441">            <span class="sa">f</span><span class="s2">&quot;have the same number of events in training sets, respectively &quot;</span>
-</span><span id="line-442">            <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">train_23</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="si">}</span><span class="s2"> and </span><span class="si">{</span><span class="n">train_final</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="si">}</span><span class="s2">.&quot;</span>
-</span><span id="line-443">        <span class="p">)</span>
-</span><span id="line-444">    <span class="k">if</span> <span class="n">val_23</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">!=</span> <span class="n">val_final</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">]:</span>
-</span><span id="line-445">        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
-</span><span id="line-446">            <span class="sa">f</span><span class="s2">&quot;Status 23 particles tensor and final particles tensor do not &quot;</span>
-</span><span id="line-447">            <span class="sa">f</span><span class="s2">&quot;have the same number of events in validation sets, respectively&quot;</span>
-</span><span id="line-448">            <span class="sa">f</span><span class="s2">&quot; </span><span class="si">{</span><span class="n">val_23</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="si">}</span><span class="s2"> and </span><span class="si">{</span><span class="n">val_final</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="si">}</span><span class="s2">.&quot;</span>
-</span><span id="line-449">        <span class="p">)</span>
-</span><span id="line-450">    <span class="k">if</span> <span class="n">test_23</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">!=</span> <span class="n">test_final</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">]:</span>
-</span><span id="line-451">        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
-</span><span id="line-452">            <span class="sa">f</span><span class="s2">&quot;Status 23 particles tensor and final particles tensor do not &quot;</span>
-</span><span id="line-453">            <span class="sa">f</span><span class="s2">&quot;have the same number of events in test sets, respectively &quot;</span>
-</span><span id="line-454">            <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">test_23</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="si">}</span><span class="s2"> and </span><span class="si">{</span><span class="n">test_final</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="si">}</span><span class="s2">.&quot;</span>
-</span><span id="line-455">        <span class="p">)</span>
-</span><span id="line-456">
-</span><span id="line-457">    <span class="c1"># Rebuilding the DataLoaders.</span>
-</span><span id="line-458">    <span class="n">loader_train</span> <span class="o">=</span> <span class="n">batching</span><span class="p">(</span><span class="n">train_23</span><span class="p">,</span> <span class="n">train_final</span><span class="p">,</span> <span class="n">batch_size</span><span class="p">)</span>
-</span><span id="line-459">    <span class="n">loader_val</span> <span class="o">=</span> <span class="n">batching</span><span class="p">(</span><span class="n">val_23</span><span class="p">,</span> <span class="n">val_final</span><span class="p">,</span> <span class="n">batch_size</span><span class="p">)</span>
-</span><span id="line-460">    <span class="n">loader_test</span> <span class="o">=</span> <span class="n">batching</span><span class="p">(</span><span class="n">test_23</span><span class="p">,</span> <span class="n">test_final</span><span class="p">,</span> <span class="n">batch_size</span><span class="p">)</span>
-</span><span id="line-461">
-</span><span id="line-462">    <span class="n">loader_padding_train</span> <span class="o">=</span> <span class="n">batching</span><span class="p">(</span>
-</span><span id="line-463">        <span class="n">mask_train_23</span><span class="p">,</span> <span class="n">mask_train_final</span><span class="p">,</span> <span class="n">batch_size</span>
-</span><span id="line-464">    <span class="p">)</span>
-</span><span id="line-465">    <span class="n">loader_padding_val</span> <span class="o">=</span> <span class="n">batching</span><span class="p">(</span><span class="n">mask_val_23</span><span class="p">,</span> <span class="n">mask_val_final</span><span class="p">,</span> <span class="n">batch_size</span><span class="p">)</span>
-</span><span id="line-466">    <span class="n">loader_padding_test</span> <span class="o">=</span> <span class="n">batching</span><span class="p">(</span><span class="n">mask_test_23</span><span class="p">,</span> <span class="n">mask_test_final</span><span class="p">,</span> <span class="n">batch_size</span><span class="p">)</span>
-</span><span id="line-467">
-</span><span id="line-468">    <span class="k">return</span> <span class="p">(</span>
-</span><span id="line-469">        <span class="n">loader_train</span><span class="p">,</span>
-</span><span id="line-470">        <span class="n">loader_val</span><span class="p">,</span>
-</span><span id="line-471">        <span class="n">loader_test</span><span class="p">,</span>
-</span><span id="line-472">        <span class="n">loader_padding_train</span><span class="p">,</span>
-</span><span id="line-473">        <span class="n">loader_padding_val</span><span class="p">,</span>
-</span><span id="line-474">        <span class="n">loader_padding_test</span><span class="p">,</span>
-</span><span id="line-475">    <span class="p">)</span></div>
+</span><span id="line-425">    <span class="k">if</span> <span class="n">train_23</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">!=</span> <span class="n">train_final</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">]:</span>
+</span><span id="line-426">        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+</span><span id="line-427">            <span class="sa">f</span><span class="s2">&quot;Status 23 particles tensor and final particles tensor do not &quot;</span>
+</span><span id="line-428">            <span class="sa">f</span><span class="s2">&quot;have the same number of events in training sets, respectively &quot;</span>
+</span><span id="line-429">            <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">train_23</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="si">}</span><span class="s2"> and </span><span class="si">{</span><span class="n">train_final</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="si">}</span><span class="s2">.&quot;</span>
+</span><span id="line-430">        <span class="p">)</span>
+</span><span id="line-431">    <span class="k">if</span> <span class="n">val_23</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">!=</span> <span class="n">val_final</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">]:</span>
+</span><span id="line-432">        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+</span><span id="line-433">            <span class="sa">f</span><span class="s2">&quot;Status 23 particles tensor and final particles tensor do not &quot;</span>
+</span><span id="line-434">            <span class="sa">f</span><span class="s2">&quot;have the same number of events in validation sets, respectively&quot;</span>
+</span><span id="line-435">            <span class="sa">f</span><span class="s2">&quot; </span><span class="si">{</span><span class="n">val_23</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="si">}</span><span class="s2"> and </span><span class="si">{</span><span class="n">val_final</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="si">}</span><span class="s2">.&quot;</span>
+</span><span id="line-436">        <span class="p">)</span>
+</span><span id="line-437">    <span class="k">if</span> <span class="n">test_23</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">!=</span> <span class="n">test_final</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">]:</span>
+</span><span id="line-438">        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+</span><span id="line-439">            <span class="sa">f</span><span class="s2">&quot;Status 23 particles tensor and final particles tensor do not &quot;</span>
+</span><span id="line-440">            <span class="sa">f</span><span class="s2">&quot;have the same number of events in test sets, respectively &quot;</span>
+</span><span id="line-441">            <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">test_23</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="si">}</span><span class="s2"> and </span><span class="si">{</span><span class="n">test_final</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="si">}</span><span class="s2">.&quot;</span>
+</span><span id="line-442">        <span class="p">)</span>
+</span><span id="line-443">
+</span><span id="line-444">    <span class="c1"># Rebuilding the DataLoaders.</span>
+</span><span id="line-445">    <span class="n">loader_train</span> <span class="o">=</span> <span class="n">batching</span><span class="p">(</span><span class="n">train_23</span><span class="p">,</span> <span class="n">train_final</span><span class="p">,</span> <span class="n">batch_size</span><span class="p">)</span>
+</span><span id="line-446">    <span class="n">loader_val</span> <span class="o">=</span> <span class="n">batching</span><span class="p">(</span><span class="n">val_23</span><span class="p">,</span> <span class="n">val_final</span><span class="p">,</span> <span class="n">batch_size</span><span class="p">)</span>
+</span><span id="line-447">    <span class="n">loader_test</span> <span class="o">=</span> <span class="n">batching</span><span class="p">(</span><span class="n">test_23</span><span class="p">,</span> <span class="n">test_final</span><span class="p">,</span> <span class="n">batch_size</span><span class="p">)</span>
+</span><span id="line-448">
+</span><span id="line-449">    <span class="n">loader_padding_train</span> <span class="o">=</span> <span class="n">batching</span><span class="p">(</span>
+</span><span id="line-450">        <span class="n">mask_train_23</span><span class="p">,</span> <span class="n">mask_train_final</span><span class="p">,</span> <span class="n">batch_size</span>
+</span><span id="line-451">    <span class="p">)</span>
+</span><span id="line-452">    <span class="n">loader_padding_val</span> <span class="o">=</span> <span class="n">batching</span><span class="p">(</span><span class="n">mask_val_23</span><span class="p">,</span> <span class="n">mask_val_final</span><span class="p">,</span> <span class="n">batch_size</span><span class="p">)</span>
+</span><span id="line-453">    <span class="n">loader_padding_test</span> <span class="o">=</span> <span class="n">batching</span><span class="p">(</span><span class="n">mask_test_23</span><span class="p">,</span> <span class="n">mask_test_final</span><span class="p">,</span> <span class="n">batch_size</span><span class="p">)</span>
+</span><span id="line-454">
+</span><span id="line-455">    <span class="k">return</span> <span class="p">(</span>
+</span><span id="line-456">        <span class="n">loader_train</span><span class="p">,</span>
+</span><span id="line-457">        <span class="n">loader_val</span><span class="p">,</span>
+</span><span id="line-458">        <span class="n">loader_test</span><span class="p">,</span>
+</span><span id="line-459">        <span class="n">loader_padding_train</span><span class="p">,</span>
+</span><span id="line-460">        <span class="n">loader_padding_val</span><span class="p">,</span>
+</span><span id="line-461">        <span class="n">loader_padding_test</span><span class="p">,</span>
+</span><span id="line-462">    <span class="p">)</span></div>
 
-</span><span id="line-476">
-</span><span id="line-477">
+</span><span id="line-463">
+</span><span id="line-464">
 <div class="viewcode-block" id="main">
 <a class="viewcode-back" href="../../_api/pythiatransformer.data_processing.html#pythiatransformer.data_processing.main">[docs]</a>
-</span><span id="line-478"><span class="k">def</span><span class="w"> </span><span class="nf">main</span><span class="p">():</span>
-</span><span id="line-479"><span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
-</span><span id="line-480"><span class="sd">    Call ``load_and_save_tensor`` with parser arguments.</span>
-</span><span id="line-481">
-</span><span id="line-482"><span class="sd">    CLI Parameters</span>
-</span><span id="line-483"><span class="sd">    --------------</span>
-</span><span id="line-484"><span class="sd">    suffix: str, required</span>
-</span><span id="line-485"><span class="sd">            String appended to the data tensor loaded filename</span>
-</span><span id="line-486"><span class="sd">            identyfing the number of events in the dataset.</span>
-</span><span id="line-487"><span class="sd">    &quot;&quot;&quot;</span>
-</span><span id="line-488">    <span class="n">parser</span> <span class="o">=</span> <span class="n">argparse</span><span class="o">.</span><span class="n">ArgumentParser</span><span class="p">()</span>
-</span><span id="line-489">    <span class="n">parser</span><span class="o">.</span><span class="n">add_argument</span><span class="p">(</span>
-</span><span id="line-490">        <span class="s2">&quot;--suffix&quot;</span><span class="p">,</span>
-</span><span id="line-491">        <span class="n">required</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
-</span><span id="line-492">        <span class="n">help</span><span class="o">=</span><span class="s2">&quot;string identyfing the number of events in the dataset.&quot;</span><span class="p">,</span>
-</span><span id="line-493">    <span class="p">)</span>
-</span><span id="line-494">    <span class="n">args</span> <span class="o">=</span> <span class="n">parser</span><span class="o">.</span><span class="n">parse_args</span><span class="p">()</span>
-</span><span id="line-495">
-</span><span id="line-496">    <span class="n">load_and_save_tensor</span><span class="p">(</span><span class="n">args</span><span class="o">.</span><span class="n">suffix</span><span class="p">)</span></div>
+</span><span id="line-465"><span class="k">def</span><span class="w"> </span><span class="nf">main</span><span class="p">():</span>
+</span><span id="line-466"><span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+</span><span id="line-467"><span class="sd">    Call ``load_and_save_tensor`` with parser arguments.</span>
+</span><span id="line-468">
+</span><span id="line-469"><span class="sd">    CLI Parameters</span>
+</span><span id="line-470"><span class="sd">    --------------</span>
+</span><span id="line-471"><span class="sd">    suffix: str, required</span>
+</span><span id="line-472"><span class="sd">            String appended to the data tensor loaded filename</span>
+</span><span id="line-473"><span class="sd">            identyfing the number of events in the dataset.</span>
+</span><span id="line-474"><span class="sd">    &quot;&quot;&quot;</span>
+</span><span id="line-475">    <span class="n">parser</span> <span class="o">=</span> <span class="n">argparse</span><span class="o">.</span><span class="n">ArgumentParser</span><span class="p">()</span>
+</span><span id="line-476">    <span class="n">parser</span><span class="o">.</span><span class="n">add_argument</span><span class="p">(</span>
+</span><span id="line-477">        <span class="s2">&quot;--suffix&quot;</span><span class="p">,</span>
+</span><span id="line-478">        <span class="n">required</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+</span><span id="line-479">        <span class="n">help</span><span class="o">=</span><span class="s2">&quot;string identyfing the number of events in the dataset.&quot;</span><span class="p">,</span>
+</span><span id="line-480">    <span class="p">)</span>
+</span><span id="line-481">    <span class="n">args</span> <span class="o">=</span> <span class="n">parser</span><span class="o">.</span><span class="n">parse_args</span><span class="p">()</span>
+</span><span id="line-482">
+</span><span id="line-483">    <span class="n">load_and_save_tensor</span><span class="p">(</span><span class="n">args</span><span class="o">.</span><span class="n">suffix</span><span class="p">)</span></div>
 
-</span><span id="line-497">
-</span><span id="line-498">
-</span><span id="line-499"><span class="k">if</span> <span class="vm">__name__</span> <span class="o">==</span> <span class="s2">&quot;__main__&quot;</span><span class="p">:</span>
-</span><span id="line-500">    <span class="n">main</span><span class="p">()</span>
+</span><span id="line-484">
+</span><span id="line-485">
+</span><span id="line-486"><span class="k">if</span> <span class="vm">__name__</span> <span class="o">==</span> <span class="s2">&quot;__main__&quot;</span><span class="p">:</span>
+</span><span id="line-487">    <span class="n">main</span><span class="p">()</span>
 </span></code></pre></div>
     </div></div>
         </main>

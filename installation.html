@@ -14,7 +14,7 @@
 <link href="_static/theme.css?v=42baaae4" rel="stylesheet" type="text/css"/>
 <link href="search.html" rel="search" title="Search"/>
 <link href="genindex.html" rel="index" title="Index"/>
-<link href="api.html" rel="next" title="API Reference"/>
+<link href="usage.html" rel="next" title="Usage"/>
 <link href="index.html" rel="prev" title="pythiatransformer documentation"/>
 <script>
     <!-- Prevent Flash of wrong theme -->
@@ -71,9 +71,9 @@
 <p class="caption" role="heading"><span class="caption-text">Contents:</span></p>
 <ul class="current">
 <li class="toctree-l1 current"><a class="current reference internal" href="#">Installation</a></li>
-</ul>
-<p class="caption" role="heading"><span class="caption-text">API</span></p>
-<ul>
+<li class="toctree-l1"><a class="reference internal" href="usage.html">Usage</a></li>
+<li class="toctree-l1"><a class="reference internal" href="name_convention.html">Naming conventions</a></li>
+<li class="toctree-l1"><a class="reference internal" href="rep_structure.html">Repository structure</a></li>
 <li class="toctree-l1" x-data="{ expanded: $el.classList.contains('current') ? true : false }"><a :class="{ 'expanded' : expanded }" @click="expanded = !expanded" class="reference internal expandable" href="api.html">API Reference<button @click.prevent.stop="expanded = !expanded" type="button"><span class="sr-only"></span><svg fill="currentColor" height="18px" stroke="none" viewbox="0 0 24 24" width="18px" xmlns="http://www.w3.org/2000/svg"><path d="M10 6L8.59 7.41 13.17 12l-4.58 4.59L10 18l6-6z"></path></svg></button></a><ul x-show="expanded">
 <li class="toctree-l2"><a class="reference internal" href="_api/modules.html">pythiatransformer</a></li>
 <li class="toctree-l2"><a class="reference internal" href="_api/tests_index.html">tests</a></li>
@@ -117,15 +117,45 @@
 <div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><code><span id="line-1">git<span class="w"> </span>clone<span class="w"> </span>https://github.com/&lt;user&gt;/pythiatransformer.git
 </span><span id="line-2"><span class="nb">cd</span><span class="w"> </span>pythiatransformer
 </span><span id="line-3"><span class="c1"># conda env, install dipendenze, ecc.</span>
+</span><span id="line-4">
+</span><span id="line-5"><span class="c1">### Step 1: Clone the Repository</span>
+</span><span id="line-6">
+</span><span id="line-7"><span class="sb">```</span>bash
+</span><span id="line-8">git<span class="w"> </span>clone<span class="w"> </span>https://github.com/AlbertoMontanelli/pythiatransformer.git
+</span><span id="line-9"><span class="nb">cd</span><span class="w"> </span>pythiatransformer
 </span></code></pre></div>
 </div>
+<section id="step-2-create-the-environment">
+<h3>Step 2: Create the Environment<a class="headerlink" href="#step-2-create-the-environment" title="Link to this heading" x-intersect.margin.0%.0%.-70%.0%="activeSection = '#step-2-create-the-environment'"><span>#</span></a></h3>
+<p>It is recommended to create a new Conda environment and activate it.
+This will install all the dependencies, including:</p>
+<ul class="simple">
+<li><p>ROOT (via conda-forge)</p></li>
+<li><p>Pythia8 (bundled with ROOT)</p></li>
+<li><p>Python packages: <code class="docutils literal notranslate"><span class="pre">numpy</span></code>, <code class="docutils literal notranslate"><span class="pre">uproot</span></code>, <code class="docutils literal notranslate"><span class="pre">loguru</span></code></p></li>
+</ul>
+</section>
+<section id="step-3-verify-installation">
+<h3>Step 3: Verify Installation<a class="headerlink" href="#step-3-verify-installation" title="Link to this heading" x-intersect.margin.0%.0%.-70%.0%="activeSection = '#step-3-verify-installation'"><span>#</span></a></h3>
+<p>Check if ROOT and Pythia8 are installed correctly:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><code><span id="line-1">python
+</span><span id="line-2">&gt;&gt;&gt;<span class="w"> </span>import<span class="w"> </span>ROOT
+</span><span id="line-3">&gt;&gt;&gt;<span class="w"> </span>import<span class="w"> </span>pythia8
+</span></code></pre></div>
+</div>
+<p>If no errors are raised, the setup is complete.</p>
+</section>
 </section>
 </section>
 </div></div><aside class="hidden text-sm xl:block" id="right-sidebar">
 <div class="sticky top-16 -mt-10 max-h-[calc(100vh-5rem)] overflow-y-auto pt-6 space-y-2"><p class="font-medium">On this page</p>
 <ul>
 <li><a :data-current="activeSection === '#requirements'" class="reference internal" href="#requirements">Requirements</a></li>
-<li><a :data-current="activeSection === '#quick-start'" class="reference internal" href="#quick-start">Quick start</a></li>
+<li><a :data-current="activeSection === '#quick-start'" class="reference internal" href="#quick-start">Quick start</a><ul>
+<li><a :data-current="activeSection === '#step-2-create-the-environment'" class="reference internal" href="#step-2-create-the-environment">Step 2: Create the Environment</a></li>
+<li><a :data-current="activeSection === '#step-3-verify-installation'" class="reference internal" href="#step-3-verify-installation">Step 3: Verify Installation</a></li>
+</ul>
+</li>
 </ul>
 </div>
 </aside>

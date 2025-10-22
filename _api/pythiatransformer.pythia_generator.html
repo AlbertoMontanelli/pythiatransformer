@@ -69,11 +69,11 @@
 <div class="relative overflow-hidden md:overflow-auto my-4 md:my-0 h-[calc(100vh-8rem)] md:h-auto">
 <div class="overflow-y-auto h-full w-full relative pr-6"><nav class="table w-full min-w-full my-6 lg:my-8">
 <p class="caption" role="heading"><span class="caption-text">Contents:</span></p>
-<ul>
-<li class="toctree-l1"><a class="reference internal" href="../installation.html">Installation</a></li>
-</ul>
-<p class="caption" role="heading"><span class="caption-text">API</span></p>
 <ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="../installation.html">Installation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../usage.html">Usage</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../name_convention.html">Naming conventions</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../rep_structure.html">Repository structure</a></li>
 <li class="toctree-l1 current" x-data="{ expanded: $el.classList.contains('current') ? true : false }"><a :class="{ 'expanded' : expanded }" @click="expanded = !expanded" class="reference internal expandable" href="../api.html">API Reference<button @click.prevent.stop="expanded = !expanded" type="button"><span class="sr-only"></span><svg fill="currentColor" height="18px" stroke="none" viewbox="0 0 24 24" width="18px" xmlns="http://www.w3.org/2000/svg"><path d="M10 6L8.59 7.41 13.17 12l-4.58 4.59L10 18l6-6z"></path></svg></button></a><ul class="current" x-show="expanded">
 <li class="toctree-l2 current"><a class="reference internal" href="modules.html">pythiatransformer</a></li>
 <li class="toctree-l2"><a class="reference internal" href="tests_index.html">tests</a></li>
@@ -109,17 +109,6 @@
 <p>Generate events using Pythia8.</p>
 <p>Save particles with status 23 and final stable particles into a ROOT
 file with two separate TTrees.</p>
-<p class="rubric">Notes</p>
-<p>All input, output, and plot filenames follow a default naming
-convention unique for all <code class="docutils literal notranslate"><span class="pre">pythiatransformer</span></code> package.
-Each file name includes a unique <code class="docutils literal notranslate"><span class="pre">_{suffix}</span></code> tag identifying the
-specific dataset/plot/filename depending on the number of events.
-This suffix is the only user-controlled identifier, and it must remain
-consistent across all stages of the workflow (data generation,
-preprocessing, training, inference, and plotting).
-File names themselves should <strong>not be changed manually</strong>, as they are
-managed automatically by the pipeline and ensure consistent data
-linkage.</p>
 <dl class="py function">
 <dt class="sig sig-object py" id="pythiatransformer.pythia_generator.setup_pythia">
 <span class="sig-prename descclassname"><span class="pre">pythiatransformer.pythia_generator.</span></span><span class="sig-name descname"><span class="pre">setup_pythia</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">seed</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">10</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">eCM</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">13000.0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">pTHatMin</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">100.0</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/pythiatransformer/pythia_generator.html#setup_pythia"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#pythiatransformer.pythia_generator.setup_pythia" title="Link to this definition" x-intersect.margin.0%.0%.-70%.0%="activeSection = '#pythiatransformer.pythia_generator.setup_pythia'"><span>#</span></a></dt>

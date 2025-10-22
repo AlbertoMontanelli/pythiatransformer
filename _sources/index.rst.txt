@@ -11,11 +11,9 @@ pythiatransformer documentation
    :caption: Contents:
    
    installation
-
-.. toctree::
-   :maxdepth: 2
-   :caption: API
-
+   usage
+   name_convention
+   rep_structure
    api
 
 

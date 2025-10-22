@@ -70,9 +70,9 @@
 <p class="caption" role="heading"><span class="caption-text">Contents:</span></p>
 <ul>
 <li class="toctree-l1"><a class="reference internal" href="installation.html">Installation</a></li>
-</ul>
-<p class="caption" role="heading"><span class="caption-text">API</span></p>
-<ul>
+<li class="toctree-l1"><a class="reference internal" href="usage.html">Usage</a></li>
+<li class="toctree-l1"><a class="reference internal" href="name_convention.html">Naming conventions</a></li>
+<li class="toctree-l1"><a class="reference internal" href="rep_structure.html">Repository structure</a></li>
 <li class="toctree-l1" x-data="{ expanded: $el.classList.contains('current') ? true : false }"><a :class="{ 'expanded' : expanded }" @click="expanded = !expanded" class="reference internal expandable" href="api.html">API Reference<button @click.prevent.stop="expanded = !expanded" type="button"><span class="sr-only"></span><svg fill="currentColor" height="18px" stroke="none" viewbox="0 0 24 24" width="18px" xmlns="http://www.w3.org/2000/svg"><path d="M10 6L8.59 7.41 13.17 12l-4.58 4.59L10 18l6-6z"></path></svg></button></a><ul x-show="expanded">
 <li class="toctree-l2"><a class="reference internal" href="_api/modules.html">pythiatransformer</a></li>
 <li class="toctree-l2"><a class="reference internal" href="_api/tests_index.html">tests</a></li>
@@ -101,11 +101,13 @@
 <li class="toctree-l2"><a class="reference internal" href="installation.html#quick-start">Quick start</a></li>
 </ul>
 </li>
+<li class="toctree-l1"><a class="reference internal" href="usage.html">Usage</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="usage.html#run-the-code">Run the code</a></li>
+<li class="toctree-l2"><a class="reference internal" href="usage.html#run-the-tests">Run the tests</a></li>
 </ul>
-</div>
-<div class="toctree-wrapper compound">
-<p class="caption" role="heading"><span class="caption-text">API</span></p>
-<ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="name_convention.html">Naming conventions</a></li>
+<li class="toctree-l1"><a class="reference internal" href="rep_structure.html">Repository structure</a></li>
 <li class="toctree-l1"><a class="reference internal" href="api.html">API Reference</a><ul>
 <li class="toctree-l2"><a class="reference internal" href="_api/modules.html">pythiatransformer</a></li>
 <li class="toctree-l2"><a class="reference internal" href="_api/tests_index.html">tests</a></li>
