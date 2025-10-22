@@ -20,6 +20,7 @@ The features dimension is representing `pT` so it is fixed to ``1``.
 """
 
 import unittest
+from pathlib import Path
 
 import matplotlib.pyplot as plt
 import torch
@@ -296,7 +297,10 @@ class TestParticleTransformer(unittest.TestCase):
         plt.title("Learning curve")
         plt.legend()
         plt.grid(True)
-        plt.show()
+        base_dir = Path(__file__).resolve().parent
+        filename = base_dir / "dummy_learning_curve.pdf"
+        plt.savefig(filename)
+        plt.close()
 
     def test_training(self):
         """
