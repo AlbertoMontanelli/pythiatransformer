@@ -1,6 +1,0 @@
-awkward
-numpy
-loguru
-torch
-uproot
-matplotlib
