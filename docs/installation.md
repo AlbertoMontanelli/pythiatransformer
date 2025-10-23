@@ -21,7 +21,7 @@ cd pythiatransformer
 ```
 ---
 
-### Step 2: Create and activate a Conda environment
+## Step 2: Create and activate a Conda environment
 
 It is necessary to create a new Conda environment and activate it.
 
@@ -62,8 +62,8 @@ pip list | grep pythiatransformer
 
 ## Step 4: Optional — Developer and Documentation Dependencies
 
-If it's planned to contribute or build the documentation, you can
-install the additional optional dependencies defined in
+If it is planned to contribute or build the documentation, install the
+additional optional dependencies defined in
 `pyproject.toml`.
 
 ### Developer tools
@@ -104,13 +104,13 @@ import pythia8
 import pythiatransformer
 ```
 
-If no errors appear, your setup is complete.
+If no errors appear, the setup is complete.
 
 ---
 
 ## Step 6: Optional — Run the Unit Tests
 
-You can verify the setup by running the test suite with the built-in `unittest` framework:
+It is possible to verify the setup by running the test suite with the built-in `unittest` framework:
 
 ```bash
 PYTHONPATH=. python -m tests.test_pythia_generator -v
