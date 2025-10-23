@@ -12,7 +12,6 @@ pythiatransformer documentation
    
    installation
    usage
-   name_convention
    rep_structure
    api
 
