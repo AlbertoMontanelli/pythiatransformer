@@ -34,14 +34,14 @@ logger.info(f"Using device: {device}")
 # Update matplotlib.pyplot parameters.
 plt.rcParams.update(
     {
-        "font.family": "serif",
-        "font.serif": ["DejaVu Serif"],
-        "font.size": 14,
-        "axes.titlesize": 16,
-        "axes.labelsize": 14,
-        "legend.fontsize": 12,
-        "xtick.labelsize": 12,
-        "ytick.labelsize": 12,
+        "font.family": "sans-serif",
+        "font.sans-serif": ["DejaVu Sans"],
+        "font.size": 16,
+        "axes.titlesize": 18,
+        "axes.labelsize": 16,
+        "legend.fontsize": 14,
+        "xtick.labelsize": 14,
+        "ytick.labelsize": 14,
     }
 )
 
@@ -185,9 +185,7 @@ def plot_pt_hist(generated_tokens, target_tokens, suffix, bins=100):
     logger.info(f"histogram saved to {filename}")
 
 
-def plot_token_hist(
-    generated_tokens_per_event, target_tokens_per_event, suffix
-):
+def plot_token_hist(generated_tokens_per_event, target_tokens_per_event, suffix):
     """
     Plot histogram of number of particles per event.
 
@@ -282,9 +280,7 @@ def run_inference(batch_size, model_suffix):
     if match:
         data_suffix = match.group(1)
     else:
-        raise ValueError(
-            f"Could not extract numeric suffix from {model_path}"
-        )
+        raise ValueError(f"Could not extract numeric suffix from {model_path}")
     model, _ = build_model(batch_size, data_suffix)
     model.load_state_dict(torch.load(model_path, map_location=device))
     model.to(device)
@@ -507,8 +503,7 @@ def main():
             target_tokens_per_event,
         )
         logger.info(
-            f"WD_global={wd_global} GeV, KS_stat={ks_stat},"
-            f" KS_pvalue={ks_pvalue}"
+            f"WD_global={wd_global} GeV, KS_stat={ks_stat}, KS_pvalue={ks_pvalue}"
         )
     else:
         (
@@ -532,8 +527,7 @@ def main():
             args.suffix,
         )
         logger.info(
-            f"WD_global={wd_global} GeV, KS_stat={ks_stat},"
-            f" KS_pvalue={ks_pvalue}"
+            f"WD_global={wd_global} GeV, KS_stat={ks_stat}, KS_pvalue={ks_pvalue}"
         )
 
 
